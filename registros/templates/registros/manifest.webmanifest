@@ -1,0 +1,18 @@
+{
+  "name": "Planilla Rural",
+  "short_name": "Planilla",
+  "description": "Registro de lotes y corrales para operacion rural.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ece8dc",
+  "theme_color": "#2f6e5a",
+  "icons": [
+    {
+      "src": "/static/registros/icons/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

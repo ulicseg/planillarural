@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    {% load static %}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ingresar - Planilla Rural</title>
+    <meta name="theme-color" content="#2f6e5a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Planilla Rural" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="{% static 'registros/icons/app-icon.svg' %}" />
+    <link rel="apple-touch-icon" href="{% static 'registros/icons/app-icon.svg' %}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background:
+          radial-gradient(circle at 15% 10%, rgba(216, 239, 228, 0.7) 0%, transparent 42%),
+          radial-gradient(circle at 85% 0%, rgba(164, 118, 79, 0.12) 0%, transparent 38%),
+          linear-gradient(180deg, #f8f6ef 0%, #f0eee7 100%);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen font-sans text-slate-800">
+    <main class="mx-auto flex min-h-screen w-full max-w-md items-center px-4 py-6">
+      <section class="w-full rounded-3xl border border-white/70 bg-white/85 p-5 shadow-xl backdrop-blur">
+        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-700">Acceso local</p>
+        <h1 class="mt-1 text-2xl font-extrabold leading-tight">Planilla Rural</h1>
+        <p class="mt-1 text-sm text-slate-600">Inicia sesion para usar el sistema de registros.</p>
+
+        {% if form.errors %}
+          <div class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
+            Usuario o contrasena invalidos.
+          </div>
+        {% endif %}
+
+        <form method="post" class="mt-4 space-y-3">
+          {% csrf_token %}
+
+          <div>
+            <label for="id_username" class="mb-1 block text-sm font-semibold">Usuario</label>
+            <input
+              id="id_username"
+              name="username"
+              type="text"
+              required
+              autofocus
+              class="w-full rounded-xl border border-emerald-900/15 bg-white px-3 py-2.5 text-sm shadow-sm outline-none ring-emerald-700/20 focus:ring"
+            />
+          </div>
+
+          <div>
+            <label for="id_password" class="mb-1 block text-sm font-semibold">Contrasena</label>
+            <input
+              id="id_password"
+              name="password"
+              type="password"
+              required
+              class="w-full rounded-xl border border-emerald-900/15 bg-white px-3 py-2.5 text-sm shadow-sm outline-none ring-emerald-700/20 focus:ring"
+            />
+          </div>
+
+          <button type="submit" class="w-full rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-extrabold text-white shadow">
+            Ingresar
+          </button>
+
+          <input type="hidden" name="next" value="{{ next|default:'/' }}" />
+        </form>
+      </section>
+    </main>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").catch(() => {
+            // No interrumpe la app si el registro falla.
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

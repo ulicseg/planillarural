@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Planilla Rural">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#5d887e"/>
+      <stop offset="100%" stop-color="#3e6f63"/>
+    </linearGradient>
+    <linearGradient id="grid" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#b67b46"/>
+      <stop offset="100%" stop-color="#a36a36"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="24" y="24" width="464" height="464" rx="78" fill="url(#bg)"/>
+
+  <g stroke="url(#grid)" stroke-width="24" stroke-linecap="round" opacity="0.95">
+    <path d="M94 164 H318"/>
+    <path d="M94 224 H318"/>
+    <path d="M94 284 H318"/>
+    <path d="M94 344 H318"/>
+    <path d="M114 142 V368"/>
+    <path d="M204 142 V368"/>
+    <path d="M294 142 V368"/>
+  </g>
+
+  <path d="M255 128 H384 L438 182 V362 C438 382 422 398 402 398 H255 C235 398 219 382 219 362 V164 C219 144 235 128 255 128 Z" fill="#d8f0e6"/>
+  <path d="M384 128 V164 C384 174 392 182 402 182 H438" fill="#d8f0e6"/>
+  <rect x="240" y="150" width="174" height="224" rx="10" fill="#3f7467" opacity="0.3"/>
+
+  <path d="M284 270 L320 304 L382 244" fill="none" stroke="#d8f0e6" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
