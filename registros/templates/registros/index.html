@@ -105,6 +105,16 @@
         padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
         transform: translateZ(0);
       }
+
+      @keyframes app-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .app-spinner {
+        animation: app-spin 0.9s linear infinite;
+      }
     </style>
   </head>
   <body class="min-h-screen font-sans text-app-ink">
@@ -1158,7 +1168,7 @@
         if (loading) {
           guardarBtn.innerHTML = `
             <span class="inline-flex items-center justify-center gap-2">
-              <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg class="app-spinner h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.35" stroke-width="3"></circle>
                 <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
               </svg>
@@ -1182,6 +1192,9 @@
         ocupacionModalCorralActual = null;
         hideModalCorralOcupacionAviso();
 
+        // Force centered modal even if an old cached class list still has items-end.
+        editarLoteModal.classList.remove("items-end");
+        editarLoteModal.classList.add("items-center", "justify-center");
         editarLoteModal.classList.remove("hidden");
         editarLoteModal.classList.add("flex");
         checkModalCorralOcupacion();
@@ -1618,38 +1631,37 @@
         event.preventDefault();
         if (isSavingRegistro) return;
         clearMessage();
-
-        const id = registroIdInput.value;
-        const allowPasillo = pasillosHabilitados();
-        const payload = {
-          corral: document.getElementById("corral").value.trim(),
-          allowPasillo,
-          remitente: document.getElementById("remitente").value.trim(),
-          categoria: document.getElementById("categoria").value.trim(),
-          cantidad: document.getElementById("cantidad").value,
-          estado: getEstadoSelection(estadoOptions),
-          observaciones: document.getElementById("observaciones").value.trim(),
-          marcaImagen: imagenBase64Actual,
-        };
-
-        const url = id ? `/api/registros/${id}/` : "/api/registros/";
-        const method = id ? "PUT" : "POST";
-
-        if (!validatePasilloAllowed(payload.corral, allowPasillo, "el formulario principal")) {
-          return;
-        }
-
-        const ocupacion = await checkCorralOcupacion();
-        if (ocupacion && ocupacion.ocupado) {
-          const ok = window.confirm(`El corral ${ocupacion.corral} ya tiene ${getLotesLabel(ocupacion.registros.length)}. Deseas guardar igual?`);
-          if (!ok) {
-            return;
-          }
-        }
-
         setGuardarLoading(true);
 
         try {
+          const id = registroIdInput.value;
+          const allowPasillo = pasillosHabilitados();
+          const payload = {
+            corral: document.getElementById("corral").value.trim(),
+            allowPasillo,
+            remitente: document.getElementById("remitente").value.trim(),
+            categoria: document.getElementById("categoria").value.trim(),
+            cantidad: document.getElementById("cantidad").value,
+            estado: getEstadoSelection(estadoOptions),
+            observaciones: document.getElementById("observaciones").value.trim(),
+            marcaImagen: imagenBase64Actual,
+          };
+
+          const url = id ? `/api/registros/${id}/` : "/api/registros/";
+          const method = id ? "PUT" : "POST";
+
+          if (!validatePasilloAllowed(payload.corral, allowPasillo, "el formulario principal")) {
+            return;
+          }
+
+          const ocupacion = await checkCorralOcupacion();
+          if (ocupacion && ocupacion.ocupado) {
+            const ok = window.confirm(`El corral ${ocupacion.corral} ya tiene ${getLotesLabel(ocupacion.registros.length)}. Deseas guardar igual?`);
+            if (!ok) {
+              return;
+            }
+          }
+
           const response = await fetch(url, {
             method,
             headers: {
