@@ -91,6 +91,21 @@ class RegistrosApiTests(TestCase):
 
 		self.assertEqual(response.status_code, 400)
 
+	def test_create_rejects_invalid_estado(self):
+		response = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "12",
+				"remitente": "Proveedor X",
+				"categoria": "Vaca",
+				"estado": "excelente",
+			},
+			content_type="application/json",
+		)
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn("Estado invalido", response.json().get("error", ""))
+
 	def test_update_and_delete_registro(self):
 		registro = Registro.objects.create(corral="10", remitente="Pedro")
 

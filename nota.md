@@ -8,4 +8,4 @@ cantidad
 como ultimo el estado
 
 
-total la sumatoria de lo lotes en el corral.
+en los corralesm cuando seleccionas uno, debe aparecerte la sumatoria total de la cantidad de animales que hay en el corral. por ejemplo si un lote tiene 10 y otro 6 el total es 16 y esa información es importante poder visualizarla rápido.

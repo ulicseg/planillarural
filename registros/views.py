@@ -12,7 +12,15 @@ from .corrales_layout import CORRALES_DISPONIBLES, CORRALES_LAYOUT, MAP_COLS, MA
 from .models import Registro
 
 
-CATEGORIAS_PREDEFINIDAS = {"Novillo", "Vaca", "Ternero", "Ternera", "Vaquillona", "Toro"}
+CATEGORIAS_PREDEFINIDAS = {"Novillo", "Novillito", "Vaca", "Ternero", "Ternera", "Vaquillona", "Vaquillita", "Toro"}
+ESTADOS_PREDEFINIDOS_MAP = {
+	"muy bueno": "muy bueno",
+	"bueno": "bueno",
+	"regular": "regular",
+	"gordo": "gordo",
+	"invernada": "invernada",
+	"para cría": "para cría",
+}
 PASILLO_LABEL = "PASILLO"
 TORIL_CORRAL_ID = "1"
 
@@ -80,6 +88,65 @@ def parse_bool(raw_value):
 	if isinstance(raw_value, (int, float)):
 		return raw_value != 0
 	return False
+
+
+def normalize_text_key(value):
+	"""Normalize text for fuzzy matching: lowercase, remove accents."""
+	import unicodedata
+	text = (value or "").strip().lower()
+	# Remove accents
+	text = unicodedata.normalize("NFD", text)
+	text = "".join(c for c in text if unicodedata.category(c) != "Mn")
+	return text
+
+
+def parse_estado(raw_value):
+	"""Parse and validate estado field.
+	
+	Accepts:
+	- List of strings: ["bueno", "gordo"]
+	- Comma-separated string: "bueno, gordo"
+	- Single string: "bueno"
+	
+	Returns: (normalized_estado_string, error_message)
+	"""
+	if not raw_value:
+		return None, None
+	
+	# Convert to list
+	if isinstance(raw_value, list):
+		values = raw_value
+	else:
+		# If it's a comma-separated string, split it
+		if isinstance(raw_value, str) and "," in raw_value:
+			values = raw_value.split(",")
+		else:
+			values = [raw_value]
+	
+	# Validate each value
+	normalized_values = []
+	for val in values:
+		val_str = (val or "").strip()
+		if not val_str:
+			continue
+		
+		# Try to find matching key in map
+		normalized_key = normalize_text_key(val_str)
+		found = False
+		for key, canonical in ESTADOS_PREDEFINIDOS_MAP.items():
+			if normalize_text_key(key) == normalized_key:
+				if canonical not in normalized_values:  # Avoid duplicates
+					normalized_values.append(canonical)
+				found = True
+				break
+		
+		if not found:
+			return None, "Estado invalido"
+	
+	if not normalized_values:
+		return None, "Estado invalido"
+	
+	return ", ".join(normalized_values), None
 
 
 def get_corrales_disponibles():
@@ -201,6 +268,7 @@ def api_registros(request):
 	corral, corral_error = normalize_corral(payload.get("corral"), allow_pasillo=allow_pasillo, pasillos_validos=pasillos_disponibles)
 	remitente = (payload.get("remitente") or "").strip()
 	categoria = (payload.get("categoria") or "").strip()
+	estado, estado_error = parse_estado(payload.get("estado"))
 
 	if corral_error:
 		return JsonResponse({"error": corral_error}, status=400)
@@ -208,13 +276,15 @@ def api_registros(request):
 		return JsonResponse({"error": "Remitente es obligatorio."}, status=400)
 	if categoria and categoria not in CATEGORIAS_PREDEFINIDAS:
 		return JsonResponse({"error": "Categoria invalida. Debe ser una categoria predefinida."}, status=400)
+	if estado_error:
+		return JsonResponse({"error": estado_error}, status=400)
 
 	registro = Registro.objects.create(
 		corral=corral,
 		remitente=remitente,
 		categoria=categoria,
 		cantidad=parse_cantidad(payload.get("cantidad")),
-		estado=(payload.get("estado") or "").strip(),
+		estado=estado or "",
 		observaciones=(payload.get("observaciones") or "").strip(),
 		marca_imagen=payload.get("marcaImagen") or "",
 	)
@@ -240,6 +310,7 @@ def api_registro_detail(request, registro_id):
 	corral, corral_error = normalize_corral(payload.get("corral"), allow_pasillo=allow_pasillo, pasillos_validos=pasillos_disponibles)
 	remitente = (payload.get("remitente") or "").strip()
 	categoria = (payload.get("categoria") or "").strip()
+	estado, estado_error = parse_estado(payload.get("estado"))
 
 	if corral_error:
 		return JsonResponse({"error": corral_error}, status=400)
@@ -247,12 +318,14 @@ def api_registro_detail(request, registro_id):
 		return JsonResponse({"error": "Remitente es obligatorio."}, status=400)
 	if categoria and categoria not in CATEGORIAS_PREDEFINIDAS:
 		return JsonResponse({"error": "Categoria invalida. Debe ser una categoria predefinida."}, status=400)
+	if estado_error:
+		return JsonResponse({"error": estado_error}, status=400)
 
 	registro.corral = corral
 	registro.remitente = remitente
 	registro.categoria = categoria
 	registro.cantidad = parse_cantidad(payload.get("cantidad"))
-	registro.estado = (payload.get("estado") or "").strip()
+	registro.estado = estado or ""
 	registro.observaciones = (payload.get("observaciones") or "").strip()
 	registro.marca_imagen = payload.get("marcaImagen") or ""
 	registro.save()
