@@ -133,10 +133,12 @@
               <select id="categoria" class="w-full rounded-lg border border-app-leaf/45 bg-white/95 px-3 py-2.5 text-sm">
                 <option value="">Seleccionar categoria</option>
                 <option value="Novillo">Novillo</option>
+                <option value="Novillito">Novillito</option>
                 <option value="Vaca">Vaca</option>
                 <option value="Ternero">Ternero</option>
                 <option value="Ternera">Ternera</option>
                 <option value="Vaquillona">Vaquilla</option>
+                <option value="Vaquillita">Vaquillita</option>
                 <option value="Toro">Toro</option>
               </select>
             </div>
@@ -147,8 +149,15 @@
             </div>
 
             <div>
-              <label for="estado" class="mb-1 block text-sm font-semibold">Estado</label>
-              <input id="estado" type="text" class="w-full rounded-lg border border-app-leaf/45 bg-white/95 px-3 py-2.5 text-sm" />
+              <label for="estadoOptions" class="mb-1 block text-sm font-semibold">Estado</label>
+              <div id="estadoOptions" class="grid grid-cols-2 gap-2 rounded-lg border border-app-leaf/45 bg-white/95 p-2 text-sm">
+                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="muy bueno" class="h-4 w-4 rounded border-app-leaf/55" />Muy bueno</label>
+                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="bueno" class="h-4 w-4 rounded border-app-leaf/55" />Bueno</label>
+                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="regular" class="h-4 w-4 rounded border-app-leaf/55" />Regular</label>
+                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="gordo" class="h-4 w-4 rounded border-app-leaf/55" />Gordo</label>
+                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada" class="h-4 w-4 rounded border-app-leaf/55" />Invernada</label>
+                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="para cría" class="h-4 w-4 rounded border-app-leaf/55" />Para cría</label>
+              </div>
             </div>
 
             <div>
@@ -286,10 +295,12 @@
             <select id="modalCategoria" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm">
               <option value="">Seleccionar categoria</option>
               <option value="Novillo">Novillo</option>
+              <option value="Novillito">Novillito</option>
               <option value="Vaca">Vaca</option>
               <option value="Ternero">Ternero</option>
               <option value="Ternera">Ternera</option>
               <option value="Vaquillona">Vaquillona</option>
+              <option value="Vaquillita">Vaquillita</option>
               <option value="Toro">Toro</option>
             </select>
           </div>
@@ -300,8 +311,15 @@
           </div>
 
           <div>
-            <label for="modalEstado" class="mb-1 block text-xs font-bold">Estado</label>
-            <input id="modalEstado" type="text" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
+            <label for="modalEstadoOptions" class="mb-1 block text-xs font-bold">Estado</label>
+            <div id="modalEstadoOptions" class="grid grid-cols-2 gap-2 rounded-md border border-app-leaf/45 bg-white p-2 text-sm">
+              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="muy bueno" class="h-4 w-4 rounded border-app-leaf/55" />Muy bueno</label>
+              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="bueno" class="h-4 w-4 rounded border-app-leaf/55" />Bueno</label>
+              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="regular" class="h-4 w-4 rounded border-app-leaf/55" />Regular</label>
+              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="gordo" class="h-4 w-4 rounded border-app-leaf/55" />Gordo</label>
+              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada" class="h-4 w-4 rounded border-app-leaf/55" />Invernada</label>
+              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="para cría" class="h-4 w-4 rounded border-app-leaf/55" />Para cría</label>
+            </div>
           </div>
 
           <div>
@@ -368,6 +386,7 @@
       const cancelarEdicionBtn = document.getElementById("cancelarEdicion");
       const abrirCamaraBtn = document.getElementById("abrirCamaraBtn");
       const marcaInput = document.getElementById("marca");
+      const estadoOptions = document.getElementById("estadoOptions");
       const previewWrap = document.getElementById("previewWrap");
       const previewImg = document.getElementById("previewImg");
       const quitarImagenBtn = document.getElementById("quitarImagen");
@@ -409,7 +428,7 @@
       const modalRemitente = document.getElementById("modalRemitente");
       const modalCategoria = document.getElementById("modalCategoria");
       const modalCantidad = document.getElementById("modalCantidad");
-      const modalEstado = document.getElementById("modalEstado");
+      const modalEstadoOptions = document.getElementById("modalEstadoOptions");
       const modalObservaciones = document.getElementById("modalObservaciones");
       const cameraModal = document.getElementById("cameraModal");
       const cameraVideo = document.getElementById("cameraVideo");
@@ -864,6 +883,39 @@
         return cleaned || fallback;
       }
 
+      function normalizeEstadoKey(value) {
+        return (value || "")
+          .toString()
+          .trim()
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+      }
+
+      function parseEstadoValue(rawEstado) {
+        if (Array.isArray(rawEstado)) {
+          return rawEstado.map((item) => (item || "").toString().trim()).filter(Boolean);
+        }
+        return (rawEstado || "")
+          .toString()
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function getEstadoSelection(container) {
+        const selected = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map((input) => input.value);
+        return selected.join(", ");
+      }
+
+      function setEstadoSelection(container, rawEstado) {
+        const selectedKeys = new Set(parseEstadoValue(rawEstado).map(normalizeEstadoKey));
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach((checkbox) => {
+          checkbox.checked = selectedKeys.has(normalizeEstadoKey(checkbox.value));
+        });
+      }
+
       function getLotesLabel(count) {
         return count === 1 ? "1 lote" : `${count} lotes`;
       }
@@ -1093,7 +1145,7 @@
         modalRemitente.value = registro.remitente || "";
         modalCategoria.value = registro.categoria || "";
         modalCantidad.value = registro.cantidad || "";
-        modalEstado.value = registro.estado || "";
+        setEstadoSelection(modalEstadoOptions, registro.estado || "");
         modalObservaciones.value = registro.observaciones || "";
         ocupacionModalCorralActual = null;
         hideModalCorralOcupacionAviso();
@@ -1122,7 +1174,7 @@
         document.getElementById("remitente").value = registro.remitente || "";
         document.getElementById("categoria").value = registro.categoria || "";
         document.getElementById("cantidad").value = registro.cantidad || "";
-        document.getElementById("estado").value = registro.estado || "";
+        setEstadoSelection(estadoOptions, registro.estado || "");
         document.getElementById("observaciones").value = registro.observaciones || "";
 
         imagenBase64Actual = registro.marcaImagen || "";
@@ -1513,7 +1565,7 @@
           remitente: document.getElementById("remitente").value.trim(),
           categoria: document.getElementById("categoria").value.trim(),
           cantidad: document.getElementById("cantidad").value,
-          estado: document.getElementById("estado").value.trim(),
+          estado: getEstadoSelection(estadoOptions),
           observaciones: document.getElementById("observaciones").value.trim(),
           marcaImagen: imagenBase64Actual,
         };
@@ -1722,7 +1774,7 @@
           remitente: modalRemitente.value.trim(),
           categoria: modalCategoria.value.trim(),
           cantidad: modalCantidad.value,
-          estado: modalEstado.value.trim(),
+          estado: getEstadoSelection(modalEstadoOptions),
           observaciones: modalObservaciones.value.trim(),
           marcaImagen: registro.marcaImagen || "",
         };
@@ -1803,6 +1855,50 @@
       window.addEventListener("resize", () => {
         applyMapTransform();
       });
+
+      // Handle back button (especially on PWA when installed on mobile)
+      // This prevents closing the session when back button is pressed
+      function isAnyModalOpen() {
+        const modals = [editarLoteModal, imageViewerModal, deleteConfirmModal, cameraModal];
+        return modals.some((modal) => !modal.classList.contains("hidden"));
+      }
+
+      function closeAllModals() {
+        // Close edit modal
+        if (!editarLoteModal.classList.contains("hidden")) {
+          closeEditModal();
+        }
+        // Close image viewer
+        if (!imageViewerModal.classList.contains("hidden")) {
+          closeImageViewer();
+        }
+        // Close delete confirm
+        if (!deleteConfirmModal.classList.contains("hidden")) {
+          closeDeleteConfirmModal(false);
+        }
+        // Close camera
+        if (!cameraModal.classList.contains("hidden")) {
+          closeCameraCapture();
+        }
+      }
+
+      // Handle browser back button (popstate event fired on back button press)
+      // especially important for PWA running on mobile devices
+      window.addEventListener("popstate", (event) => {
+        event.preventDefault();
+        if (isAnyModalOpen()) {
+          closeAllModals();
+          // Restore history state so back button works again next time
+          window.history.pushState({ modalClosed: true }, "");
+        } else {
+          // No modals open, allow normal navigation
+          // Push a dummy state to maintain history integrity
+          window.history.pushState({ page: "main" }, "");
+        }
+      });
+
+      // Push initial history state to enable back button handling
+      window.history.pushState({ page: "main" }, "");
 
       setSection("registros");
       setupTouchNavigation();
