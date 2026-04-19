@@ -278,7 +278,7 @@
       </section>
     </main>
 
-    <div id="editarLoteModal" class="fixed inset-0 z-40 hidden items-end justify-center bg-black/45 p-3 sm:items-center">
+    <div id="editarLoteModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/45 p-3">
       <div class="w-full max-w-md rounded-md border border-app-ink/20 bg-white p-4 shadow-2xl">
         <div class="flex items-center justify-between">
           <h3 class="text-base font-extrabold">Editar lote</h3>
@@ -468,6 +468,7 @@
       let cameraRegistroId = null;
       let pendingDeleteConfirmResolve = null;
       let remitenteMarcasActuales = [];
+      let isSavingRegistro = false;
 
       let zoomScale = 0.55;
       let panX = 0;
@@ -1148,6 +1149,28 @@
         cancelarEdicionBtn.classList.add("hidden");
       }
 
+      function setGuardarLoading(loading) {
+        isSavingRegistro = loading;
+        guardarBtn.disabled = loading;
+        guardarBtn.classList.toggle("opacity-70", loading);
+        guardarBtn.classList.toggle("cursor-not-allowed", loading);
+
+        if (loading) {
+          guardarBtn.innerHTML = `
+            <span class="inline-flex items-center justify-center gap-2">
+              <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.35" stroke-width="3"></circle>
+                <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+              </svg>
+              Guardando...
+            </span>
+          `;
+          return;
+        }
+
+        guardarBtn.textContent = registroIdInput.value ? "Guardar Cambios" : "Guardar Registro";
+      }
+
       function openEditarLoteModal(registro) {
         editarLoteId.value = registro.id;
         modalCorral.value = registro.corral || "";
@@ -1593,6 +1616,7 @@
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        if (isSavingRegistro) return;
         clearMessage();
 
         const id = registroIdInput.value;
@@ -1623,25 +1647,31 @@
           }
         }
 
-        const response = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken"),
-          },
-          body: JSON.stringify(payload),
-        });
+        setGuardarLoading(true);
 
-        if (handleAuthError(response)) return;
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          showMessage(body.error || "No se pudo guardar el registro.", "error");
-          return;
+        try {
+          const response = await fetch(url, {
+            method,
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (handleAuthError(response)) return;
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            showMessage(body.error || "No se pudo guardar el registro.", "error");
+            return;
+          }
+
+          showMessage(id ? "Registro actualizado." : "Registro creado.");
+          resetFormState();
+          await refreshAllData();
+        } finally {
+          setGuardarLoading(false);
         }
-
-        showMessage(id ? "Registro actualizado." : "Registro creado.");
-        resetFormState();
-        await refreshAllData();
       });
 
       cancelarEdicionBtn.addEventListener("click", () => {
