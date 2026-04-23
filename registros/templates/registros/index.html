@@ -105,6 +105,16 @@
         padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
         transform: translateZ(0);
       }
+
+      @keyframes app-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .app-spinner {
+        animation: app-spin 0.9s linear infinite;
+      }
     </style>
   </head>
   <body class="min-h-screen font-sans text-app-ink">
@@ -148,7 +158,7 @@
                 <option value="Ternero">Ternero</option>
                 <option value="Ternera">Ternera</option>
                 <option value="Ternera/o">Ternera/o</option>
-                <option value="Vaquillona">Vaquilla</option>
+                <option value="Vaquilla">Vaquilla</option>
                 <option value="Vaquillita">Vaquillita</option>
                 <option value="Toro">Toro</option>
               </select>
@@ -279,7 +289,7 @@
       </section>
     </main>
 
-    <div id="editarLoteModal" class="fixed inset-0 z-40 hidden items-end justify-center bg-black/45 p-3 sm:items-center">
+    <div id="editarLoteModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/45 p-3">
       <div class="w-full max-w-md rounded-md border border-app-ink/20 bg-white p-4 shadow-2xl">
         <div class="flex items-center justify-between">
           <h3 class="text-base font-extrabold">Editar lote</h3>
@@ -309,7 +319,7 @@
               <option value="Vaca">Vaca</option>
               <option value="Ternero">Ternero</option>
               <option value="Ternera">Ternera</option>
-              <option value="Vaquillona">Vaquillona</option>
+              <option value="Vaquilla">Vaquilla</option>
               <option value="Vaquillita">Vaquillita</option>
               <option value="Toro">Toro</option>
             </select>
@@ -344,7 +354,7 @@
       </div>
     </div>
 
-    <div id="cameraModal" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/70 p-3 sm:items-center">
+    <div id="cameraModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-3">
       <div class="w-full max-w-md rounded-md border border-app-ink/20 bg-white p-3 shadow-2xl">
         <div class="mb-2 flex items-center justify-between">
           <h3 class="text-sm font-extrabold">Camara</h3>
@@ -469,6 +479,7 @@
       let cameraRegistroId = null;
       let pendingDeleteConfirmResolve = null;
       let remitenteMarcasActuales = [];
+      let isSavingRegistro = false;
 
       let zoomScale = 0.55;
       let panX = 0;
@@ -1149,6 +1160,28 @@
         cancelarEdicionBtn.classList.add("hidden");
       }
 
+      function setGuardarLoading(loading) {
+        isSavingRegistro = loading;
+        guardarBtn.disabled = loading;
+        guardarBtn.classList.toggle("opacity-70", loading);
+        guardarBtn.classList.toggle("cursor-not-allowed", loading);
+
+        if (loading) {
+          guardarBtn.innerHTML = `
+            <span class="inline-flex items-center justify-center gap-2">
+              <svg class="app-spinner h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.35" stroke-width="3"></circle>
+                <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+              </svg>
+              Guardando...
+            </span>
+          `;
+          return;
+        }
+
+        guardarBtn.textContent = registroIdInput.value ? "Guardar Cambios" : "Guardar Registro";
+      }
+
       function openEditarLoteModal(registro) {
         editarLoteId.value = registro.id;
         modalCorral.value = registro.corral || "";
@@ -1160,6 +1193,9 @@
         ocupacionModalCorralActual = null;
         hideModalCorralOcupacionAviso();
 
+        // Force centered modal even if an old cached class list still has items-end.
+        editarLoteModal.classList.remove("items-end");
+        editarLoteModal.classList.add("items-center", "justify-center");
         editarLoteModal.classList.remove("hidden");
         editarLoteModal.classList.add("flex");
         checkModalCorralOcupacion();
@@ -1289,25 +1325,25 @@
 
                 <div class="mt-4 space-y-2 border-t border-app-leaf/20 pt-3">
                   <div>
-                    <p class="text-[10px] font-bold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
-                    <p class="mt-1 text-sm font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "-"))}</p>
+                    <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
+                    <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "-"))}</p>
                   </div>
                   
                   <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <p class="text-xs font-extrabold uppercase tracking-[.12em] text-app-ink/70">Cantidad</p>
-                      <p class="mt-1 text-[11px] font-semibold text-app-ink">${escapeHtml(emptyText(item.cantidad, "-"))}</p>
+                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Cantidad</p>
+                      <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.cantidad, "-"))}</p>
                     </div>
                     <div>
-                      <p class="text-xs font-extrabold uppercase tracking-[.12em] text-app-ink/70">Estado</p>
-                      <p class="mt-1 text-[11px] font-semibold text-app-ink">${escapeHtml(emptyText(item.estado, "-"))}</p>
+                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Estado</p>
+                      <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.estado, "-"))}</p>
                     </div>
                   </div>
                 </div>
 
                 <div class="mt-3 border-t border-app-leaf/20 pt-3">
-                  <p class="text-base font-bold text-app-ink">${escapeHtml(emptyText(item.remitente))}</p>
-                  <p class="mt-1 text-xs font-semibold text-app-ink/65">${escapeHtml(emptyText(item.observaciones, "Sin observaciones"))}</p>
+                  <p class="text-lg font-bold text-app-ink">${escapeHtml(emptyText(item.remitente))}</p>
+                  <p class="mt-1 text-sm font-semibold text-app-ink/65">${escapeHtml(emptyText(item.observaciones, "Sin observaciones"))}</p>
                 </div>
 
                 ${
@@ -1430,25 +1466,25 @@
 
                 <div class="mt-4 space-y-2 border-t border-app-leaf/20 pt-3">
                   <div>
-                    <p class="text-[10px] font-bold uppercase tracking-[.12em] text-app-ink/70">Categoria</p>
-                    <p class="mt-1 text-sm font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "-"))}</p>
+                    <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoria</p>
+                    <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "-"))}</p>
                   </div>
 
                   <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <p class="text-xs font-extrabold uppercase tracking-[.12em] text-app-ink/70">Cantidad</p>
-                      <p class="mt-1 text-[11px] font-semibold text-app-ink">${escapeHtml(emptyText(item.cantidad, "-"))}</p>
+                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Cantidad</p>
+                      <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.cantidad, "-"))}</p>
                     </div>
                     <div>
-                      <p class="text-xs font-extrabold uppercase tracking-[.12em] text-app-ink/70">Estado</p>
-                      <p class="mt-1 text-[11px] font-semibold text-app-ink">${escapeHtml(emptyText(item.estado, "-"))}</p>
+                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Estado</p>
+                      <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.estado, "-"))}</p>
                     </div>
                   </div>
                 </div>
 
                 <div class="mt-3 border-t border-app-leaf/20 pt-3">
-                  <p class="text-base font-bold text-app-ink">${escapeHtml(emptyText(item.remitente))}</p>
-                  <p class="mt-1 text-xs font-semibold text-app-ink/65">${escapeHtml(emptyText(item.observaciones, "Sin observaciones"))}</p>
+                  <p class="text-lg font-bold text-app-ink">${escapeHtml(emptyText(item.remitente))}</p>
+                  <p class="mt-1 text-sm font-semibold text-app-ink/65">${escapeHtml(emptyText(item.observaciones, "Sin observaciones"))}</p>
                 </div>
                 ${marcaHtml}
                 <div class="mt-2">
@@ -1594,55 +1630,61 @@
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        if (isSavingRegistro) return;
         clearMessage();
+        setGuardarLoading(true);
 
-        const id = registroIdInput.value;
-        const allowPasillo = pasillosHabilitados();
-        const payload = {
-          corral: document.getElementById("corral").value.trim(),
-          allowPasillo,
-          remitente: document.getElementById("remitente").value.trim(),
-          categoria: document.getElementById("categoria").value.trim(),
-          cantidad: document.getElementById("cantidad").value,
-          estado: getEstadoSelection(estadoOptions),
-          observaciones: document.getElementById("observaciones").value.trim(),
-          marcaImagen: imagenBase64Actual,
-        };
+        try {
+          const id = registroIdInput.value;
+          const allowPasillo = pasillosHabilitados();
+          const payload = {
+            corral: document.getElementById("corral").value.trim(),
+            allowPasillo,
+            remitente: document.getElementById("remitente").value.trim(),
+            categoria: document.getElementById("categoria").value.trim(),
+            cantidad: document.getElementById("cantidad").value,
+            estado: getEstadoSelection(estadoOptions),
+            observaciones: document.getElementById("observaciones").value.trim(),
+            marcaImagen: imagenBase64Actual,
+          };
 
-        const url = id ? `/api/registros/${id}/` : "/api/registros/";
-        const method = id ? "PUT" : "POST";
+          const url = id ? `/api/registros/${id}/` : "/api/registros/";
+          const method = id ? "PUT" : "POST";
 
-        if (!validatePasilloAllowed(payload.corral, allowPasillo, "el formulario principal")) {
-          return;
-        }
-
-        const ocupacion = await checkCorralOcupacion();
-        if (ocupacion && ocupacion.ocupado) {
-          const ok = window.confirm(`El corral ${ocupacion.corral} ya tiene ${getLotesLabel(ocupacion.registros.length)}. Deseas guardar igual?`);
-          if (!ok) {
+          if (!validatePasilloAllowed(payload.corral, allowPasillo, "el formulario principal")) {
             return;
           }
+
+          const ocupacion = await checkCorralOcupacion();
+          if (ocupacion && ocupacion.ocupado) {
+            const ok = window.confirm(`El corral ${ocupacion.corral} ya tiene ${getLotesLabel(ocupacion.registros.length)}. Deseas guardar igual?`);
+            if (!ok) {
+              return;
+            }
+          }
+
+          const response = await fetch(url, {
+            method,
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (handleAuthError(response)) return;
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            showMessage(body.error || "No se pudo guardar el registro.", "error");
+            return;
+          }
+
+          showMessage(id ? "Registro actualizado." : "Registro creado.");
+          resetFormState();
+          await refreshAllData();
+        } finally {
+          setGuardarLoading(false);
         }
-
-        const response = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken"),
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (handleAuthError(response)) return;
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          showMessage(body.error || "No se pudo guardar el registro.", "error");
-          return;
-        }
-
-        showMessage(id ? "Registro actualizado." : "Registro creado.");
-        resetFormState();
-        await refreshAllData();
       });
 
       cancelarEdicionBtn.addEventListener("click", () => {

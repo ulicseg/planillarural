@@ -12,7 +12,7 @@ from .corrales_layout import CORRALES_DISPONIBLES, CORRALES_LAYOUT, MAP_COLS, MA
 from .models import Registro
 
 
-CATEGORIAS_PREDEFINIDAS = {"Novillo", "Novillito", "Vaca", "Ternero", "Ternera", "Ternera/o", "Vaquillona", "Vaquillita", "Toro"}
+CATEGORIAS_PREDEFINIDAS = {"Novillo", "Novillito", "Vaca", "Ternero", "Ternera", "Ternera/o", "Vaquilla", "Vaquillita", "Toro"}
 ESTADOS_PREDEFINIDOS_MAP = {
 	"muy bueno": "muy bueno",
 	"bueno": "bueno",
