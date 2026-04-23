@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Remate Ganadero - Carga</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Manrope", "ui-sans-serif", "sans-serif"],
+            },
+            colors: {
+              app: {
+                ink: "#1d2b2a",
+                mint: "#d8efe4",
+                leaf: "#4f7c67",
+                clay: "#a4764f",
+                cream: "#f8f6ef",
+              },
+            },
+            boxShadow: {
+              card: "0 10px 25px -15px rgba(29,43,42,.45)",
+            },
+            keyframes: {
+              rise: {
+                "0%": { opacity: "0", transform: "translateY(10px)" },
+                "100%": { opacity: "1", transform: "translateY(0)" },
+              },
+            },
+            animation: {
+              rise: "rise .35s ease-out both",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 15% 10%, rgba(216, 239, 228, 0.7) 0%, transparent 42%),
+          radial-gradient(circle at 85% 0%, rgba(164, 118, 79, 0.12) 0%, transparent 38%),
+          linear-gradient(180deg, #f8f6ef 0%, #f0eee7 100%);
+      }
+
+      .glass {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.78);
+      }
+    </style>
+  </head>
+  <body class="text-app-ink font-sans min-h-screen">
+    <main class="mx-auto w-full max-w-md px-4 pb-10 pt-5 sm:max-w-xl sm:px-6">
+      <header class="mb-4 animate-rise rounded-3xl border border-white/70 glass p-4 shadow-card">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-app-leaf">Carga rapida</p>
+        <h1 class="mt-1 text-2xl font-extrabold leading-tight">Remate Ganadero</h1>
+        <p class="mt-1 text-sm text-app-ink/70">Registro de lotes en formato movil</p>
+      </header>
+
+      <section class="animate-rise rounded-3xl border border-white/70 glass p-4 shadow-card [animation-delay:.04s]">
+        <form id="registroForm" class="space-y-3">
+          <input type="hidden" id="registroId" />
+
+          <div>
+            <label for="corral" class="mb-1 block text-sm font-semibold">Corral</label>
+            <input
+              id="corral"
+              name="corral"
+              type="text"
+              inputmode="numeric"
+              class="w-full rounded-2xl border border-app-leaf/20 bg-white/80 px-3 py-2.5 text-sm shadow-sm outline-none ring-app-leaf/30 transition focus:ring"
+              placeholder="Ej: 12"
+            />
+          </div>
+
+          <div class="relative">
+            <label for="remitente" class="mb-1 block text-sm font-semibold">Remitente</label>
+            <input
+              id="remitente"
+              name="remitente"
+              type="text"
+              class="w-full rounded-2xl border border-app-leaf/20 bg-white/80 px-3 py-2.5 text-sm shadow-sm outline-none ring-app-leaf/30 transition focus:ring"
+              placeholder="Nombre o razon social"
+              autocomplete="off"
+            />
+            <div id="remitenteSugerencias" class="absolute z-20 mt-1 hidden w-full rounded-2xl border border-app-leaf/20 bg-white shadow-lg"></div>
+          </div>
+
+          <div>
+            <label for="categoria" class="mb-1 block text-sm font-semibold">Categoria</label>
+            <select
+              id="categoria"
+              name="categoria"
+              class="w-full rounded-2xl border border-app-leaf/20 bg-white/80 px-3 py-2.5 text-sm shadow-sm outline-none ring-app-leaf/30 transition focus:ring"
+            >
+              <option value="">Seleccionar</option>
+              <option value="Novillo">Novillo</option>
+              <option value="Vaca">Vaca</option>
+              <option value="Ternero">Ternero</option>
+              <option value="Ternera/o">Ternera/o</option>
+              <option value="Otro">Otro (texto libre)</option>
+            </select>
+            <input
+              id="categoriaLibre"
+              name="categoriaLibre"
+              type="text"
+              class="mt-2 hidden w-full rounded-2xl border border-app-leaf/20 bg-white/80 px-3 py-2.5 text-sm shadow-sm outline-none ring-app-leaf/30 transition focus:ring"
+              placeholder="Especificar categoria"
+            />
+          </div>
+
+          <div>
+            <label for="cantidad" class="mb-1 block text-sm font-semibold">Cantidad</label>
+            <input
+              id="cantidad"
+              name="cantidad"
+              type="number"
+              class="w-full rounded-2xl border border-app-leaf/20 bg-white/80 px-3 py-2.5 text-sm shadow-sm outline-none ring-app-leaf/30 transition focus:ring"
+              placeholder="Ej: 25"
+            />
+          </div>
+
+          <div>
+            <label for="estado" class="mb-1 block text-sm font-semibold">Estado</label>
+            <input
+              id="estado"
+              name="estado"
+              type="text"
+              class="w-full rounded-2xl border border-app-leaf/20 bg-white/80 px-3 py-2.5 text-sm shadow-sm outline-none ring-app-leaf/30 transition focus:ring"
+              placeholder="Ej: Muy bueno"
+            />
+          </div>
+
+          <div>
+            <label for="marca" class="mb-1 block text-sm font-semibold">Marca (foto)</label>
+            <input
+              id="marca"
+              name="marca"
+              type="file"
+              accept="image/*"
+              class="block w-full rounded-2xl border border-app-leaf/20 bg-white/80 px-3 py-2 text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-app-leaf file:px-3 file:py-1.5 file:font-semibold file:text-white"
+            />
+            <div id="previewWrap" class="mt-2 hidden items-center gap-3 rounded-2xl bg-app-mint/40 p-2">
+              <img id="previewImg" alt="Vista previa" class="h-14 w-14 rounded-xl object-cover" />
+              <button
+                id="quitarImagen"
+                type="button"
+                class="rounded-xl border border-app-leaf/30 bg-white px-3 py-1.5 text-xs font-semibold"
+              >
+                Quitar foto
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label for="observaciones" class="mb-1 block text-sm font-semibold">Observaciones</label>
+            <textarea
+              id="observaciones"
+              name="observaciones"
+              rows="3"
+              class="w-full rounded-2xl border border-app-leaf/20 bg-white/80 px-3 py-2.5 text-sm shadow-sm outline-none ring-app-leaf/30 transition focus:ring"
+              placeholder="Notas libres"
+            ></textarea>
+          </div>
+
+          <div class="flex items-center gap-2 pt-1">
+            <button
+              id="guardarBtn"
+              type="submit"
+              class="flex-1 rounded-2xl bg-app-leaf px-4 py-3 text-sm font-extrabold text-white shadow transition active:scale-[.99]"
+            >
+              Guardar Registro
+            </button>
+            <button
+              id="cancelarEdicion"
+              type="button"
+              class="hidden rounded-2xl border border-app-leaf/30 bg-white px-3 py-3 text-xs font-bold"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="mt-5 animate-rise [animation-delay:.08s]">
+        <div class="mb-3 flex items-center gap-3">
+          <h2 class="text-lg font-extrabold">Registros</h2>
+        </div>
+
+        <div class="mb-3 rounded-2xl border border-app-leaf/15 bg-white/75 p-3 shadow-sm">
+          <p class="text-[11px] font-extrabold uppercase tracking-[0.14em] text-app-leaf/90">Buscador global</p>
+          <label for="buscadorGeneral" class="mt-1 block text-sm font-semibold text-app-ink/90">Buscar registros</label>
+          <input
+            id="buscadorGeneral"
+            type="search"
+            class="mt-1 w-full rounded-xl border border-app-leaf/25 bg-white px-3 py-2.5 text-sm font-semibold shadow-sm outline-none ring-app-leaf/30 transition focus:ring"
+            placeholder="Ej: corral 12, Jose Luis, vaca, bueno"
+          />
+          <p class="mt-1 text-xs text-app-ink/70">Filtra en tiempo real por corral, remitente, categoria, cantidad, estado u observaciones.</p>
+        </div>
+
+        <div id="cardsContainer" class="space-y-3"></div>
+      </section>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "planillaRemateRegistros";
+
+      const form = document.getElementById("registroForm");
+      const registroIdInput = document.getElementById("registroId");
+      const guardarBtn = document.getElementById("guardarBtn");
+      const cancelarEdicionBtn = document.getElementById("cancelarEdicion");
+      const categoriaSelect = document.getElementById("categoria");
+      const categoriaLibreInput = document.getElementById("categoriaLibre");
+      const remitenteInput = document.getElementById("remitente");
+      const remitenteSugerencias = document.getElementById("remitenteSugerencias");
+      const marcaInput = document.getElementById("marca");
+      const previewWrap = document.getElementById("previewWrap");
+      const previewImg = document.getElementById("previewImg");
+      const quitarImagenBtn = document.getElementById("quitarImagen");
+      const buscadorGeneral = document.getElementById("buscadorGeneral");
+      const cardsContainer = document.getElementById("cardsContainer");
+
+      let registros = loadRegistros();
+      let imagenBase64Actual = "";
+      let isPickingSuggestion = false;
+
+      function loadRegistros() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function persistRegistros() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+      }
+
+      function hideRemitenteSugerencias() {
+        remitenteSugerencias.classList.add("hidden");
+        remitenteSugerencias.innerHTML = "";
+      }
+
+      function getRemitentesUnicos() {
+        const map = new Map();
+
+        registros.forEach((item) => {
+          const nombre = (item.remitente || "").trim();
+          if (!nombre) return;
+
+          const key = nombre.toLowerCase();
+          const existing = map.get(key);
+          if (!existing || (item.updatedAt || 0) > (existing.updatedAt || 0)) {
+            map.set(key, { remitente: nombre, marcaImagen: item.marcaImagen || "", updatedAt: item.updatedAt || 0 });
+          }
+        });
+
+        return Array.from(map.values()).sort((a, b) => a.remitente.localeCompare(b.remitente, "es", { sensitivity: "base" }));
+      }
+
+      function buscarRegistroPorRemitente(remitente) {
+        const buscado = (remitente || "").trim().toLowerCase();
+        if (!buscado) return null;
+
+        const candidatos = registros
+          .filter((item) => (item.remitente || "").trim().toLowerCase() === buscado)
+          .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+        return candidatos[0] || null;
+      }
+
+      function aplicarMarcaDesdeRemitente(remitente) {
+        const registro = buscarRegistroPorRemitente(remitente);
+        if (!registro || !registro.marcaImagen) return;
+
+        imagenBase64Actual = registro.marcaImagen;
+        marcaInput.value = "";
+        showImagePreview(imagenBase64Actual);
+      }
+
+      function seleccionarRemitente(remitente) {
+        remitenteInput.value = remitente;
+        hideRemitenteSugerencias();
+        aplicarMarcaDesdeRemitente(remitente);
+      }
+
+      function renderRemitenteSugerencias(query) {
+        const buscado = (query || "").trim().toLowerCase();
+        if (!buscado) {
+          hideRemitenteSugerencias();
+          return;
+        }
+
+        const matches = getRemitentesUnicos().filter((item) => item.remitente.toLowerCase().includes(buscado)).slice(0, 6);
+
+        if (!matches.length) {
+          hideRemitenteSugerencias();
+          return;
+        }
+
+        remitenteSugerencias.innerHTML = matches
+          .map(
+            (item) => `
+              <button
+                type="button"
+                data-remitente="${escapeHtml(item.remitente)}"
+                class="block w-full border-b border-app-leaf/10 px-3 py-2 text-left text-sm last:border-b-0 hover:bg-app-mint/45"
+              >
+                ${escapeHtml(item.remitente)}
+              </button>
+            `,
+          )
+          .join("");
+
+        remitenteSugerencias.classList.remove("hidden");
+      }
+
+      function showImagePreview(base64) {
+        if (!base64) {
+          previewWrap.classList.add("hidden");
+          previewWrap.classList.remove("flex");
+          previewImg.src = "";
+          return;
+        }
+
+        previewImg.src = base64;
+        previewWrap.classList.remove("hidden");
+        previewWrap.classList.add("flex");
+      }
+
+      function toggleCategoriaLibre() {
+        const isOtro = categoriaSelect.value === "Otro";
+        categoriaLibreInput.classList.toggle("hidden", !isOtro);
+        if (!isOtro) categoriaLibreInput.value = "";
+      }
+
+      function getCategoriaFinal() {
+        if (categoriaSelect.value === "Otro") {
+          return categoriaLibreInput.value.trim();
+        }
+        return categoriaSelect.value;
+      }
+
+      function toNumber(value) {
+        const n = Number.parseFloat(value);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function normalizeText(value) {
+        return (value || "").toString().trim().toLowerCase();
+      }
+
+      function emptyText(value, fallback = "Sin dato") {
+        const cleaned = (value || "").toString().trim();
+        return cleaned || fallback;
+      }
+
+      function filterRegistros(list) {
+        const query = normalizeText(buscadorGeneral.value);
+
+        if (!query) {
+          return list;
+        }
+
+        return list.filter((item) => {
+          const campos = [item.corral, item.remitente, item.categoria, item.cantidad, item.estado, item.observaciones]
+            .map((value) => normalizeText(value))
+            .join(" ");
+
+          return campos.includes(query);
+        });
+      }
+
+      function renderCards() {
+        const filtered = filterRegistros(registros);
+        const sorted = filtered;
+
+        if (!sorted.length) {
+          if (!registros.length) {
+            cardsContainer.innerHTML = `
+              <article class="rounded-3xl border border-dashed border-app-leaf/30 bg-white/70 p-4 text-center shadow-sm">
+                <p class="text-sm font-semibold text-app-ink/70">Sin registros cargados todavia.</p>
+                <p class="mt-1 text-xs text-app-ink/55">Completa el formulario y guarda para ver tarjetas aqui.</p>
+              </article>
+            `;
+          } else {
+            cardsContainer.innerHTML = `
+              <article class="rounded-3xl border border-dashed border-app-leaf/30 bg-white/70 p-4 text-center shadow-sm">
+                <p class="text-sm font-semibold text-app-ink/70">No hay resultados con esos filtros.</p>
+                <p class="mt-1 text-xs text-app-ink/55">Proba cambiar el rango de corral o el buscador.</p>
+              </article>
+            `;
+          }
+          return;
+        }
+
+        cardsContainer.innerHTML = sorted
+          .map((item) => {
+            return `
+              <article class="rounded-3xl border border-white/70 glass p-4 shadow-card animate-rise">
+                <div>
+                  <p class="text-[11px] uppercase tracking-[.14em] text-app-leaf/85">Corral</p>
+                  <h3 class="text-xl font-extrabold leading-tight">${escapeHtml(emptyText(item.corral))}</h3>
+                </div>
+
+                <div class="mt-3 grid grid-cols-1 gap-2 text-sm">
+                  <p><span class="font-bold">Remitente:</span> ${escapeHtml(emptyText(item.remitente))}</p>
+                  <p><span class="font-bold">Categoria:</span> ${escapeHtml(emptyText(item.categoria))}</p>
+                  <p><span class="font-bold">Cantidad:</span> ${escapeHtml(emptyText(item.cantidad, "Sin dato"))}</p>
+                  <p><span class="font-bold">Estado:</span> ${escapeHtml(emptyText(item.estado))}</p>
+                  <p><span class="font-bold">Observaciones:</span> ${escapeHtml(emptyText(item.observaciones))}</p>
+                  <p><span class="font-bold">Marca:</span> ${item.marcaImagen ? "Cargada" : "Sin dato"}</p>
+                </div>
+
+                ${
+                  item.marcaImagen
+                    ? `<div class="mt-3">
+                        <p class="mb-1 text-xs font-bold uppercase tracking-wide text-app-ink/70">Imagen de marca</p>
+                        <img src="${item.marcaImagen}" alt="Marca registrada" class="h-24 w-24 rounded-2xl border border-app-leaf/15 object-cover" />
+                      </div>`
+                    : ""
+                }
+
+                <div class="mt-4 flex items-center gap-2">
+                  <button data-action="edit" data-id="${item.id}" class="flex-1 rounded-xl border border-app-leaf/30 bg-white px-3 py-2 text-xs font-extrabold">
+                    Editar
+                  </button>
+                  <button data-action="delete" data-id="${item.id}" class="flex-1 rounded-xl bg-app-clay px-3 py-2 text-xs font-extrabold text-white">
+                    Eliminar
+                  </button>
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function escapeHtml(value) {
+        return value
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function resetFormState() {
+        form.reset();
+        registroIdInput.value = "";
+        imagenBase64Actual = "";
+        showImagePreview("");
+        hideRemitenteSugerencias();
+        categoriaLibreInput.classList.add("hidden");
+        guardarBtn.textContent = "Guardar Registro";
+        cancelarEdicionBtn.classList.add("hidden");
+      }
+
+      function setEditState(registro) {
+        registroIdInput.value = registro.id;
+        document.getElementById("corral").value = registro.corral || "";
+        document.getElementById("remitente").value = registro.remitente || "";
+        document.getElementById("cantidad").value = registro.cantidad || "";
+        document.getElementById("estado").value = registro.estado || "";
+        document.getElementById("observaciones").value = registro.observaciones || "";
+
+        const categoriasBase = ["Novillo", "Vaca", "Ternero", "Ternera/o", ""];
+        if (categoriasBase.includes(registro.categoria || "")) {
+          categoriaSelect.value = registro.categoria || "";
+          categoriaLibreInput.value = "";
+          categoriaLibreInput.classList.add("hidden");
+        } else {
+          categoriaSelect.value = "Otro";
+          categoriaLibreInput.classList.remove("hidden");
+          categoriaLibreInput.value = registro.categoria || "";
+        }
+
+        imagenBase64Actual = registro.marcaImagen || "";
+        showImagePreview(imagenBase64Actual);
+        marcaInput.value = "";
+        hideRemitenteSugerencias();
+
+        guardarBtn.textContent = "Guardar Cambios";
+        cancelarEdicionBtn.classList.remove("hidden");
+      }
+
+      marcaInput.addEventListener("change", (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) {
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          imagenBase64Actual = typeof reader.result === "string" ? reader.result : "";
+          showImagePreview(imagenBase64Actual);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      quitarImagenBtn.addEventListener("click", () => {
+        imagenBase64Actual = "";
+        marcaInput.value = "";
+        showImagePreview("");
+      });
+
+      categoriaSelect.addEventListener("change", toggleCategoriaLibre);
+
+      remitenteInput.addEventListener("input", (event) => {
+        renderRemitenteSugerencias(event.target.value);
+      });
+
+      remitenteInput.addEventListener("focus", () => {
+        renderRemitenteSugerencias(remitenteInput.value);
+      });
+
+      remitenteInput.addEventListener("blur", () => {
+        setTimeout(() => {
+          if (isPickingSuggestion) {
+            return;
+          }
+          hideRemitenteSugerencias();
+          aplicarMarcaDesdeRemitente(remitenteInput.value);
+        }, 220);
+      });
+
+      remitenteSugerencias.addEventListener("pointerdown", (event) => {
+        const option = event.target.closest("button[data-remitente]");
+        if (!option) return;
+        event.preventDefault();
+        isPickingSuggestion = true;
+        seleccionarRemitente(option.dataset.remitente || "");
+        setTimeout(() => {
+          isPickingSuggestion = false;
+          remitenteInput.focus();
+        }, 0);
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const idEdicion = registroIdInput.value;
+        const payload = {
+          id: idEdicion || crypto.randomUUID(),
+          corral: document.getElementById("corral").value.trim(),
+          remitente: document.getElementById("remitente").value.trim(),
+          categoria: getCategoriaFinal(),
+          cantidad: document.getElementById("cantidad").value,
+          estado: document.getElementById("estado").value.trim(),
+          marcaImagen: imagenBase64Actual,
+          observaciones: document.getElementById("observaciones").value.trim(),
+          updatedAt: Date.now(),
+        };
+
+        if (idEdicion) {
+          registros = registros.map((item) => (item.id === idEdicion ? payload : item));
+        } else {
+          registros.unshift(payload);
+        }
+
+        persistRegistros();
+        renderCards();
+        resetFormState();
+      });
+
+      cancelarEdicionBtn.addEventListener("click", () => {
+        resetFormState();
+      });
+
+      cardsContainer.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) {
+          return;
+        }
+
+        const id = button.dataset.id;
+        const action = button.dataset.action;
+        const registro = registros.find((item) => item.id === id);
+        if (!registro) {
+          return;
+        }
+
+        if (action === "edit") {
+          setEditState(registro);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+
+        if (action === "delete") {
+          const ok = window.confirm("Eliminar este registro?");
+          if (!ok) {
+            return;
+          }
+          registros = registros.filter((item) => item.id !== id);
+          persistRegistros();
+          renderCards();
+          if (registroIdInput.value === id) {
+            resetFormState();
+          }
+        }
+      });
+
+      buscadorGeneral.addEventListener("input", renderCards);
+
+      toggleCategoriaLibre();
+      renderCards();
+    </script>
+  </body>
+</html>
