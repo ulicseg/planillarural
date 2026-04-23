@@ -1035,20 +1035,39 @@
         return new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.9));
       }
 
+      function openNativeCameraInput(target, registroId = null) {
+        if (target === "quick") {
+          pendingMarcaRegistroId = registroId;
+          marcaRapidaInput.value = "";
+          marcaRapidaInput.click();
+          return;
+        }
+
+        marcaInput.value = "";
+        marcaInput.click();
+      }
+
+      function shouldUseNativeCameraOnThisDevice() {
+        const ua = navigator.userAgent || "";
+        const uaDataBrands = navigator.userAgentData && Array.isArray(navigator.userAgentData.brands)
+          ? navigator.userAgentData.brands.map((item) => item.brand).join(" ")
+          : "";
+        const haystack = `${ua} ${uaDataBrands}`.toLowerCase();
+        return haystack.includes("android");
+      }
+
       async function openCameraCapture(target, registroId = null) {
         cameraTarget = target;
         cameraRegistroId = registroId;
 
+        if (shouldUseNativeCameraOnThisDevice()) {
+          openNativeCameraInput(target, registroId);
+          return;
+        }
+
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           showMessage("Este dispositivo no permite abrir la camara desde el navegador.", "error");
-          if (target === "quick") {
-            pendingMarcaRegistroId = registroId;
-            marcaRapidaInput.value = "";
-            marcaRapidaInput.click();
-          } else {
-            marcaInput.value = "";
-            marcaInput.click();
-          }
+          openNativeCameraInput(target, registroId);
           return;
         }
 
@@ -1086,14 +1105,7 @@
           cameraModal.classList.add("flex");
         } catch {
           showMessage("No se pudo abrir la camara. Revisa permisos o usa archivo.", "error");
-          if (target === "quick") {
-            pendingMarcaRegistroId = registroId;
-            marcaRapidaInput.value = "";
-            marcaRapidaInput.click();
-          } else {
-            marcaInput.value = "";
-            marcaInput.click();
-          }
+          openNativeCameraInput(target, registroId);
         }
       }
 
