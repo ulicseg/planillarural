@@ -243,6 +243,10 @@
             </div>
           </div>
 
+          <div id="totalIngresos" class="mb-2 text-right">
+            <p class="text-sm text-app-ink/60"><span class="font-semibold text-app-leaf">Total: </span><span id="totalCantidad" class="font-extrabold text-app-leaf">0</span> cabezas</p>
+          </div>
+
           <div id="cardsContainer" class="space-y-3"></div>
         </section>
       </section>
@@ -1306,6 +1310,10 @@
             return textA.localeCompare(textB, "es", { sensitivity: "base" });
           });
         }
+
+        // Calcular total de cantidad
+        const total = registrosOrdenados.reduce((sum, item) => sum + (parseInt(item.cantidad) || 0), 0);
+        document.getElementById("totalCantidad").textContent = total;
 
         if (!registrosOrdenados.length) {
           cardsContainer.innerHTML = `
