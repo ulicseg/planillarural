@@ -374,6 +374,37 @@
         return cleaned || fallback;
       }
 
+      function getCorralSortKey(value) {
+        const cleaned = (value || "").toString().trim();
+        if (!cleaned) {
+          return { rank: 0, number: Number.NEGATIVE_INFINITY, text: "" };
+        }
+
+        const numberMatch = cleaned.match(/\d+/);
+        if (numberMatch) {
+          return { rank: 1, number: Number(numberMatch[0]), text: cleaned.toLowerCase() };
+        }
+
+        return { rank: 2, number: Number.POSITIVE_INFINITY, text: cleaned.toLowerCase() };
+      }
+
+      function sortRegistrosByCorral(list) {
+        return [...list].sort((a, b) => {
+          const corralA = getCorralSortKey(a.corral);
+          const corralB = getCorralSortKey(b.corral);
+
+          if (corralA.rank !== corralB.rank) {
+            return corralA.rank - corralB.rank;
+          }
+
+          if (corralA.rank === 1 && corralA.number !== corralB.number) {
+            return corralA.number - corralB.number;
+          }
+
+          return corralA.text.localeCompare(corralB.text, "es", { sensitivity: "base", numeric: true });
+        });
+      }
+
       function filterRegistros(list) {
         const query = normalizeText(buscadorGeneral.value);
 
@@ -392,7 +423,7 @@
 
       function renderCards() {
         const filtered = filterRegistros(registros);
-        const sorted = filtered;
+        const sorted = sortRegistrosByCorral(filtered);
 
         // Calcular total de cantidad
         const total = sorted.reduce((sum, item) => sum + (parseInt(item.cantidad) || 0), 0);

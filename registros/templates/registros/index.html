@@ -234,10 +234,10 @@
             <div class="mt-3 text-left">
               <label for="ordenRegistros" class="mb-1 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-app-leaf/90">Ordenar por</label>
               <select id="ordenRegistros" class="w-full rounded-md border border-app-leaf/50 bg-white px-3 py-2.5 text-sm font-semibold shadow-sm">
-                <option value="reciente">Mas reciente</option>
+                <option value="corral_asc" selected>Corral: menor a mayor</option>
+                <option value="corral_desc">Corral: mayor a menor</option>
                 <option value="cantidad_desc">Cantidad: mayor a menor</option>
                 <option value="cantidad_asc">Cantidad: menor a mayor</option>
-                <option value="corral_desc">Corral: mayor a menor</option>
                 <option value="alfabetico">Alfabetico (A-Z)</option>
               </select>
             </div>
@@ -917,6 +917,39 @@
         return cleaned || fallback;
       }
 
+      function getCorralSortKey(value) {
+        const cleaned = (value || "").toString().trim();
+        if (!cleaned) {
+          return { rank: 0, number: Number.NEGATIVE_INFINITY, text: "" };
+        }
+
+        const numberMatch = cleaned.match(/\d+/);
+        if (numberMatch) {
+          return { rank: 1, number: Number(numberMatch[0]), text: cleaned.toLowerCase() };
+        }
+
+        return { rank: 2, number: Number.POSITIVE_INFINITY, text: cleaned.toLowerCase() };
+      }
+
+      function sortRegistrosByCorral(list, descending = false) {
+        return [...list].sort((a, b) => {
+          const corralA = getCorralSortKey(a.corral);
+          const corralB = getCorralSortKey(b.corral);
+
+          if (corralA.rank !== corralB.rank) {
+            return corralA.rank - corralB.rank;
+          }
+
+          if (corralA.rank === 1 && corralA.number !== corralB.number) {
+            return descending ? corralB.number - corralA.number : corralA.number - corralB.number;
+          }
+
+          return descending
+            ? corralB.text.localeCompare(corralA.text, "es", { sensitivity: "base", numeric: true })
+            : corralA.text.localeCompare(corralB.text, "es", { sensitivity: "base", numeric: true });
+        });
+      }
+
       function normalizeEstadoKey(value) {
         return (value || "")
           .toString()
@@ -1382,16 +1415,14 @@
         const orden = ordenRegistros ? ordenRegistros.value : "reciente";
         const registrosOrdenados = [...registros];
 
-        if (orden === "cantidad_desc") {
+        if (orden === "corral_asc" || orden === "reciente") {
+          registrosOrdenados.splice(0, registrosOrdenados.length, ...sortRegistrosByCorral(registrosOrdenados));
+        } else if (orden === "corral_desc") {
+          registrosOrdenados.splice(0, registrosOrdenados.length, ...sortRegistrosByCorral(registrosOrdenados, true));
+        } else if (orden === "cantidad_desc") {
           registrosOrdenados.sort((a, b) => Number(b.cantidad || 0) - Number(a.cantidad || 0));
         } else if (orden === "cantidad_asc") {
           registrosOrdenados.sort((a, b) => Number(a.cantidad || 0) - Number(b.cantidad || 0));
-        } else if (orden === "corral_desc") {
-          registrosOrdenados.sort((a, b) => {
-            const corralA = emptyText(a.corral, "");
-            const corralB = emptyText(b.corral, "");
-            return corralB.localeCompare(corralA, "es", { numeric: true, sensitivity: "base" });
-          });
         } else if (orden === "alfabetico") {
           registrosOrdenados.sort((a, b) => {
             const textA = `${emptyText(a.remitente, "")} ${emptyText(a.corral, "")}`.trim();
