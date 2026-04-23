@@ -235,6 +235,7 @@
               <label for="ordenRegistros" class="mb-1 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-app-leaf/90">Ordenar por</label>
               <select id="ordenRegistros" class="w-full rounded-md border border-app-leaf/50 bg-white px-3 py-2.5 text-sm font-semibold shadow-sm">
                 <option value="corral_asc" selected>Corral: menor a mayor</option>
+                <option value="reciente">Ingreso: mas reciente</option>
                 <option value="corral_desc">Corral: mayor a menor</option>
                 <option value="cantidad_desc">Cantidad: mayor a menor</option>
                 <option value="cantidad_asc">Cantidad: menor a mayor</option>
@@ -950,6 +951,12 @@
         });
       }
 
+      function getIngresoSortValue(registro) {
+        const raw = registro.createdAt || registro.updatedAt || "";
+        const parsed = Date.parse(raw);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
       function normalizeEstadoKey(value) {
         return (value || "")
           .toString()
@@ -1415,8 +1422,10 @@
         const orden = ordenRegistros ? ordenRegistros.value : "reciente";
         const registrosOrdenados = [...registros];
 
-        if (orden === "corral_asc" || orden === "reciente") {
+        if (orden === "corral_asc") {
           registrosOrdenados.splice(0, registrosOrdenados.length, ...sortRegistrosByCorral(registrosOrdenados));
+        } else if (orden === "reciente") {
+          registrosOrdenados.sort((a, b) => getIngresoSortValue(b) - getIngresoSortValue(a));
         } else if (orden === "corral_desc") {
           registrosOrdenados.splice(0, registrosOrdenados.length, ...sortRegistrosByCorral(registrosOrdenados, true));
         } else if (orden === "cantidad_desc") {
