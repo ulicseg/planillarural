@@ -255,6 +255,12 @@
         <section class="rounded-md border border-app-ink/20 glass p-4 shadow-card">
           <h2 class="text-center text-lg font-extrabold">Corrales</h2>
 
+          <div class="mb-4 rounded-lg border-2 border-app-leaf/50 bg-gradient-to-r from-app-leaf/10 to-app-mint/10 p-4 text-center">
+            <p class="text-sm font-semibold uppercase tracking-wider text-app-leaf/80">Total de cabezas</p>
+            <p id="totalCabesasCorreales" class="mt-1 text-4xl font-extrabold text-app-leaf">0</p>
+            <p class="mt-1 text-xs text-app-ink/60">en circulación</p>
+          </div>
+
           <label class="mt-3 flex items-center justify-center gap-2 rounded-lg border border-app-leaf/35 bg-white/90 px-3 py-2 text-xs font-bold text-app-ink">
             <input id="habilitarPasillos" type="checkbox" class="h-4 w-4 rounded border-app-leaf/55" />
             Habilitar pasillos numerados como corrales temporales
@@ -1287,6 +1293,12 @@
         if (selectedCorral) {
           renderCorralDetalle(selectedCorral);
         }
+        updateTotalCabesasCorreales();
+      }
+
+      function updateTotalCabesasCorreales() {
+        const total = (registrosAll || []).reduce((sum, item) => sum + (parseInt(item.cantidad) || 0), 0);
+        document.getElementById("totalCabesasCorreales").textContent = total;
       }
 
       function renderCards() {
