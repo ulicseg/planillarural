@@ -19,6 +19,8 @@
       rel="stylesheet"
     />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -220,6 +222,11 @@
 
         <section class="rounded-md border border-app-ink/20 glass p-4 shadow-card">
           <h2 class="mb-3 text-center text-lg font-extrabold">Registros</h2>
+
+          <div class="mb-4 flex gap-2">
+            <button id="exportPdfBtn" type="button" class="flex-1 rounded-md bg-app-leaf px-3 py-2.5 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-app-leaf/90">📄 PDF Excel</button>
+            <button id="sharePdfBtn" type="button" class="flex-1 rounded-md border-2 border-app-mint bg-emerald-50 px-3 py-2.5 text-sm font-extrabold text-app-leaf shadow-sm transition-colors hover:bg-app-mint/30">📱 WhatsApp</button>
+          </div>
 
           <div class="mb-3 rounded-lg border border-app-leaf/35 bg-white/95 p-3 text-center shadow-sm">
             <p class="text-[11px] font-extrabold uppercase tracking-[0.14em] text-app-leaf/90">Buscador global</p>
@@ -431,6 +438,8 @@
       const corralOcupacionAviso = document.getElementById("corralOcupacionAviso");
       const ubicacionesDatalist = document.getElementById("ubicacionesDatalist");
       const marcaRapidaInput = document.getElementById("marcaRapidaInput");
+      const exportPdfBtn = document.getElementById("exportPdfBtn");
+      const sharePdfBtn = document.getElementById("sharePdfBtn");
 
       const registrosSection = document.getElementById("registrosSection");
       const corralesSection = document.getElementById("corralesSection");
@@ -2115,6 +2124,149 @@
 
       // Push initial history state to enable back button handling
       window.history.pushState({ page: "main" }, "");
+
+      function normalizeCorralSortingKey(corral) {
+        const c = (corral || "").toString().trim().toUpperCase();
+        const num = parseInt(c, 10);
+        if (!isNaN(num)) {
+          // Rellenamos con 0 para que los números ordenen bien (00001, 00012)
+          return num.toString().padStart(5, '0');
+        }
+        return c;
+      }
+
+      function generarPdfBlob() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        
+        doc.setFontSize(18);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(15, 31, 27); // app-ink
+        doc.text("Planilla Rural - Exportación de Corrales", 14, 15);
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        const dateStr = new Date().toLocaleDateString("es-AR", { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        doc.text(`Fecha y hora: ${dateStr}`, 14, 22);
+
+        const registrosOrdenados = [...registrosAll].sort((a, b) => {
+          const corralA = normalizeCorralSortingKey(a.corral);
+          const corralB = normalizeCorralSortingKey(b.corral);
+          if (corralA < corralB) return -1;
+          if (corralA > corralB) return 1;
+          return 0;
+        });
+
+        const tableColumn = ["Corral", "Remitente", "Categoría", "Cant.", "Corral Nuevo 1", "Corral Nuevo 2"];
+        const tableRows = [];
+
+        registrosOrdenados.forEach(item => {
+          const rowData = [
+            item.corral || "-",
+            item.remitente || "-",
+            item.categoria || "-",
+            item.cantidad !== null ? item.cantidad.toString() : "-",
+            "", 
+            ""  
+          ];
+          tableRows.push(rowData);
+        });
+
+        // Agregamos las 10 filas vacias solicitadas al final
+        for (let i = 0; i < 10; i++) {
+          tableRows.push(["", "", "", "", "", ""]);
+        }
+
+        doc.autoTable({
+          startY: 28,
+          head: [tableColumn],
+          body: tableRows,
+          theme: 'grid', 
+          headStyles: { 
+            fillColor: [31, 95, 72], // app-leaf
+            textColor: [255, 255, 255], 
+            fontStyle: 'bold',
+            halign: 'center',
+            valign: 'middle'
+          },
+          bodyStyles: {
+            textColor: [15, 31, 27], // app-ink
+            valign: 'middle'
+          },
+          columnStyles: {
+            0: { halign: 'center', cellWidth: 20 }, 
+            1: { cellWidth: 'auto' }, 
+            2: { cellWidth: 30 }, 
+            3: { halign: 'center', cellWidth: 15 }, 
+            4: { cellWidth: 32 }, 
+            5: { cellWidth: 32 }  
+          },
+          styles: {
+            font: 'helvetica',
+            fontSize: 9,
+            cellPadding: 4,
+            lineColor: [200, 200, 200],
+            lineWidth: 0.2
+          },
+          alternateRowStyles: {
+            fillColor: [248, 250, 248] // Un gris muy sutil como en excel
+          }
+        });
+
+        return doc.output('blob');
+      }
+
+      if (exportPdfBtn) {
+        exportPdfBtn.addEventListener("click", () => {
+          try {
+            const blob = generarPdfBlob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `planillarural_corrales_${new Date().getTime()}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            console.error(e);
+            showMessage("Error al generar el PDF", "error");
+          }
+        });
+      }
+
+      if (sharePdfBtn) {
+        sharePdfBtn.addEventListener("click", async () => {
+          try {
+            const blob = generarPdfBlob();
+            const file = new File([blob], `planillarural_corrales_${new Date().getTime()}.pdf`, { type: "application/pdf" });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: 'Planilla Rural - Corrales',
+                text: 'Adjunto exportación de corrales'
+              });
+            } else {
+              // Fallback en PC / Web
+              showMessage("Tu dispositivo no soporta compartir a WhatsApp directo. El archivo se descargará a tu carpeta de descargas.", "ok");
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = file.name;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }
+          } catch (e) {
+            if (e.name !== "AbortError") {
+              console.error(e);
+              showMessage("Error al intentar compartir el PDF.", "error");
+            }
+          }
+        });
+      }
 
       setSection("registros");
       setupTouchNavigation();
