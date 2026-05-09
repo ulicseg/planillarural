@@ -3,7 +3,7 @@
   <head>
     {% load static %}
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <title>Planilla Rural</title>
     <meta name="theme-color" content="#2f6e5a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -116,6 +116,14 @@
 
       .app-spinner {
         animation: app-spin 0.9s linear infinite;
+      }
+      /* Prevenir zoom al enfocar inputs en iOS y Android.
+         Los navegadores móviles hacen zoom cuando el font-size es < 16px.
+         Esta regla lo neutraliza solo en dispositivos táctiles. */
+      @media (hover: none) and (pointer: coarse) {
+        input, select, textarea {
+          font-size: 16px !important;
+        }
       }
     </style>
   </head>
