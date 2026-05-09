@@ -33,6 +33,12 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost')
 CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS', '')
 
+# Si no está definido, lo derivamos automáticamente de ALLOWED_HOSTS
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = [
+        f"https://{host}" for host in ALLOWED_HOSTS if host not in ("127.0.0.1", "localhost")
+    ] + ["http://127.0.0.1", "http://localhost"]
+
 
 # Application definition
 
