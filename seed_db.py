@@ -16,44 +16,58 @@ REMITENTES_POSIBLES = [
 ]
 
 OBSERVACIONES_POSIBLES = [
-    "", "Llegaron con retraso", "Falta revisar caravanas",
-    "Se apartaron 2 enfermos", "Todo en orden", "Lote muy parejo",
-    "", "", "Mucha merma en el viaje", "Requieren tratamiento"
+    "", "3M 4H", "-1 toro.", "Llegaron con retraso", 
+    "Falta revisar caravanas", "Se apartaron 2 enfermos", "Todo en orden", 
+    "Lote muy parejo", "", "", "1 rengo.", "Requieren tratamiento"
 ]
 
 def run():
     print("Limpiando la base de datos actual...")
     Registro.objects.all().delete()
     
-    print("Generando nuevos registros de prueba (Corrales 1 al 100)...")
+    print("Generando nuevos registros de prueba (1000 cabezas en 121 corrales)...")
     
     categorias = list(CATEGORIAS_PREDEFINIDAS)
     estados = list(ESTADOS_PREDEFINIDOS_MAP.keys())
     
     registros_a_crear = []
     
-    for i in range(1, 101):
-        # Ocasionalmente dejamos algunos corrales vacíos
-        if random.random() < 0.1:
-            continue
+    total_cabezas_objetivo = 1000
+    cabezas_actuales = 0
+    total_corrales = 121
+    
+    corrales_list = list(range(1, total_corrales + 1))
+    
+    # Bucle hasta alcanzar exactamente 1000 cabezas
+    while cabezas_actuales < total_cabezas_objetivo:
+        # Elegimos un corral aleatorio (1 a 121)
+        corral_elegido = random.choice(corrales_list)
+        
+        # Determinar cantidad para este lote (sin pasarnos del limite total de 1000)
+        cabezas_restantes = total_cabezas_objetivo - cabezas_actuales
+        # Para que se generen bastantes lotes de diferentes dueños, 
+        # hacemos que la cantidad por lote no sea excesiva (por ej. 5 a 25)
+        cantidad = random.randint(5, min(25, cabezas_restantes))
+        
+        # Excepción si falta muy poco para terminar
+        if cabezas_restantes < 5:
+            cantidad = cabezas_restantes
             
-        # Crear de 1 a 3 lotes por corral ocupado
-        num_lotes = random.randint(1, 3)
-        for _ in range(num_lotes):
-            reg = Registro(
-                corral=str(i),
-                remitente=random.choice(REMITENTES_POSIBLES),
-                categoria=random.choice(categorias),
-                cantidad=random.randint(10, 80),
-                estado=random.choice(estados),
-                observaciones=random.choice(OBSERVACIONES_POSIBLES),
-                marca_imagen="" # Sin foto como solicitaste
-            )
-            registros_a_crear.append(reg)
+        reg = Registro(
+            corral=str(corral_elegido),
+            remitente=random.choice(REMITENTES_POSIBLES),
+            categoria=random.choice(categorias),
+            cantidad=cantidad,
+            estado=random.choice(estados),
+            observaciones=random.choice(OBSERVACIONES_POSIBLES),
+            marca_imagen="" # Sin foto
+        )
+        registros_a_crear.append(reg)
+        cabezas_actuales += cantidad
             
     Registro.objects.bulk_create(registros_a_crear)
     
-    print(f"¡Éxito! Se generaron {len(registros_a_crear)} registros aleatorios distribuidos en la mayoría de los primeros 100 corrales.")
+    print(f"¡Éxito! Se generaron {len(registros_a_crear)} lotes sumando exactamente {cabezas_actuales} cabezas, distribuidas de forma aleatoria en hasta {total_corrales} corrales con diferentes remitentes por corral.")
 
 if __name__ == "__main__":
     run()
