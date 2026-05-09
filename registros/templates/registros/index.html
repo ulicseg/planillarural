@@ -2155,7 +2155,7 @@
           return 0;
         });
 
-        const tableColumn = ["Corral", "Remitente", "Categoría", "Cant.", "Observaciones", "Corral Nuevo 1", "Corral Nuevo 2"];
+        const tableColumn = ["Corral", "Remitente", "Categoría", "Estado", "Cant.", "Observaciones", "Corral Nuevo 1", "Corral Nuevo 2"];
         const tableRows = [];
 
         registrosOrdenados.forEach(item => {
@@ -2163,6 +2163,7 @@
             item.corral || "-",
             item.remitente || "-",
             item.categoria || "-",
+            item.estado || "-",
             item.cantidad !== null ? item.cantidad.toString() : "-",
             item.observaciones || "-",
             "", 
@@ -2173,7 +2174,7 @@
 
         // Agregamos filas vacias suficientes para llenar la hoja actual y asegurar una hoja extra
         for (let i = 0; i < 40; i++) {
-          tableRows.push(["", "", "", "", "", "", ""]);
+          tableRows.push(["", "", "", "", "", "", "", ""]);
         }
 
         doc.autoTable({
@@ -2193,13 +2194,14 @@
             valign: 'middle'
           },
           columnStyles: {
-            0: { halign: 'center', cellWidth: 20 }, 
+            0: { halign: 'center', cellWidth: 15 }, 
             1: { cellWidth: 'auto' }, 
-            2: { cellWidth: 30 }, 
-            3: { halign: 'center', cellWidth: 15 }, 
-            4: { cellWidth: 60 }, 
-            5: { cellWidth: 35 }, 
-            6: { cellWidth: 35 }  
+            2: { cellWidth: 20 }, 
+            3: { cellWidth: 20 }, 
+            4: { halign: 'center', cellWidth: 12 }, 
+            5: { cellWidth: 45 }, 
+            6: { cellWidth: 32 }, 
+            7: { cellWidth: 32 }  
           },
           styles: {
             font: 'helvetica',
