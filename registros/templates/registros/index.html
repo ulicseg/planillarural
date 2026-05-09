@@ -2223,7 +2223,8 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `planillarural_corrales_${new Date().getTime()}.pdf`;
+            const fileNameDate = new Date().toLocaleDateString("es-AR").replace(/\//g, "-");
+            link.download = `Planilla de Corrales ${fileNameDate}.pdf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
