@@ -14,7 +14,7 @@ from .models import Registro
 
 CATEGORIAS_PREDEFINIDAS = {"Novillo", "Novillito", "Vaca", "Ternero", "Ternera", "Ternera/o", "Vaquilla", "Vaquillita", "Toro"}
 ESTADOS_PREDEFINIDOS_MAP = {
-	"conserva (categoria mas baja)": "conserva (categoria mas baja)",
+	"conserva": "conserva",
 	"invernada normal": "invernada normal",
 	"invernada buena": "invernada buena",
 	"gordo": "gordo",
