@@ -45,13 +45,11 @@ def run():
         
         # Determinar cantidad para este lote (sin pasarnos del limite total de 1000)
         cabezas_restantes = total_cabezas_objetivo - cabezas_actuales
-        # Para que se generen bastantes lotes de diferentes dueños, 
-        # hacemos que la cantidad por lote no sea excesiva (por ej. 5 a 25)
-        cantidad = random.randint(5, min(25, cabezas_restantes))
         
-        # Excepción si falta muy poco para terminar
         if cabezas_restantes < 5:
             cantidad = cabezas_restantes
+        else:
+            cantidad = random.randint(5, min(25, cabezas_restantes))
             
         reg = Registro(
             corral=str(corral_elegido),
