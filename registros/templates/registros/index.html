@@ -3,7 +3,7 @@
   <head>
     {% load static %}
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Planilla Rural</title>
     <meta name="theme-color" content="#2f6e5a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -116,14 +116,6 @@
 
       .app-spinner {
         animation: app-spin 0.9s linear infinite;
-      }
-      /* Prevenir zoom al enfocar inputs en iOS y Android.
-         Los navegadores móviles hacen zoom cuando el font-size es < 16px.
-         Esta regla lo neutraliza solo en dispositivos táctiles. */
-      @media (hover: none) and (pointer: coarse) {
-        input, select, textarea {
-          font-size: 16px !important;
-        }
       }
     </style>
   </head>
@@ -2130,6 +2122,30 @@
 
       // Push initial history state to enable back button handling
       window.history.pushState({ page: "main" }, "");
+
+      // Fix: prevenir zoom automatico en iOS Safari al enfocar inputs.
+      // iOS hace zoom cuando el font-size del input es < 16px, ignorando
+      // el atributo maximum-scale del viewport desde iOS 10.
+      // La solucion es forzar font-size=16px justo antes del focus
+      // y restaurar el valor original despues del blur.
+      (function preventIOSZoom() {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (!isIOS) return;
+        function fixFontSize(el) {
+          const original = el.style.fontSize;
+          el.style.fontSize = '16px';
+          el.addEventListener('blur', function onBlur() {
+            el.style.fontSize = original;
+            el.removeEventListener('blur', onBlur);
+          }, { once: true });
+        }
+        document.addEventListener('focus', function(e) {
+          const tag = e.target.tagName;
+          if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') {
+            fixFontSize(e.target);
+          }
+        }, true);
+      })();
 
       function normalizeCorralSortingKey(corral) {
         const c = (corral || "").toString().trim().toUpperCase();
