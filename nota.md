@@ -1,5 +1,5 @@
 ESTADO
-conserva categoria mas baja
+conserva (categoria mas baja)
 invernada normal
 invernada buena
 gordo

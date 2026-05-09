@@ -41,7 +41,7 @@ class RegistrosApiTests(TestCase):
 				"remitente": "Jose Luis Gutierrez",
 				"categoria": "Vaca",
 				"cantidad": 30,
-				"estado": "Bueno",
+				"estado": "gordo",
 				"observaciones": "Sin dato",
 				"marcaImagen": "",
 			},
@@ -116,7 +116,7 @@ class RegistrosApiTests(TestCase):
 				"remitente": "Pedro Gomez",
 				"categoria": "Novillo",
 				"cantidad": 18,
-				"estado": "Bueno",
+				"estado": "gordo",
 				"observaciones": "Actualizado",
 				"marcaImagen": "",
 			},
@@ -206,8 +206,8 @@ class RegistrosApiTests(TestCase):
 		self.assertEqual(registro.corral, pasillo)
 
 	def test_corral_ocupacion_detail(self):
-		uno = Registro.objects.create(corral="20", remitente="Remitente Uno", cantidad=10, categoria="Vaca", estado="Bueno")
-		Registro.objects.create(corral="20", remitente="Remitente Dos", cantidad=5, categoria="Novillo", estado="Regular")
+		uno = Registro.objects.create(corral="20", remitente="Remitente Uno", cantidad=10, categoria="Vaca", estado="gordo")
+		Registro.objects.create(corral="20", remitente="Remitente Dos", cantidad=5, categoria="Novillo", estado="invernada normal")
 
 		ocupado_response = self.client.get(reverse("api-corral-ocupacion", kwargs={"corral": "20"}))
 		self.assertEqual(ocupado_response.status_code, 200)

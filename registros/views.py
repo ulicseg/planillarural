@@ -14,11 +14,10 @@ from .models import Registro
 
 CATEGORIAS_PREDEFINIDAS = {"Novillo", "Novillito", "Vaca", "Ternero", "Ternera", "Ternera/o", "Vaquilla", "Vaquillita", "Toro"}
 ESTADOS_PREDEFINIDOS_MAP = {
-	"muy bueno": "muy bueno",
-	"bueno": "bueno",
-	"regular": "regular",
+	"conserva (categoria mas baja)": "conserva (categoria mas baja)",
+	"invernada normal": "invernada normal",
+	"invernada buena": "invernada buena",
 	"gordo": "gordo",
-	"invernada": "invernada",
 	"para cría": "para cría",
 }
 PASILLO_LABEL = "PASILLO"
