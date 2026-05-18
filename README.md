@@ -64,13 +64,19 @@ python manage.py migrate
 python manage.py setup_operadores --password "TuClaveSegura"
 ```
 
-7. Levantar servidor:
+7. Dejar la base lista para remate real:
+
+```bash
+python manage.py limpiar_remate --force
+```
+
+8. Levantar servidor:
 
 ```bash
 python manage.py runserver
 ```
 
-8. Verificar:
+9. Verificar:
 - http://127.0.0.1:8000/
 - http://127.0.0.1:8000/admin/
 
@@ -145,6 +151,7 @@ export OPERADOR_USERNAMES="operador1,operador2"
 python manage.py migrate
 python manage.py collectstatic --noinput
 python manage.py setup_operadores --password "TuClaveSegura"
+python manage.py limpiar_remate --force
 ```
 
 7. Crear una Web App en PythonAnywhere (Manual configuration, Python 3.11).

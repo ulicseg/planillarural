@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.contrib.sessions.models import Session
+from django.core.management import call_command
 from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
@@ -223,3 +225,23 @@ class RegistrosApiTests(TestCase):
 		vacio_response = self.client.get(reverse("api-corral-ocupacion", kwargs={"corral": "130"}))
 		self.assertEqual(vacio_response.status_code, 200)
 		self.assertFalse(vacio_response.json()["data"]["ocupado"])
+
+
+@override_settings(OPERADOR_USERNAMES=["operador1", "operador2"])
+class LimpiezaRemateTests(TestCase):
+	def test_limpiar_remate_elimina_registros_y_sesiones_sin_borrar_usuarios(self):
+		user_model = get_user_model()
+		user_model.objects.create_user(username="operador1", password="Clave12345")
+		user_model.objects.create_user(username="operador2", password="Clave12345")
+		Registro.objects.create(corral="12", remitente="Proveedor X")
+		Session.objects.create(session_key="abc123", session_data="e30:1", expire_date="2099-01-01T00:00:00Z")
+
+		self.assertEqual(Registro.objects.count(), 1)
+		self.assertEqual(Session.objects.count(), 1)
+		self.assertEqual(user_model.objects.count(), 2)
+
+		call_command("limpiar_remate", force=True)
+
+		self.assertEqual(Registro.objects.count(), 0)
+		self.assertEqual(Session.objects.count(), 0)
+		self.assertEqual(user_model.objects.count(), 2)
