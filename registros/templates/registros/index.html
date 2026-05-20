@@ -1870,9 +1870,26 @@
           });
 
           if (handleAuthError(response)) return;
-          const body = await response.json().catch(() => ({}));
+          let body = {};
+          try {
+            body = await response.json();
+          } catch (err) {
+            // ignore json parse error
+          }
+
           if (!response.ok) {
-            showMessage(body.error || "No se pudo guardar el registro.", "error");
+            // Temporary debug: show status and server response text if available
+            let text = body && body.error ? body.error : null;
+            if (!text) {
+              try {
+                const txt = await response.text();
+                if (txt) text = txt;
+              } catch (e) {
+                // ignore
+              }
+            }
+            console.error('Save registro failed', response.status, text, body);
+            showMessage(text || `No se pudo guardar el registro. (status ${response.status})`, "error");
             return;
           }
 
