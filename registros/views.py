@@ -285,7 +285,8 @@ def api_registros(request):
 		cantidad=parse_cantidad(payload.get("cantidad")),
 		estado=estado or "",
 		observaciones=(payload.get("observaciones") or "").strip(),
-		marca_imagen=payload.get("marcaImagen") or "",
+		# Normalize marcaImagen: accept string or list, store as JSON array string
+		marca_imagen=(lambda m: __import__('json').dumps(m if isinstance(m, list) else ([m] if m else [])))(payload.get("marcaImagen")),
 	)
 
 	return JsonResponse({"data": registro.to_dict()}, status=201)
@@ -326,7 +327,9 @@ def api_registro_detail(request, registro_id):
 	registro.cantidad = parse_cantidad(payload.get("cantidad"))
 	registro.estado = estado or ""
 	registro.observaciones = (payload.get("observaciones") or "").strip()
-	registro.marca_imagen = payload.get("marcaImagen") or ""
+	# Normalize marcaImagen on update too
+	m_in = payload.get("marcaImagen")
+	registro.marca_imagen = __import__("json").dumps(m_in if isinstance(m_in, list) else ([m_in] if m_in else []))
 	registro.save()
 
 	return JsonResponse({"data": registro.to_dict()})

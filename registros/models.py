@@ -1,4 +1,5 @@
 from django.db import models
+import json
 
 
 class Registro(models.Model):
@@ -19,6 +20,22 @@ class Registro(models.Model):
 		return f"Corral {self.corral} - {self.remitente}"
 
 	def to_dict(self):
+		# Support backwards-compatible single image (`marcaImagen`) and
+		# a list of images (`marcaImagenes`) stored as JSON in `marca_imagen`.
+		imgs = []
+		if self.marca_imagen:
+			try:
+				parsed = json.loads(self.marca_imagen)
+				if isinstance(parsed, list):
+					imgs = parsed
+				elif isinstance(parsed, str):
+					imgs = [parsed]
+			except Exception:
+				# legacy/raw string
+				imgs = [self.marca_imagen]
+
+		first_img = imgs[0] if imgs else (self.marca_imagen or "")
+
 		return {
 			"id": self.id,
 			"corral": self.corral,
@@ -27,7 +44,10 @@ class Registro(models.Model):
 			"cantidad": self.cantidad,
 			"estado": self.estado,
 			"observaciones": self.observaciones,
-			"marcaImagen": self.marca_imagen,
+			# legacy field (string) kept for compatibility
+			"marcaImagen": first_img,
+			# new field: always an array
+			"marcaImagenes": imgs,
 			"createdAt": self.created_at.isoformat(),
 			"updatedAt": self.updated_at.isoformat(),
 		}
