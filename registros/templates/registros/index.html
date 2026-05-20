@@ -1106,7 +1106,12 @@
           ? navigator.userAgentData.brands.map((item) => item.brand).join(" ")
           : "";
         const haystack = `${ua} ${uaDataBrands}`.toLowerCase();
-        return haystack.includes("android");
+        // Prefer the in-browser camera (mediaDevices) when available because
+        // it allows taking multiple photos in a session. Fall back to the
+        // native camera picker only when getUserMedia is not available.
+        const isAndroid = haystack.includes("android");
+        const supportsMediaDevices = Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        return isAndroid && !supportsMediaDevices;
       }
 
       async function openCameraCapture(target, registroId = null) {
@@ -1717,6 +1722,7 @@
         let files = event.target.files ? Array.from(event.target.files) : [];
         if (!files.length) return;
 
+        // Limit incoming files
         if (files.length > MAX_MARCA_IMAGES) {
           showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos. Se tomarán las primeras ${MAX_MARCA_IMAGES}.`, "error");
           files = files.slice(0, MAX_MARCA_IMAGES);
@@ -1724,7 +1730,15 @@
 
         try {
           const results = await Promise.all(files.map((f) => fileToOptimizedImageData(f)));
-          imagenBase64Actual = results.slice(0, MAX_MARCA_IMAGES);
+
+          // Append to existing images instead of replacing (fixes Android camera single-file behavior)
+          const existing = Array.isArray(imagenBase64Actual) ? imagenBase64Actual.slice() : (imagenBase64Actual ? [imagenBase64Actual] : []);
+          let merged = existing.concat(results).filter(Boolean);
+          if (merged.length > MAX_MARCA_IMAGES) {
+            showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos. Se conservarán las primeras ${MAX_MARCA_IMAGES}.`, "error");
+            merged = merged.slice(0, MAX_MARCA_IMAGES);
+          }
+          imagenBase64Actual = merged;
           showImagePreview(imagenBase64Actual);
         } catch {
           showMessage("No se pudo procesar la foto. Intenta otra vez.", "error");
