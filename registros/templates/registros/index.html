@@ -189,10 +189,7 @@
               </button>
               <input id="marca" type="file" accept="image/*" capture="environment" class="sr-only" multiple />
               <div id="previewWrap" class="mt-2 hidden items-center gap-3 rounded-lg bg-app-mint/65 p-2">
-                <div id="previewGrid" class="flex items-center gap-2">
-                  <img id="previewImg" alt="Vista previa 1" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-md object-cover" />
-                  <img id="previewImg2" alt="Vista previa 2" class="hidden h-10 w-10 cursor-zoom-in rounded-md object-cover" />
-                </div>
+                <div id="previewGrid" class="flex items-center gap-2"></div>
                 <button id="quitarImagen" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-semibold">
                   Quitar foto(s)
                 </button>
@@ -426,8 +423,9 @@
       const marcaInput = document.getElementById("marca");
       const estadoOptions = document.getElementById("estadoOptions");
       const previewWrap = document.getElementById("previewWrap");
-      const previewImg = document.getElementById("previewImg");
+      const previewGrid = document.getElementById("previewGrid");
       const quitarImagenBtn = document.getElementById("quitarImagen");
+      const MAX_MARCA_IMAGES = 6;
       const buscadorGeneral = document.getElementById("buscadorGeneral");
       const ordenRegistros = document.getElementById("ordenRegistros");
       const cardsContainer = document.getElementById("cardsContainer");
@@ -1209,7 +1207,13 @@
 
           // append captured photo to current images array (keep compatibility)
           if (!Array.isArray(imagenBase64Actual)) imagenBase64Actual = imagenBase64Actual ? [imagenBase64Actual] : [];
+          if (imagenBase64Actual.length >= MAX_MARCA_IMAGES) {
+            showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos.`, "error");
+            closeCameraCapture();
+            return;
+          }
           imagenBase64Actual.push(optimizedDataUrl);
+          if (imagenBase64Actual.length > MAX_MARCA_IMAGES) imagenBase64Actual = imagenBase64Actual.slice(0, MAX_MARCA_IMAGES);
           showImagePreview(imagenBase64Actual);
           closeCameraCapture();
         } catch {
@@ -1245,22 +1249,23 @@
         else if (Array.isArray(base64OrArray)) arr = base64OrArray.filter(Boolean);
         else arr = [base64OrArray];
 
+        // respect max limit
+        arr = arr.slice(0, MAX_MARCA_IMAGES);
+
         if (!arr.length) {
           previewWrap.classList.add("hidden");
           previewWrap.classList.remove("flex");
-          previewImg.src = "";
-          previewImg2.src = "";
-          previewImg2.classList.add("hidden");
+          previewGrid.innerHTML = "";
           return;
         }
 
-        previewImg.src = arr[0];
-        if (arr[1]) {
-          previewImg2.src = arr[1];
-          previewImg2.classList.remove("hidden");
-        } else {
-          previewImg2.src = "";
-          previewImg2.classList.add("hidden");
+        previewGrid.innerHTML = "";
+        for (const src of arr) {
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = "Vista previa";
+          img.className = "zoomable-photo h-14 w-14 cursor-zoom-in rounded-md object-cover";
+          previewGrid.appendChild(img);
         }
 
         previewWrap.classList.remove("hidden");
@@ -1709,12 +1714,17 @@
       }
 
       marcaInput.addEventListener("change", async (event) => {
-        const files = event.target.files ? Array.from(event.target.files) : [];
+        let files = event.target.files ? Array.from(event.target.files) : [];
         if (!files.length) return;
+
+        if (files.length > MAX_MARCA_IMAGES) {
+          showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos. Se tomarán las primeras ${MAX_MARCA_IMAGES}.`, "error");
+          files = files.slice(0, MAX_MARCA_IMAGES);
+        }
 
         try {
           const results = await Promise.all(files.map((f) => fileToOptimizedImageData(f)));
-          imagenBase64Actual = results;
+          imagenBase64Actual = results.slice(0, MAX_MARCA_IMAGES);
           showImagePreview(imagenBase64Actual);
         } catch {
           showMessage("No se pudo procesar la foto. Intenta otra vez.", "error");
@@ -1727,10 +1737,10 @@
         showImagePreview([]);
       });
 
-      previewImg.addEventListener("click", () => {
-        if (previewImg.src) {
-          openImageViewer(previewImg.src);
-        }
+      previewGrid.addEventListener("click", (ev) => {
+        const img = ev.target.closest && ev.target.closest("img");
+        if (!img) return;
+        openImageViewer(img.src);
       });
 
       cardsContainer.addEventListener("click", (event) => {
@@ -1951,6 +1961,10 @@
         if (!Array.isArray(imagenBase64Actual)) imagenBase64Actual = imagenBase64Actual ? [imagenBase64Actual] : [];
         const pos = imagenBase64Actual.indexOf(marca);
         if (pos === -1) {
+          if (imagenBase64Actual.length >= MAX_MARCA_IMAGES) {
+            showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos.`, "error");
+            return;
+          }
           imagenBase64Actual.push(marca);
         } else {
           imagenBase64Actual.splice(pos, 1);
