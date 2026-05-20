@@ -149,3 +149,11 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Allow larger JSON payloads when clients send base64-encoded images.
+# Be careful: increasing this value increases memory usage per request.
+# Value is in bytes. Default Django is 2.5MB (2621440).
+# Set to 100MB here as a pragmatic upper bound for multiple images.
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', 100 * 1024 * 1024))
+# Also increase file upload memory size used by MultiPartParser when files are uploaded
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 100 * 1024 * 1024))

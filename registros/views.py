@@ -2,6 +2,7 @@ import json
 from functools import wraps
 
 from django.conf import settings
+from django.core.exceptions import RequestDataTooBig
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
@@ -64,6 +65,9 @@ def parse_json_body(request):
 	try:
 		payload = json.loads(request.body.decode("utf-8"))
 		return payload if isinstance(payload, dict) else None
+	except RequestDataTooBig:
+		# Signal to caller that payload exceeded allowed size
+		return {"__error__": "payload_too_large"}
 	except (UnicodeDecodeError, json.JSONDecodeError):
 		return None
 
@@ -261,6 +265,8 @@ def api_registros(request):
 	payload = parse_json_body(request)
 	if payload is None:
 		return HttpResponseBadRequest("JSON invalido")
+	if isinstance(payload, dict) and payload.get("__error__") == "payload_too_large":
+		return JsonResponse({"error": "Carga demasiado grande. Reduce el tamaño de las fotos o subilas individualmente."}, status=413)
 
 	pasillos_disponibles = get_pasillos_disponibles()
 	allow_pasillo = parse_bool(payload.get("allowPasillo"))
@@ -304,6 +310,8 @@ def api_registro_detail(request, registro_id):
 	payload = parse_json_body(request)
 	if payload is None:
 		return HttpResponseBadRequest("JSON invalido")
+	if isinstance(payload, dict) and payload.get("__error__") == "payload_too_large":
+		return JsonResponse({"error": "Carga demasiado grande. Reduce el tamaño de las fotos o subilas individualmente."}, status=413)
 
 	pasillos_disponibles = get_pasillos_disponibles()
 	allow_pasillo = parse_bool(payload.get("allowPasillo"))
@@ -362,6 +370,8 @@ def api_registro_mover(request, registro_id):
 	payload = parse_json_body(request)
 	if payload is None:
 		return HttpResponseBadRequest("JSON invalido")
+	if isinstance(payload, dict) and payload.get("__error__") == "payload_too_large":
+		return JsonResponse({"error": "Carga demasiado grande. Reduce el tamaño de las fotos o subilas individualmente."}, status=413)
 
 	pasillos_disponibles = get_pasillos_disponibles()
 	allow_pasillo = parse_bool(payload.get("allowPasillo"))
