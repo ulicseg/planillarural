@@ -517,6 +517,8 @@
       let isSavingRegistro = false;
       let registroDetailCache = new Map();
       let lastRegistrosSyncSignature = sessionStorage.getItem("registrosSyncSignature") || "";
+      let buscadorDebounceTimer = null;
+      let ultimoQueryProcesado = "";
       let corralesMapaLoaded = false;
 
       let zoomScale = 0.55;
@@ -1503,10 +1505,17 @@
       async function fetchRegistrosFiltered() {
         const rawQuery = buscadorGeneral.value.trim();
         if (!rawQuery) {
+          ultimoQueryProcesado = "";
           registros = Array.isArray(registrosAll) ? registrosAll.slice() : [];
           renderCards();
           return;
         }
+
+        if (rawQuery === ultimoQueryProcesado) {
+          return;
+        }
+
+        ultimoQueryProcesado = rawQuery;
 
         const q = encodeURIComponent(rawQuery);
         const response = await fetch(`/api/registros/?q=${q}`);
@@ -2204,7 +2213,10 @@
       });
 
       buscadorGeneral.addEventListener("input", () => {
-        fetchRegistrosFiltered();
+        window.clearTimeout(buscadorDebounceTimer);
+        buscadorDebounceTimer = window.setTimeout(() => {
+          fetchRegistrosFiltered();
+        }, 300);
       });
 
       ordenRegistros.addEventListener("change", () => {
