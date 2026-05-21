@@ -98,6 +98,11 @@
         justify-content: center;
       }
 
+      .zoomable-photo {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+
       .app-bottom-nav {
         position: fixed;
         left: 0;
@@ -391,7 +396,7 @@
       </div>
     </div>
 
-    <div id="imageViewerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4">
+    <div id="imageViewerModal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/80 p-4">
       <div class="relative w-full max-w-3xl">
         <button id="cerrarImageViewerBtn" type="button" class="absolute right-2 top-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs font-bold text-app-ink shadow">
           Cerrar
@@ -1259,6 +1264,33 @@
           .replaceAll("'", "&#39;");
       }
 
+      let lastThumbnailTouchAt = 0;
+
+      function getEventElement(event) {
+        return event && event.target && event.target instanceof Element ? event.target : null;
+      }
+
+      function handleThumbnailActivation(event, onActivate) {
+        const target = getEventElement(event);
+        if (!target) return;
+
+        const image = target.closest("img.zoomable-photo");
+        if (!image) return;
+
+        if (event.type === "touchend") {
+          lastThumbnailTouchAt = Date.now();
+          event.preventDefault();
+          event.stopPropagation();
+        } else if (event.type === "click" && Date.now() - lastThumbnailTouchAt < 700) {
+          return;
+        }
+
+        const result = onActivate(image);
+        if (result && typeof result.catch === "function") {
+          result.catch(() => {});
+        }
+      }
+
       function showImagePreview(base64OrArray) {
         let arr = [];
         if (!base64OrArray) arr = [];
@@ -1799,34 +1831,135 @@
         showImagePreview([]);
       });
 
-      previewGrid.addEventListener("click", (ev) => {
-        const img = ev.target.closest && ev.target.closest("img");
-        if (!img) return;
-        openImageViewer(img.src);
+      previewGrid.addEventListener("click", (event) => {
+        handleThumbnailActivation(event, (image) => openImageViewer(image.src));
+      });
+
+      previewGrid.addEventListener("touchend", (event) => {
+        handleThumbnailActivation(event, (image) => openImageViewer(image.src));
+      }, { passive: false });
+
+      previewGrid.addEventListener("pointerup", (event) => {
+        handleThumbnailActivation(event, (image) => openImageViewer(image.src));
       });
 
       cardsContainer.addEventListener("click", async (event) => {
         const image = event.target.closest("img.zoomable-photo");
-        if (!image) return;
-        const registroId = image.dataset.registroId;
-        const imageIndex = Number(image.dataset.imageIndex || 0);
-        if (registroId) {
-          await openRegistroImageViewer(registroId, imageIndex);
+        if (image) {
+          handleThumbnailActivation(event, async (thumb) => {
+            const registroId = thumb.dataset.registroId;
+            const imageIndex = Number(thumb.dataset.imageIndex || 0);
+            if (registroId) {
+              await openRegistroImageViewer(registroId, imageIndex);
+              return;
+            }
+            openImageViewer(thumb.src);
+          });
           return;
         }
-        openImageViewer(image.src);
+
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        const id = button.dataset.id;
+        const action = button.dataset.action;
+        const registro = registrosAll.find((item) => String(item.id) === String(id));
+        if (!registro) return;
+
+        if (action === "edit") {
+          setEditState(registro);
+          return;
+        }
+
+        if (action === "add-photo") {
+          openCameraCapture("quick", id);
+          return;
+        }
+
+        if (action === "delete") {
+          const ok = await openDeleteConfirmModal("Eliminar este registro?");
+          if (!ok) return;
+
+          const response = await fetch(`/api/registros/${id}/`, {
+            method: "DELETE",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+          });
+
+          if (handleAuthError(response)) return;
+          if (!response.ok) {
+            showMessage("No se pudo eliminar el registro.", "error");
+            return;
+          }
+
+          showMessage("Registro eliminado.");
+          if (registroIdInput.value === id) {
+            resetFormState();
+          }
+          invalidateRegistroDetailCache(id);
+          await refreshAllData();
+        }
+      });
+
+      cardsContainer.addEventListener("touchend", (event) => {
+        handleThumbnailActivation(event, async (thumb) => {
+          const registroId = thumb.dataset.registroId;
+          const imageIndex = Number(thumb.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(thumb.src);
+        });
+      }, { passive: false });
+
+      cardsContainer.addEventListener("pointerup", (event) => {
+        handleThumbnailActivation(event, async (thumb) => {
+          const registroId = thumb.dataset.registroId;
+          const imageIndex = Number(thumb.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(thumb.src);
+        });
       });
 
       corralDetalleContainer.addEventListener("click", async (event) => {
-        const image = event.target.closest("img.zoomable-photo");
-        if (!image) return;
-        const registroId = image.dataset.registroId;
-        const imageIndex = Number(image.dataset.imageIndex || 0);
-        if (registroId) {
-          await openRegistroImageViewer(registroId, imageIndex);
-          return;
-        }
-        openImageViewer(image.src);
+        handleThumbnailActivation(event, async (image) => {
+          const registroId = image.dataset.registroId;
+          const imageIndex = Number(image.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(image.src);
+        });
+      });
+
+      corralDetalleContainer.addEventListener("touchend", (event) => {
+        handleThumbnailActivation(event, async (image) => {
+          const registroId = image.dataset.registroId;
+          const imageIndex = Number(image.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(image.src);
+        });
+      }, { passive: false });
+
+      corralDetalleContainer.addEventListener("pointerup", (event) => {
+        handleThumbnailActivation(event, async (image) => {
+          const registroId = image.dataset.registroId;
+          const imageIndex = Number(image.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(image.src);
+        });
       });
 
       cerrarImageViewerBtn.addEventListener("click", () => {
