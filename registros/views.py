@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import RequestDataTooBig
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Q
-from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotModified, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotModified, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 from django.utils.http import http_date
@@ -237,6 +237,16 @@ def build_layout_with_pasillos_numerados():
 		layout.append(cell_copy)
 
 	return layout
+
+
+@require_http_methods(["GET"])
+def catch_empty_array(request):
+	"""Ruta defensiva para capturar peticiones a '/[]' que a veces reciben produccion.
+
+	Devuelve 204 No Content para evitar ruido repetido en los logs mientras se rastrea
+	el origen en clientes y service workers antiguos.
+	"""
+	return HttpResponse(status=204)
 
 
 def get_ubicaciones_disponibles(include_pasillos=False, pasillos=None):

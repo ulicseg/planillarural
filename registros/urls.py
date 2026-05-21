@@ -8,6 +8,7 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("manifest.webmanifest", views.pwa_manifest, name="pwa-manifest"),
     path("sw.js", views.pwa_service_worker, name="pwa-service-worker"),
+    path("[]", views.catch_empty_array, name="catch-empty-array"),
     path("", views.index, name="home"),
     path("api/registros/", views.api_registros, name="api-registros"),
     path("api/registros/ultimos-cambios/", views.api_registros_ultimos_cambios, name="api-registros-ultimos-cambios"),
