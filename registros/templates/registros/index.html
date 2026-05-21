@@ -127,8 +127,11 @@
 
       <section id="registrosSection">
         <section class="rounded-md border border-app-ink/20 glass p-4 shadow-card">
-          <div class="mb-3 rounded-lg border border-app-leaf/35 bg-app-mint/70 px-3 py-2 text-center">
+          <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-app-leaf/35 bg-app-mint/70 px-3 py-2">
             <p class="text-[11px] font-extrabold uppercase tracking-[0.14em] text-app-leaf/85">Nuevo registro</p>
+            <button id="refrescarRegistrosBtn" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-[11px] font-extrabold text-app-ink shadow-sm">
+              Actualizar
+            </button>
           </div>
 
           <form id="registroForm" class="space-y-3">
@@ -259,7 +262,12 @@
 
       <section id="corralesSection" class="hidden">
         <section class="rounded-md border border-app-ink/20 glass p-4 shadow-card">
-          <h2 class="text-center text-lg font-extrabold">Corrales</h2>
+          <div class="mb-3 flex items-center justify-between gap-2">
+            <h2 class="text-center text-lg font-extrabold">Corrales</h2>
+            <button id="refrescarCorralesBtn" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-[11px] font-extrabold text-app-ink shadow-sm">
+              Actualizar
+            </button>
+          </div>
 
           <div class="mb-4 rounded-lg border-2 border-app-leaf/50 bg-gradient-to-r from-app-leaf/10 to-app-mint/10 p-4 text-center">
             <p class="text-sm font-semibold uppercase tracking-wider text-app-leaf/80">Total de cabezas ingresadas</p>
@@ -444,6 +452,8 @@
       const corralesSection = document.getElementById("corralesSection");
       const navRegistros = document.getElementById("navRegistros");
       const navCorrales = document.getElementById("navCorrales");
+      const refrescarRegistrosBtn = document.getElementById("refrescarRegistrosBtn");
+      const refrescarCorralesBtn = document.getElementById("refrescarCorralesBtn");
 
       const mapaGrid = document.getElementById("mapaGrid");
       const mapaCanvas = document.getElementById("mapaCanvas");
@@ -2142,6 +2152,18 @@
 
       navRegistros.addEventListener("click", () => setSection("registros"));
       navCorrales.addEventListener("click", () => setSection("corrales"));
+
+      function refreshPage() {
+        window.location.reload();
+      }
+
+      if (refrescarRegistrosBtn) {
+        refrescarRegistrosBtn.addEventListener("click", refreshPage);
+      }
+
+      if (refrescarCorralesBtn) {
+        refrescarCorralesBtn.addEventListener("click", refreshPage);
+      }
 
       zoomInBtn.addEventListener("click", () => {
         const viewportWidth = mapaViewport.clientWidth - 16;
