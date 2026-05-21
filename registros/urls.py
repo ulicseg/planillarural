@@ -10,6 +10,7 @@ urlpatterns = [
     path("sw.js", views.pwa_service_worker, name="pwa-service-worker"),
     path("", views.index, name="home"),
     path("api/registros/", views.api_registros, name="api-registros"),
+    path("api/registros/ultimos-cambios/", views.api_registros_ultimos_cambios, name="api-registros-ultimos-cambios"),
     path("api/registros/<int:registro_id>/", views.api_registro_detail, name="api-registro-detail"),
     path("api/registros/<int:registro_id>/mover/", views.api_registro_mover, name="api-registro-mover"),
     path("api/corrales/mapa/", views.api_corrales_mapa, name="api-corrales-mapa"),

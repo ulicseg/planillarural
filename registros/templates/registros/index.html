@@ -516,6 +516,8 @@
       let remitenteMarcasActuales = [];
       let isSavingRegistro = false;
       let registroDetailCache = new Map();
+      let lastRegistrosSyncSignature = sessionStorage.getItem("registrosSyncSignature") || "";
+      let corralesMapaLoaded = false;
 
       let zoomScale = 0.55;
       let panX = 0;
@@ -1499,7 +1501,14 @@
       }
 
       async function fetchRegistrosFiltered() {
-        const q = encodeURIComponent(buscadorGeneral.value.trim());
+        const rawQuery = buscadorGeneral.value.trim();
+        if (!rawQuery) {
+          registros = Array.isArray(registrosAll) ? registrosAll.slice() : [];
+          renderCards();
+          return;
+        }
+
+        const q = encodeURIComponent(rawQuery);
         const response = await fetch(`/api/registros/?q=${q}`);
         if (handleAuthError(response)) return;
         const body = await response.json();
@@ -1517,6 +1526,10 @@
       }
 
       async function fetchCorralesMapa() {
+        if (corralesMapaLoaded) {
+          return;
+        }
+
         const response = await fetch("/api/corrales/mapa/");
         if (handleAuthError(response)) return;
         const body = await response.json();
@@ -1525,11 +1538,49 @@
         pasillosDisponibles = corralesMapa.pasillos || [];
         syncUbicacionesDatalist();
         renderMapaCorrales();
+        corralesMapaLoaded = true;
+      }
+
+      async function fetchRegistrosSyncMeta() {
+        const response = await fetch("/api/registros/ultimos-cambios/");
+        if (handleAuthError(response)) return null;
+        const body = await response.json().catch(() => ({}));
+        return body.data || null;
       }
 
       async function refreshAllData() {
+        const meta = await fetchRegistrosSyncMeta();
+        const signature = meta && meta.signature ? meta.signature : "";
+        const hasDataLoaded = (registrosAll && registrosAll.length) || (registros && registros.length);
+        const unchanged = Boolean(signature) && signature === lastRegistrosSyncSignature && hasDataLoaded;
+
+        if (unchanged) {
+          if (selectedCorral) {
+            renderCorralDetalle(selectedCorral);
+          }
+          updateTotalCabesasCorreales();
+          return;
+        }
+
         invalidateRegistroDetailCache();
-        await Promise.all([fetchRegistrosFiltered(), fetchRegistrosAll(), fetchCorralesMapa()]);
+        const query = buscadorGeneral.value.trim();
+
+        if (query) {
+          await Promise.all([fetchRegistrosFiltered(), fetchRegistrosAll()]);
+        } else {
+          await fetchRegistrosAll();
+          registros = Array.isArray(registrosAll) ? registrosAll.slice() : [];
+          renderCards();
+        }
+
+        if (!corralesMapaLoaded) {
+          await fetchCorralesMapa();
+        }
+
+        lastRegistrosSyncSignature = signature || lastRegistrosSyncSignature;
+        if (lastRegistrosSyncSignature) {
+          sessionStorage.setItem("registrosSyncSignature", lastRegistrosSyncSignature);
+        }
         if (selectedCorral) {
           renderCorralDetalle(selectedCorral);
         }
@@ -2346,7 +2397,7 @@
       navCorrales.addEventListener("click", () => setSection("corrales"));
 
       function refreshPage() {
-        window.location.reload();
+        refreshAllData();
       }
 
       if (refrescarRegistrosBtn) {
