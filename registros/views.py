@@ -102,6 +102,24 @@ def make_registro_detail_etag(registro, include_full=False):
 	return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest(), registro.updated_at
 
 
+def get_registros_sync_meta(queryset=None):
+	queryset = queryset if queryset is not None else Registro.objects.all()
+	stats = queryset.aggregate(total=Count("id"), latest=Max("updated_at"))
+	latest = stats.get("latest")
+	signature = hashlib.sha1(
+		"|".join([
+			"registros-sync",
+			str(stats.get("total", 0)),
+			latest.isoformat() if latest else "",
+		]).encode("utf-8")
+	).hexdigest()
+	return {
+		"signature": signature,
+		"lastUpdatedAt": latest.isoformat() if latest else None,
+		"total": stats.get("total", 0),
+	}
+
+
 def parse_cantidad(raw_value):
 	if raw_value in (None, ""):
 		return None
@@ -388,6 +406,14 @@ def api_registro_detail(request, registro_id):
 	etag_value, last_modified = make_registro_detail_etag(registro, include_full=True)
 	response = JsonResponse({"data": registro.to_dict(include_full=True)})
 	return apply_browser_cache_headers(response, etag_value, last_modified)
+
+
+@require_http_methods(["GET"])
+@require_api_login
+def api_registros_ultimos_cambios(request):
+	meta = get_registros_sync_meta()
+	response = JsonResponse({"data": meta})
+	return apply_browser_cache_headers(response, meta["signature"], None)
 
 
 @require_http_methods(["GET"])

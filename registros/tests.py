@@ -62,6 +62,17 @@ class RegistrosApiTests(TestCase):
 		cached_response = self.client.get(reverse("api-registros"), HTTP_IF_NONE_MATCH=etag)
 		self.assertEqual(cached_response.status_code, 304)
 
+	def test_sync_meta_endpoint(self):
+		Registro.objects.create(corral="1", remitente="Sync A")
+		Registro.objects.create(corral="2", remitente="Sync B")
+
+		response = self.client.get(reverse("api-registros-ultimos-cambios"))
+		self.assertEqual(response.status_code, 200)
+		data = response.json()["data"]
+		self.assertTrue(data["signature"])
+		self.assertEqual(data["total"], 2)
+		self.assertTrue(data["lastUpdatedAt"])
+
 	def test_create_requires_only_remitente(self):
 		ok_without_corral = self.client.post(
 			reverse("api-registros"),
