@@ -57,6 +57,11 @@ class RegistrosApiTests(TestCase):
 		self.assertEqual(list_response.status_code, 200)
 		self.assertEqual(len(list_response.json()["data"]), 1)
 
+		etag = list_response.headers.get("ETag")
+		self.assertTrue(etag)
+		cached_response = self.client.get(reverse("api-registros"), HTTP_IF_NONE_MATCH=etag)
+		self.assertEqual(cached_response.status_code, 304)
+
 	def test_create_requires_only_remitente(self):
 		ok_without_corral = self.client.post(
 			reverse("api-registros"),
@@ -110,6 +115,11 @@ class RegistrosApiTests(TestCase):
 
 	def test_update_and_delete_registro(self):
 		registro = Registro.objects.create(corral="10", remitente="Pedro")
+
+		get_response = self.client.get(reverse("api-registro-detail", kwargs={"registro_id": registro.id}))
+		self.assertEqual(get_response.status_code, 200)
+		self.assertIn("marcaImagenesFull", get_response.json()["data"])
+		self.assertTrue(get_response.headers.get("ETag"))
 
 		update_response = self.client.put(
 			reverse("api-registro-detail", kwargs={"registro_id": registro.id}),

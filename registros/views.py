@@ -1,13 +1,15 @@
 import json
+import hashlib
 from functools import wraps
 
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from django.http import HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+from django.db.models import Count, Max, Q
+from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotModified, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
+from django.utils.http import http_date
 
 from .corrales_layout import CORRALES_DISPONIBLES, CORRALES_LAYOUT, MAP_COLS, MAP_ROWS
 from .models import Registro
@@ -70,6 +72,34 @@ def parse_json_body(request):
 		return {"__error__": "payload_too_large"}
 	except (UnicodeDecodeError, json.JSONDecodeError):
 		return None
+
+
+def apply_browser_cache_headers(response, etag_value, last_modified=None):
+	response["ETag"] = f'"{etag_value}"'
+	response["Cache-Control"] = "private, max-age=0, must-revalidate"
+	if last_modified is not None:
+		response["Last-Modified"] = http_date(last_modified.timestamp())
+	return response
+
+
+def etag_matches_request(request, etag_value):
+	if not etag_value:
+		return False
+	request_etag = request.META.get("HTTP_IF_NONE_MATCH", "")
+	return f'"{etag_value}"' in request_etag
+
+
+def make_registros_list_etag(queryset, query_text=""):
+	stats = queryset.aggregate(total=Count("id"), latest=Max("updated_at"))
+	latest = stats.get("latest")
+	parts = ["registros-list", f"q={query_text}", f"total={stats.get('total', 0)}", f"latest={latest.isoformat() if latest else ''}"]
+	digest = hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
+	return digest, latest
+
+
+def make_registro_detail_etag(registro, include_full=False):
+	parts = ["registro-detail", str(registro.id), registro.updated_at.isoformat(), f"full={int(bool(include_full))}"]
+	return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest(), registro.updated_at
 
 
 def parse_cantidad(raw_value):
@@ -260,7 +290,13 @@ def api_registros(request):
 
 			registros = registros.filter(filters)
 
-		return JsonResponse({"data": [item.to_dict(include_full=False) for item in registros]})
+		etag_value, last_modified = make_registros_list_etag(registros, query_text=query)
+		if etag_matches_request(request, etag_value):
+			response = HttpResponseNotModified()
+			return apply_browser_cache_headers(response, etag_value, last_modified)
+
+		response = JsonResponse({"data": [item.to_dict(include_full=False) for item in registros]})
+		return apply_browser_cache_headers(response, etag_value, last_modified)
 
 	payload = parse_json_body(request)
 	if payload is None:
@@ -298,13 +334,19 @@ def api_registros(request):
 	return JsonResponse({"data": registro.to_dict(include_full=True)}, status=201)
 
 
-@require_http_methods(["PUT", "DELETE"])
+@require_http_methods(["GET", "PUT", "DELETE"])
 @require_api_login
 def api_registro_detail(request, registro_id):
 	registro = get_object_or_404(Registro, id=registro_id)
 
 	if request.method == "GET":
-		return JsonResponse({"data": registro.to_dict(include_full=True)})
+		etag_value, last_modified = make_registro_detail_etag(registro, include_full=True)
+		if etag_matches_request(request, etag_value):
+			response = HttpResponseNotModified()
+			return apply_browser_cache_headers(response, etag_value, last_modified)
+
+		response = JsonResponse({"data": registro.to_dict(include_full=True)})
+		return apply_browser_cache_headers(response, etag_value, last_modified)
 
 	if request.method == "DELETE":
 		registro.delete()
@@ -343,7 +385,9 @@ def api_registro_detail(request, registro_id):
 	registro.marca_imagen = __import__("json").dumps(m_in if isinstance(m_in, list) else ([m_in] if m_in else []))
 	registro.save()
 
-	return JsonResponse({"data": registro.to_dict(include_full=True)})
+	etag_value, last_modified = make_registro_detail_etag(registro, include_full=True)
+	response = JsonResponse({"data": registro.to_dict(include_full=True)})
+	return apply_browser_cache_headers(response, etag_value, last_modified)
 
 
 @require_http_methods(["GET"])
