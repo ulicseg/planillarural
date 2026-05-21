@@ -510,6 +510,7 @@
       let pendingDeleteConfirmResolve = null;
       let remitenteMarcasActuales = [];
       let isSavingRegistro = false;
+      let registroDetailCache = new Map();
 
       let zoomScale = 0.55;
       let panX = 0;
@@ -1294,10 +1295,46 @@
         imageViewerModal.classList.add("flex");
       }
 
+      async function getRegistroDetailCached(registroId) {
+        const key = String(registroId);
+        if (registroDetailCache.has(key)) {
+          return registroDetailCache.get(key);
+        }
+
+        const response = await fetch(`/api/registros/${encodeURIComponent(key)}/`);
+        if (handleAuthError(response)) return null;
+
+        const body = await response.json().catch(() => ({}));
+        const data = body.data || null;
+        if (data) {
+          registroDetailCache.set(key, data);
+        }
+        return data;
+      }
+
+      async function openRegistroImageViewer(registroId, imageIndex = 0) {
+        const registro = await getRegistroDetailCached(registroId);
+        if (!registro) return;
+
+        const fulls = Array.isArray(registro.marcaImagenesFull) && registro.marcaImagenesFull.length
+          ? registro.marcaImagenesFull
+          : (registro.marcaImagenes || []);
+        const src = fulls[imageIndex] || fulls[0] || registro.marcaImagen || "";
+        openImageViewer(src);
+      }
+
       function closeImageViewer() {
         imageViewerModal.classList.add("hidden");
         imageViewerModal.classList.remove("flex");
         imageViewerImg.src = "";
+      }
+
+      function invalidateRegistroDetailCache(registroId = null) {
+        if (!registroId) {
+          registroDetailCache.clear();
+          return;
+        }
+        registroDetailCache.delete(String(registroId));
       }
 
       function openDeleteConfirmModal(message, title = "Confirmar eliminacion") {
@@ -1458,6 +1495,7 @@
       }
 
       async function refreshAllData() {
+        invalidateRegistroDetailCache();
         await Promise.all([fetchRegistrosFiltered(), fetchRegistrosAll(), fetchCorralesMapa()]);
         if (selectedCorral) {
           renderCorralDetalle(selectedCorral);
@@ -1538,8 +1576,8 @@
                 ${(() => {
                   const imgs = (item.marcaImagenes && item.marcaImagenes.length) ? item.marcaImagenes : (item.marcaImagen ? [item.marcaImagen] : []);
                   if (imgs.length) {
-                    const imgsHtml = imgs.map((s) => `
-                      <img src="${s}" alt="Marca del lote" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-lg object-cover" />
+                      const imgsHtml = imgs.map((s, index) => `
+                        <img src="${s}" alt="Marca del lote" data-registro-id="${item.id}" data-image-index="${index}" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-lg object-cover" />
                     `).join("");
                     return `<div class="mt-3 flex items-center justify-center gap-2 border-t border-app-leaf/20 pt-3">${imgsHtml}</div>`;
                   }
@@ -1645,7 +1683,7 @@
             const imgs = (item.marcaImagenes && item.marcaImagenes.length) ? item.marcaImagenes : (item.marcaImagen ? [item.marcaImagen] : []);
             const marcaHtml = imgs.length
               ? (() => {
-                  const imgsHtml = imgs.map((s) => `<img src="${s}" alt="Marca del lote" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-lg object-cover" />`).join("");
+                  const imgsHtml = imgs.map((s, index) => `<img src="${s}" alt="Marca del lote" data-registro-id="${item.id}" data-image-index="${index}" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-lg object-cover" />`).join("");
                   return `<div class="mt-3 flex items-center justify-center gap-2 border-t border-app-leaf/20 pt-3">${imgsHtml}</div>`;
                 })()
               : `<div class="mt-3 border-t border-app-leaf/20 pt-3 text-center">
@@ -1767,15 +1805,27 @@
         openImageViewer(img.src);
       });
 
-      cardsContainer.addEventListener("click", (event) => {
+      cardsContainer.addEventListener("click", async (event) => {
         const image = event.target.closest("img.zoomable-photo");
         if (!image) return;
+        const registroId = image.dataset.registroId;
+        const imageIndex = Number(image.dataset.imageIndex || 0);
+        if (registroId) {
+          await openRegistroImageViewer(registroId, imageIndex);
+          return;
+        }
         openImageViewer(image.src);
       });
 
-      corralDetalleContainer.addEventListener("click", (event) => {
+      corralDetalleContainer.addEventListener("click", async (event) => {
         const image = event.target.closest("img.zoomable-photo");
         if (!image) return;
+        const registroId = image.dataset.registroId;
+        const imageIndex = Number(image.dataset.imageIndex || 0);
+        if (registroId) {
+          await openRegistroImageViewer(registroId, imageIndex);
+          return;
+        }
         openImageViewer(image.src);
       });
 
@@ -1905,6 +1955,7 @@
 
           showMessage(id ? "Registro actualizado." : "Registro creado.");
           resetFormState();
+          invalidateRegistroDetailCache(id || null);
           await refreshAllData();
         } finally {
           setGuardarLoading(false);
@@ -1956,6 +2007,7 @@
           if (registroIdInput.value === id) {
             resetFormState();
           }
+          invalidateRegistroDetailCache(id);
           await refreshAllData();
         }
       });

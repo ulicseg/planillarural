@@ -260,7 +260,7 @@ def api_registros(request):
 
 			registros = registros.filter(filters)
 
-		return JsonResponse({"data": [item.to_dict() for item in registros]})
+		return JsonResponse({"data": [item.to_dict(include_full=False) for item in registros]})
 
 	payload = parse_json_body(request)
 	if payload is None:
@@ -295,13 +295,16 @@ def api_registros(request):
 		marca_imagen=(lambda m: __import__('json').dumps(m if isinstance(m, list) else ([m] if m else [])))(payload.get("marcaImagen")),
 	)
 
-	return JsonResponse({"data": registro.to_dict()}, status=201)
+	return JsonResponse({"data": registro.to_dict(include_full=True)}, status=201)
 
 
 @require_http_methods(["PUT", "DELETE"])
 @require_api_login
 def api_registro_detail(request, registro_id):
 	registro = get_object_or_404(Registro, id=registro_id)
+
+	if request.method == "GET":
+		return JsonResponse({"data": registro.to_dict(include_full=True)})
 
 	if request.method == "DELETE":
 		registro.delete()
@@ -340,7 +343,7 @@ def api_registro_detail(request, registro_id):
 	registro.marca_imagen = __import__("json").dumps(m_in if isinstance(m_in, list) else ([m_in] if m_in else []))
 	registro.save()
 
-	return JsonResponse({"data": registro.to_dict()})
+	return JsonResponse({"data": registro.to_dict(include_full=True)})
 
 
 @require_http_methods(["GET"])
