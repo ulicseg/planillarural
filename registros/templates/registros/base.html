@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    {% load static %}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Planilla Rural{% endblock %}</title>
+    <meta name="theme-color" content="#0f1f1b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Planilla Rural" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="{% static 'registros/icons/app-icon.svg' %}" />
+    <link rel="apple-touch-icon" href="{% static 'registros/icons/app-icon.svg' %}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Manrope", "ui-sans-serif", "sans-serif"],
+            },
+            colors: {
+              app: {
+                ink: "#0f1f1b",
+                mint: "#9cc9b1",
+                leaf: "#1f5f48",
+                clay: "#7a461f",
+                cream: "#ece8dc",
+              },
+            },
+            boxShadow: {
+              card: "0 18px 36px -24px rgba(10, 26, 21, 0.55)",
+            },
+          },
+        },
+      };
+    </script>
+    {% block extra_head %}{% endblock %}
+    <style>
+      body {
+        background:
+          radial-gradient(circle at 12% 8%, rgba(31, 95, 72, 0.16) 0%, transparent 38%),
+          radial-gradient(circle at 88% -2%, rgba(122, 70, 31, 0.12) 0%, transparent 36%),
+          linear-gradient(180deg, #f3efe5 0%, #e4ddcf 100%);
+      }
+
+      .glass {
+        backdrop-filter: blur(10px);
+        background: rgba(250, 250, 248, 0.9);
+      }
+
+      input,
+      select,
+      textarea {
+        color: #0f1f1b;
+        font-weight: 600;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus,
+      button:focus-visible {
+        outline: 2px solid rgba(31, 95, 72, 0.65);
+        outline-offset: 1px;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen font-sans text-app-ink {% block body_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

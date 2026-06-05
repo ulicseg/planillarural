@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
 
-from .models import Registro
+from .models import PreferenciaRemateUsuario, Registro, Remate
 
 
 @override_settings(OPERADOR_USERNAMES=["operador1", "operador2"])
@@ -13,6 +13,8 @@ class RegistrosApiTests(TestCase):
 	def setUp(self):
 		self.user = get_user_model().objects.create_user(username="operador1", password="Clave12345")
 		self.non_operator = get_user_model().objects.create_user(username="visitante", password="Clave12345")
+		self.remate = Remate.objects.create(nombre="Remate junio 2026")
+		PreferenciaRemateUsuario.objects.create(usuario=self.user, remate=self.remate)
 		self.client.login(username="operador1", password="Clave12345")
 
 	def test_requires_authentication(self):
@@ -109,7 +111,7 @@ class RegistrosApiTests(TestCase):
 		self.assertIn("Estado invalido", response.json().get("error", ""))
 
 	def test_update_and_delete_registro(self):
-		registro = Registro.objects.create(corral="10", remitente="Pedro")
+		registro = Registro.objects.create(remate=self.remate, corral="10", remitente="Pedro")
 
 		update_response = self.client.put(
 			reverse("api-registro-detail", kwargs={"registro_id": registro.id}),
@@ -135,7 +137,7 @@ class RegistrosApiTests(TestCase):
 		self.assertEqual(Registro.objects.count(), 0)
 
 	def test_corrales_mapa_and_move(self):
-		registro = Registro.objects.create(corral="10", remitente="Mover")
+		registro = Registro.objects.create(remate=self.remate, corral="10", remitente="Mover")
 
 		mapa_response = self.client.get(reverse("api-corrales-mapa"))
 		self.assertEqual(mapa_response.status_code, 200)
@@ -188,7 +190,7 @@ class RegistrosApiTests(TestCase):
 		self.assertEqual(accepted.json()["data"]["corral"], pasillo)
 
 	def test_move_to_pasillo_requires_allow_flag(self):
-		registro = Registro.objects.create(corral="10", remitente="Mover pasillo")
+		registro = Registro.objects.create(remate=self.remate, corral="10", remitente="Mover pasillo")
 		pasillo = self.client.get(reverse("api-corrales-mapa")).json()["data"]["pasillos"][0]
 
 		rejected = self.client.post(
@@ -208,8 +210,12 @@ class RegistrosApiTests(TestCase):
 		self.assertEqual(registro.corral, pasillo)
 
 	def test_corral_ocupacion_detail(self):
-		uno = Registro.objects.create(corral="20", remitente="Remitente Uno", cantidad=10, categoria="Vaca", estado="gordo")
-		Registro.objects.create(corral="20", remitente="Remitente Dos", cantidad=5, categoria="Novillo", estado="invernada normal")
+		uno = Registro.objects.create(remate=self.remate, corral="20", remitente="Remitente Uno", cantidad=10, categoria="Vaca", estado="gordo")
+		Registro.objects.create(remate=self.remate, corral="20", remitente="Remitente Dos", cantidad=5, categoria="Novillo", estado="invernada normal")
+
+		# Registro de otro remate no debe figurar en la ocupacion del remate actual
+		otro_remate = Remate.objects.create(nombre="Otro remate")
+		Registro.objects.create(remate=otro_remate, corral="20", remitente="Remitente de otro remate", cantidad=8, categoria="Toro")
 
 		ocupado_response = self.client.get(reverse("api-corral-ocupacion", kwargs={"corral": "20"}))
 		self.assertEqual(ocupado_response.status_code, 200)
@@ -226,6 +232,102 @@ class RegistrosApiTests(TestCase):
 		self.assertEqual(vacio_response.status_code, 200)
 		self.assertFalse(vacio_response.json()["data"]["ocupado"])
 
+	def test_remates_selector_persists_selection(self):
+		nuevo_remate = Remate.objects.create(nombre="Remate julio 2026")
+		response = self.client.post(reverse("seleccionar-remate", kwargs={"remate_id": nuevo_remate.id}))
+		self.assertEqual(response.status_code, 302)
+		preferencia = PreferenciaRemateUsuario.objects.get(usuario=self.user)
+		self.assertEqual(preferencia.remate_id, nuevo_remate.id)
+
+	def test_remates_home_lists_selector(self):
+		response = self.client.get(reverse("remates-home"))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "Gestión de remates")
+
+	def test_image_optimization_flow(self):
+		# 1. Crear un registro con una imagen en Base64
+		sample_base64 = "data:image/webp;base64,UklGRi4AAABXRUJQVlA4TCEAAAAvAUAAEB8wAiMwAgSSNtse/cXjEaBt20xy7zz1Pn///wA="
+		create_response = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "15",
+				"remitente": "Remitente Foto",
+				"categoria": "Novillo",
+				"cantidad": 5,
+				"marcaImagen": sample_base64,
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(create_response.status_code, 201)
+		reg_id = create_response.json()["data"]["id"]
+		expected_url = f"/api/registros/{reg_id}/foto/"
+
+		# 2. Verificar que en la serialización to_dict / listado no se expone el Base64 sino la URL
+		self.assertEqual(create_response.json()["data"]["marcaImagen"], expected_url)
+		
+		db_reg = Registro.objects.get(id=reg_id)
+		self.assertEqual(db_reg.marca_imagen, sample_base64)
+
+		list_response = self.client.get(reverse("api-registros"))
+		self.assertEqual(list_response.status_code, 200)
+		self.assertEqual(list_response.json()["data"][0]["marcaImagen"], expected_url)
+
+		# 3. Solicitar el endpoint de la foto y verificar que devuelve el binario con Cache-Control
+		foto_response = self.client.get(reverse("api-registro-foto", kwargs={"registro_id": reg_id}))
+		self.assertEqual(foto_response.status_code, 200)
+		self.assertEqual(foto_response["Content-Type"], "image/webp")
+		self.assertIn("max-age=86400", foto_response["Cache-Control"])
+		self.assertTrue(len(foto_response.content) > 0)
+
+		# 4. Actualizar el registro enviando su propia URL (no debería modificar la foto en BD)
+		update_response = self.client.put(
+			reverse("api-registro-detail", kwargs={"registro_id": reg_id}),
+			data={
+				"corral": "15",
+				"remitente": "Remitente Foto",
+				"categoria": "Novillo",
+				"cantidad": 5,
+				"marcaImagen": expected_url,
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(update_response.status_code, 200)
+		db_reg.refresh_from_db()
+		self.assertEqual(db_reg.marca_imagen, sample_base64)
+
+		# 5. Crear otro registro reutilizando la URL del primero (debería clonar la foto en BD)
+		clone_response = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "16",
+				"remitente": "Remitente Clon",
+				"categoria": "Novillo",
+				"cantidad": 10,
+				"marcaImagen": expected_url,
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(clone_response.status_code, 201)
+		clone_id = clone_response.json()["data"]["id"]
+		db_clone = Registro.objects.get(id=clone_id)
+		self.assertEqual(db_clone.marca_imagen, sample_base64)
+
+		# 6. Actualizar enviando vacío (debería borrar la foto)
+		clear_response = self.client.put(
+			reverse("api-registro-detail", kwargs={"registro_id": reg_id}),
+			data={
+				"corral": "15",
+				"remitente": "Remitente Foto",
+				"categoria": "Novillo",
+				"cantidad": 5,
+				"marcaImagen": "",
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(clear_response.status_code, 200)
+		db_reg.refresh_from_db()
+		self.assertEqual(db_reg.marca_imagen, "")
+
 
 @override_settings(OPERADOR_USERNAMES=["operador1", "operador2"])
 class LimpiezaRemateTests(TestCase):
@@ -233,7 +335,8 @@ class LimpiezaRemateTests(TestCase):
 		user_model = get_user_model()
 		user_model.objects.create_user(username="operador1", password="Clave12345")
 		user_model.objects.create_user(username="operador2", password="Clave12345")
-		Registro.objects.create(corral="12", remitente="Proveedor X")
+		remate = Remate.objects.create(nombre="Remate limpieza")
+		Registro.objects.create(remate=remate, corral="12", remitente="Proveedor X")
 		Session.objects.create(session_key="abc123", session_data="e30:1", expire_date="2099-01-01T00:00:00Z")
 
 		self.assertEqual(Registro.objects.count(), 1)

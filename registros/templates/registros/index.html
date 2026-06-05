@@ -4,411 +4,626 @@
     {% load static %}
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Planilla Rural</title>
-    <meta name="theme-color" content="#2f6e5a" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Planilla Rural" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" type="image/svg+xml" href="{% static 'registros/icons/app-icon.svg' %}" />
-    <link rel="apple-touch-icon" href="{% static 'registros/icons/app-icon.svg' %}" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ["Manrope", "ui-sans-serif", "sans-serif"],
-            },
-            colors: {
-              app: {
-                ink: "#0f1f1b",
-                mint: "#9cc9b1",
-                leaf: "#1f5f48",
-                clay: "#7a461f",
-                cream: "#ece8dc",
+        <title>Planilla Rural</title>
+        <meta name="theme-color" content="#2f6e5a" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Planilla Rural" />
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="icon" type="image/svg+xml" href="{% static 'registros/icons/app-icon.svg' %}" />
+        <link rel="apple-touch-icon" href="{% static 'registros/icons/app-icon.svg' %}" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+        <script>
+          tailwind.config = {
+            theme: {
+              extend: {
+                fontFamily: {
+                  sans: ["Manrope", "ui-sans-serif", "sans-serif"],
+                },
+                colors: {
+                  app: {
+                    ink: "#0f1f1b",
+                    mint: "#9cc9b1",
+                    leaf: "#1f5f48",
+                    clay: "#7a461f",
+                    cream: "#ece8dc",
+                  },
+                },
+                boxShadow: {
+                  card: "0 18px 36px -24px rgba(10, 26, 21, 0.55)",
+                },
               },
             },
-            boxShadow: {
-              card: "0 16px 34px -20px rgba(10, 26, 21, 0.62)",
-            },
-          },
-        },
-      };
-    </script>
-    <style>
-      body {
-        background:
-          radial-gradient(circle at 12% 8%, rgba(31, 95, 72, 0.2) 0%, transparent 40%),
-          radial-gradient(circle at 88% -2%, rgba(122, 70, 31, 0.16) 0%, transparent 38%),
-          linear-gradient(180deg, #ece8dc 0%, #ddd7c8 100%);
-      }
+          };
+        </script>
+        <style>
+          body {
+            background:
+              radial-gradient(circle at 5% 5%, rgba(31, 95, 72, 0.12) 0%, transparent 40%),
+              radial-gradient(circle at 95% 5%, rgba(122, 70, 31, 0.08) 0%, transparent 40%),
+              linear-gradient(180deg, #f7f4ed 0%, #ece7db 100%);
+            background-attachment: fixed;
+          }
 
-      .glass {
-        backdrop-filter: blur(10px);
-        background: rgba(248, 250, 248, 0.92);
-      }
+          .glass-panel {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 
+              0 10px 30px -10px rgba(15, 31, 27, 0.08),
+              0 1px 3px 0 rgba(15, 31, 27, 0.03);
+          }
 
-      input,
-      select,
-      textarea {
-        color: #0f1f1b;
-        font-weight: 600;
-      }
+          .glass-panel-dark {
+            backdrop-filter: blur(12px);
+            background: rgba(15, 31, 27, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+          }
 
-      input:focus,
-      select:focus,
-      textarea:focus,
-      button:focus-visible {
-        outline: 2px solid rgba(31, 95, 72, 0.7);
-        outline-offset: 1px;
-      }
+          input,
+          select,
+          textarea {
+            color: #0f1f1b;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+          }
 
-      .mapa-grid {
-        display: grid;
-        gap: 0;
-        grid-auto-rows: 28px;
-      }
+          input:focus,
+          select:focus,
+          textarea:focus {
+            outline: none !important;
+            border-color: #1f5f48 !important;
+            box-shadow: 0 0 0 3px rgba(31, 95, 72, 0.15) !important;
+          }
 
-      .mapa-viewport {
-        touch-action: none;
-      }
+          .mapa-grid {
+            display: grid;
+            gap: 2px;
+            grid-auto-rows: 28px;
+            padding: 4px;
+          }
 
-      .mapa-canvas {
-        transform-origin: 0 0;
-        will-change: transform;
-      }
+          .mapa-viewport {
+            touch-action: none;
+            position: relative;
+            background: #0b1319;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+            cursor: grab;
+          }
 
-      .mapa-cell {
-        width: 100%;
-        height: 100%;
-        border-radius: 0;
-        font-size: 9px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+          .mapa-canvas {
+            transform-origin: 0 0;
+            will-change: transform;
+          }
 
-      .app-bottom-nav {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 60;
-        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
-        transform: translateZ(0);
-      }
+          .mapa-cell {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 950;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+          }
 
-      @keyframes app-spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
+          .mapa-cell:hover {
+            transform: scale(1.08);
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+          }
 
-      .app-spinner {
-        animation: app-spin 0.9s linear infinite;
-      }
-    </style>
-  </head>
-  <body class="min-h-screen font-sans text-app-ink">
-    <main class="mx-auto w-full max-w-md px-4 pb-24 pt-5 sm:max-w-xl sm:px-6">
-      <header class="mb-4 rounded-md border border-app-ink/20 glass p-4 shadow-card">
-        <h1 class="mt-1 text-center text-2xl font-extrabold leading-tight">Planilla Rural</h1>
-      </header>
+          .app-bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 60;
+            padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+            transform: translateZ(0);
+          }
 
-      <section id="registrosSection">
-        <section class="rounded-md border border-app-ink/20 glass p-4 shadow-card">
-          <div class="mb-3 rounded-lg border border-app-leaf/35 bg-app-mint/70 px-3 py-2 text-center">
-            <p class="text-[11px] font-extrabold uppercase tracking-[0.14em] text-app-leaf/85">Nuevo registro</p>
-          </div>
+          @keyframes app-spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
 
-          <form id="registroForm" class="space-y-3">
-            {% csrf_token %}
-            <input type="hidden" id="registroId" />
+          .app-spinner {
+            animation: app-spin 0.9s linear infinite;
+          }
 
-            <div>
-              <label for="corral" class="mb-1 block text-sm font-semibold">Corral</label>
-              <input id="corral" list="ubicacionesDatalist" type="text" class="w-full rounded-lg border border-app-leaf/45 bg-white/95 px-3 py-2.5 text-sm" />
-              <div id="corralOcupacionAviso" class="mt-2 hidden rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"></div>
-            </div>
+          .page-shell {
+            display: grid;
+            gap: 1.25rem;
+          }
 
-            <div>
-              <label for="remitente" class="mb-1 block text-sm font-semibold">Remitente</label>
-              <input id="remitente" list="remitentesDatalist" type="text" class="w-full rounded-lg border border-app-leaf/45 bg-white/95 px-3 py-2.5 text-sm" />
-              <div id="remitenteMarcasWrap" class="mt-2 hidden rounded-lg border border-app-leaf/35 bg-app-mint/40 p-2">
-                <p class="mb-2 text-[11px] font-bold text-app-ink/75">Marcas guardadas para este remitente</p>
-                <div id="remitenteMarcasGrid" class="grid grid-cols-4 gap-2"></div>
+          /* Desktop View layout and heights */
+          .page-shell.desktop-view {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            align-items: start;
+            gap: 1.25rem;
+            max-width: 100% !important;
+            margin: 0 auto;
+          }
+
+          .desktop-view #corralesSection {
+            grid-column: 1;
+            grid-row: 1;
+            display: flex !important;
+            flex-direction: column;
+            gap: 1.25rem;
+            min-width: 0;
+          }
+
+          .desktop-view #registrosSection {
+            grid-column: 2 / span 2;
+            grid-row: 1;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            align-items: start;
+            min-width: 0;
+          }
+
+          .desktop-view .section-divider {
+            display: none !important;
+          }
+
+          .desktop-view ~ .bottom-mobile-nav {
+            display: none !important;
+          }
+
+          /* Scroll containers */
+          .desktop-view .form-scroll {
+            max-height: none;
+            overflow-y: visible;
+            padding-right: 0;
+          }
+
+          .desktop-view .records-list-scroll {
+            max-height: calc(100vh - 23rem);
+            overflow-y: auto;
+            padding-right: 0.5rem;
+          }
+
+          .desktop-view #corralDetalleContainer {
+            max-height: none;
+            overflow-y: visible;
+            padding-right: 0;
+          }
+
+          /* Scrollbar styling */
+          .form-scroll::-webkit-scrollbar,
+          .records-list-scroll::-webkit-scrollbar,
+          #corralDetalleContainer::-webkit-scrollbar {
+            width: 6px;
+          }
+
+          .form-scroll::-webkit-scrollbar-track,
+          .records-list-scroll::-webkit-scrollbar-track,
+          #corralDetalleContainer::-webkit-scrollbar-track {
+            background: transparent;
+          }
+
+          .form-scroll::-webkit-scrollbar-thumb,
+          .records-list-scroll::-webkit-scrollbar-thumb,
+          #corralDetalleContainer::-webkit-scrollbar-thumb {
+            background: rgba(31, 95, 72, 0.2);
+            border-radius: 3px;
+          }
+
+          .form-scroll::-webkit-scrollbar-thumb:hover,
+          .records-list-scroll::-webkit-scrollbar-thumb:hover,
+          #corralDetalleContainer::-webkit-scrollbar-thumb:hover {
+            background: rgba(31, 95, 72, 0.4);
+          }
+
+          #appMain.desktop-view {
+            max-width: 100% !important;
+            padding-bottom: 2rem !important;
+          }
+
+          /* Prevent grid items from exceeding their column width */
+          .page-shell > section {
+            min-width: 0;
+            overflow-x: hidden;
+          }
+
+          /* Hard clip boundary so nothing bleeds past appMain */
+          #appMain {
+            overflow-x: hidden;
+          }
+
+          /* Ensure the map viewport never forces parent wider than its container */
+          .mapa-viewport {
+            width: 100%;
+            max-width: 100%;
+          }
+        </style>
+      </head>
+      <body class="min-h-screen font-sans text-app-ink overflow-x-hidden">
+        <main id="appMain" class="mx-auto w-full max-w-md px-4 pb-24 pt-5 sm:max-w-xl sm:px-6">
+          {% include "registros/partials/index_header.html" %}
+
+          <div id="workspaceShell" class="page-shell workspace-shell">
+            
+            <!-- SECCIÓN REGISTROS (Formulario y Listado) -->
+            <section id="registrosSection">
+              
+              <!-- Formulario de Carga -->
+              <div class="rounded-2xl border border-white/40 bg-white/80 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+                <div class="mb-4 flex items-center justify-between border-b border-app-leaf/10 pb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-app-leaf/10 text-app-leaf">
+                      <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </span>
+                    <h2 class="text-base font-black text-app-ink">Registrar Ingreso</h2>
+                  </div>
+                  <span class="rounded-md bg-app-mint/30 px-2 py-0.5 text-[10px] font-black uppercase text-app-leaf">Lote Nuevo</span>
+                </div>
+
+                <div class="form-scroll">
+                  <form id="registroForm" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" id="registroId" />
+
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div>
+                        <label for="corral" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">Corral</label>
+                        <input id="corral" list="ubicacionesDatalist" type="text" placeholder="Nro de corral" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10" />
+                        <div id="corralOcupacionAviso" class="mt-2 hidden rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900 shadow-sm"></div>
+                      </div>
+
+                      <div>
+                        <label for="remitente" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">Remitente</label>
+                        <input id="remitente" list="remitentesDatalist" type="text" placeholder="Nombre remitente" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10" />
+                      </div>
+                    </div>
+
+                    <div id="remitenteMarcasWrap" class="mt-2 hidden rounded-xl border border-app-leaf/20 bg-app-mint/15 p-3 shadow-inner">
+                      <p class="mb-2 text-[10px] font-extrabold uppercase tracking-wider text-app-leaf/90">Marcas registradas para este remitente</p>
+                      <div id="remitenteMarcasGrid" class="grid grid-cols-4 gap-2"></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div>
+                        <label for="categoria" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">Categoría</label>
+                        <select id="categoria" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10">
+                          <option value="">Seleccionar categoría</option>
+                          <option value="Novillo">Novillo</option>
+                          <option value="Novillito">Novillito</option>
+                          <option value="Vaca">Vaca</option>
+                          <option value="Ternero">Ternero</option>
+                          <option value="Ternera">Ternera</option>
+                          <option value="Ternera/o">Ternera/o</option>
+                          <option value="Vaquilla">Vaquilla</option>
+                          <option value="Vaquillita">Vaquillita</option>
+                          <option value="Toro">Toro</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label for="cantidad" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">Cantidad (Cabezas)</label>
+                        <input id="cantidad" type="number" placeholder="Ej: 45" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="estadoOptions" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">Estado de la Hacienda</label>
+                      <div id="estadoOptions" class="grid grid-cols-2 gap-2.5 rounded-xl border border-slate-200 bg-white p-3 text-sm font-semibold shadow-sm">
+                        <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="conserva" class="h-4.5 w-4.5 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Conserva</label>
+                        <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="invernada normal" class="h-4.5 w-4.5 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Invernada normal</label>
+                        <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="invernada buena" class="h-4.5 w-4.5 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Invernada buena</label>
+                        <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="gordo" class="h-4.5 w-4.5 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Gordo</label>
+                        <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="para cría" class="h-4.5 w-4.5 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Para cría</label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">Foto de Marca</label>
+                      <button id="abrirCamaraBtn" type="button" class="flex w-full items-center justify-center gap-2 rounded-xl border border-app-leaf/30 bg-white hover:bg-app-mint/5 px-4 py-3 text-center text-sm font-extrabold text-app-leaf shadow-sm transition-all hover:border-app-leaf active:scale-[0.98]">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                        <span>Tomar Foto de Marca</span>
+                      </button>
+                      <input id="marca" type="file" accept="image/*" capture="environment" class="sr-only" />
+                      
+                      <div id="previewWrap" class="mt-3 hidden items-center justify-between gap-3 rounded-xl border border-app-mint/45 bg-app-mint/10 p-2.5">
+                        <div class="flex items-center gap-3">
+                          <img id="previewImg" alt="Vista previa" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-lg object-cover shadow-md border border-white" />
+                          <div class="text-left">
+                            <p class="text-xs font-bold text-app-ink">Marca cargada</p>
+                            <p class="text-[10px] font-semibold text-app-ink/60">Foto lista para guardar</p>
+                          </div>
+                        </div>
+                        <button id="quitarImagen" type="button" class="rounded-lg border border-red-200 bg-white hover:bg-red-55 px-3 py-1.5 text-xs font-bold text-red-600 transition-colors">
+                          Quitar
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="observaciones" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">Observaciones</label>
+                      <textarea id="observaciones" rows="3" placeholder="Observaciones adicionales sobre el lote..." class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10"></textarea>
+                    </div>
+
+                    <div id="mensaje" class="mx-auto hidden max-w-sm rounded-xl border px-3 py-2.5 text-center text-xs font-bold shadow-sm"></div>
+
+                    <div class="flex items-center gap-2.5 pt-2 border-t border-app-leaf/10">
+                      <button id="guardarBtn" type="submit" class="flex-1 rounded-xl bg-app-leaf hover:bg-emerald-800 px-5 py-3 text-sm font-black text-white shadow-md transition-all active:scale-[0.98]">
+                        Guardar Registro
+                      </button>
+                      <button id="cancelarEdicion" type="button" class="hidden rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-3 text-xs font-bold text-app-ink shadow-sm transition-all active:scale-[0.98]">
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label for="categoria" class="mb-1 block text-sm font-semibold">Categoria</label>
-              <select id="categoria" class="w-full rounded-lg border border-app-leaf/45 bg-white/95 px-3 py-2.5 text-sm">
-                <option value="">Seleccionar categoria</option>
-                <option value="Novillo">Novillo</option>
-                <option value="Novillito">Novillito</option>
-                <option value="Vaca">Vaca</option>
-                <option value="Ternero">Ternero</option>
-                <option value="Ternera">Ternera</option>
-                <option value="Ternera/o">Ternera/o</option>
-                <option value="Vaquilla">Vaquilla</option>
-                <option value="Vaquillita">Vaquillita</option>
-                <option value="Toro">Toro</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="cantidad" class="mb-1 block text-sm font-semibold">Cantidad</label>
-              <input id="cantidad" type="number" class="w-full rounded-lg border border-app-leaf/45 bg-white/95 px-3 py-2.5 text-sm" />
-            </div>
-
-            <div>
-              <label for="estadoOptions" class="mb-1 block text-sm font-semibold">Estado</label>
-              <div id="estadoOptions" class="grid grid-cols-2 gap-2 rounded-lg border border-app-leaf/45 bg-white/95 p-2 text-sm">
-                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="conserva" class="h-4 w-4 rounded border-app-leaf/55" />Conserva</label>
-                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada normal" class="h-4 w-4 rounded border-app-leaf/55" />Invernada normal</label>
-                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada buena" class="h-4 w-4 rounded border-app-leaf/55" />Invernada buena</label>
-                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="gordo" class="h-4 w-4 rounded border-app-leaf/55" />Gordo</label>
-                <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="para cría" class="h-4 w-4 rounded border-app-leaf/55" />Para cría</label>
+              <!-- DIVIDER MOVIL -->
+              <div class="section-divider my-6 flex items-center gap-3">
+                <div class="h-px flex-1 bg-app-leaf/15"></div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-app-leaf/60">Lista de registros</p>
+                <div class="h-px flex-1 bg-app-leaf/15"></div>
               </div>
-            </div>
 
-            <div>
-              <label for="marca" class="mb-1 block text-sm font-semibold">Marca (foto)</label>
-              <button id="abrirCamaraBtn" type="button" class="block w-full rounded-lg border border-app-leaf/45 bg-white/95 px-3 py-3 text-center text-sm font-bold text-app-ink shadow-sm">
-                Sacar foto
-              </button>
-              <input id="marca" type="file" accept="image/*" capture="environment" class="sr-only" />
-              <div id="previewWrap" class="mt-2 hidden items-center gap-3 rounded-lg bg-app-mint/65 p-2">
-                <img id="previewImg" alt="Vista previa" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-md object-cover" />
-                <button id="quitarImagen" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-semibold">
-                  Quitar foto
-                </button>
+              <!-- Listado de Registros -->
+              <div class="rounded-2xl border border-white/40 bg-white/80 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+                <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-app-leaf/10 pb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-app-leaf/10 text-app-leaf">
+                      <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                      </svg>
+                    </span>
+                    <h2 class="text-base font-black text-app-ink">Lista de Lotes</h2>
+                  </div>
+                  
+                  <button id="exportPdfBtn" type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-sm font-extrabold text-app-ink shadow-sm transition-all active:scale-[0.98]">
+                    <svg class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span>Descargar PDF</span>
+                  </button>
+                </div>
+
+                <div class="mb-4 rounded-xl border border-slate-100 bg-slate-50/50 p-3 shadow-inner">
+                  <div class="flex flex-col gap-3">
+                    <div>
+                      <label for="buscadorGeneral" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-leaf/80">Buscador General</label>
+                      <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </span>
+                        <input
+                          id="buscadorGeneral"
+                          type="search"
+                          class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10"
+                          placeholder="Ej: corral 12, Jose Luis, vaca..."
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="ordenRegistros" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-leaf/80">Ordenar por</label>
+                      <select id="ordenRegistros" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10">
+                        <option value="corral_asc" selected>Corral: menor a mayor</option>
+                        <option value="reciente">Ingreso: más reciente</option>
+                        <option value="corral_desc">Corral: mayor a menor</option>
+                        <option value="cantidad_desc">Cantidad: mayor a menor</option>
+                        <option value="cantidad_asc">Cantidad: menor a mayor</option>
+                        <option value="alfabetico">Alfabético (A-Z)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="totalIngresos" class="mb-3 flex items-center justify-between px-1">
+                  <p class="text-sm font-bold text-slate-500">Resultados encontrados</p>
+                  <p class="text-sm font-extrabold text-app-ink">
+                    <span class="text-app-leaf" id="totalCantidad">0</span> cabezas totales
+                  </p>
+                </div>
+
+                <div class="records-list-scroll">
+                  <div id="cardsContainer" class="space-y-2.5"></div>
+                </div>
               </div>
+
+            </section>
+
+            <!-- SECCIÓN CORRALES (Mapa y Detalle Corral Seleccionado) -->
+            <section id="corralesSection" class="hidden">
+              
+              <!-- Mapa Interactivo -->
+              <div class="rounded-2xl border border-white/40 bg-white/80 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+                <div class="mb-4 flex items-center justify-between border-b border-app-leaf/10 pb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-app-leaf/10 text-app-leaf">
+                      <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                    </span>
+                    <h2 class="text-base font-black text-app-ink">Mapa de Corrales</h2>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-3.5">
+                  <label class="flex items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 px-4 py-3 text-xs font-bold text-app-ink cursor-pointer shadow-sm transition-all duration-150">
+                    <input id="habilitarPasillos" type="checkbox" class="h-4.5 w-4.5 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />
+                    <span>Habilitar pasillos como corrales temporales</span>
+                  </label>
+
+                  <!-- Mapa Viewport con Canvas -->
+                  <div class="relative rounded-xl border border-slate-800 bg-[#090d10] p-1.5 shadow-2xl overflow-hidden">
+                    
+                    <!-- Controles flotantes en el mapa -->
+                    <div class="absolute right-3.5 top-3.5 z-10 flex flex-col gap-1.5">
+                      <button id="zoomInBtn" type="button" title="Acercar" class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900/90 border border-white/10 hover:bg-slate-800 text-lg font-black text-white shadow transition-all duration-150 hover:scale-105 active:scale-95">+</button>
+                      <button id="zoomOutBtn" type="button" title="Alejar" class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900/90 border border-white/10 hover:bg-slate-800 text-lg font-black text-white shadow transition-all duration-150 hover:scale-105 active:scale-95">-</button>
+                      <button id="centerCorralBtn" type="button" title="Centrar Corral" class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900/90 border border-white/10 hover:bg-slate-800 text-white shadow transition-all duration-150 hover:scale-105 active:scale-95">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <circle cx="12" cy="11" r="2" stroke="currentColor" stroke-width="2.5" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div id="mapaViewport" class="mapa-viewport h-[360px] overflow-hidden rounded-lg">
+                      <div id="mapaCanvas" class="mapa-canvas">
+                        <div id="mapaGrid" class="mapa-grid"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Referencia de Colores -->
+                  <div class="flex flex-wrap items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-slate-500">
+                    <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-sky-700"></span>Ocupado</span>
+                    <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-sky-300"></span>Vacío</span>
+                    <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-slate-300"></span>Pasillo</span>
+                    <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-emerald-300"></span>Pasillo Habilitado</span>
+                    <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-amber-200"></span>Toril (TO)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Detalle del Corral Seleccionado -->
+              <div class="rounded-2xl border border-white/40 bg-white/80 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+                <div class="mb-3 flex items-center justify-between border-b border-app-leaf/10 pb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-app-leaf/10 text-app-leaf">
+                      <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </span>
+                    <h2 class="text-base font-black text-app-ink">Corral Seleccionado</h2>
+                  </div>
+                  
+                  <button id="nuevoEnCorralBtn" type="button" class="hidden rounded-lg bg-app-leaf hover:bg-emerald-800 px-3 py-1.5 text-xs font-extrabold text-white shadow-sm transition-all active:scale-[0.98]">
+                    Nuevo Lote Aquí
+                  </button>
+                </div>
+
+                <div class="mb-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-center">
+                  <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Identificador</p>
+                  <h3 id="corralDetalleTitulo" class="mt-1 text-xl sm:text-2xl font-black text-app-ink">Selecciona un corral</h3>
+                  <p id="corralDetalleSubtitulo" class="mt-1 text-[11px] font-bold uppercase tracking-wider text-app-leaf"></p>
+                </div>
+
+                <div id="corralDetalleContainer" class="space-y-2"></div>
+              </div>
+            </section>
+          </div>
+        </main>
+
+        <div id="editarLoteModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/45 p-3">
+          <div class="w-full max-w-md rounded-md border border-app-ink/20 bg-white p-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-extrabold">Editar lote</h3>
+              <button id="cerrarModalBtn" type="button" class="rounded-lg border border-app-leaf/55 px-2 py-1 text-xs font-bold">Cerrar</button>
             </div>
 
-            <div>
-              <label for="observaciones" class="mb-1 block text-sm font-semibold">Observaciones</label>
-              <textarea id="observaciones" rows="3" class="w-full rounded-lg border border-app-leaf/45 bg-white/95 px-3 py-2.5 text-sm"></textarea>
-            </div>
+            <form id="editarLoteForm" class="mt-3 space-y-2">
+              <input id="editarLoteId" type="hidden" />
 
-            <div id="mensaje" class="mx-auto hidden max-w-sm rounded-md border px-3 py-2 text-center text-xs font-semibold"></div>
+              <div>
+                <label for="modalCorral" class="mb-1 block text-xs font-bold">Corral</label>
+                <input id="modalCorral" list="ubicacionesDatalist" type="text" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
+                <div id="modalCorralOcupacionAviso" class="mt-2 hidden rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"></div>
+              </div>
 
-            <div class="flex items-center gap-2 pt-1">
-              <button id="guardarBtn" type="submit" class="flex-1 rounded-lg bg-app-leaf px-4 py-3 text-sm font-extrabold text-white">
-                Guardar Registro
-              </button>
-              <button id="cancelarEdicion" type="button" class="hidden rounded-lg border border-app-leaf/55 bg-white px-3 py-3 text-xs font-bold">
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </section>
+              <div>
+                <label for="modalRemitente" class="mb-1 block text-xs font-bold">Remitente</label>
+                <input id="modalRemitente" type="text" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
+              </div>
 
-        <div class="my-5 flex items-center gap-3">
-          <div class="h-px flex-1 bg-app-leaf/25"></div>
-          <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-app-leaf/85">Lista de registros</p>
-          <div class="h-px flex-1 bg-app-leaf/25"></div>
+              <div>
+                <label for="modalCategoria" class="mb-1 block text-xs font-bold">Categoria</label>
+                <select id="modalCategoria" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm">
+                  <option value="">Seleccionar categoria</option>
+                  <option value="Novillo">Novillo</option>
+                  <option value="Novillito">Novillito</option>
+                  <option value="Vaca">Vaca</option>
+                  <option value="Ternero">Ternero</option>
+                  <option value="Ternera">Ternera</option>
+                  <option value="Vaquilla">Vaquilla</option>
+                  <option value="Vaquillita">Vaquillita</option>
+                  <option value="Toro">Toro</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="modalCantidad" class="mb-1 block text-xs font-bold">Cantidad</label>
+                <input id="modalCantidad" type="number" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
+              </div>
+
+              <div>
+                <label for="modalEstadoOptions" class="mb-1 block text-xs font-bold">Estado</label>
+                <div id="modalEstadoOptions" class="grid grid-cols-2 gap-2 rounded-md border border-app-leaf/45 bg-white p-2 text-sm">
+                  <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="conserva" class="h-4 w-4 rounded border-app-leaf/55" />Conserva</label>
+                  <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada normal" class="h-4 w-4 rounded border-app-leaf/55" />Invernada normal</label>
+                  <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada buena" class="h-4 w-4 rounded border-app-leaf/55" />Invernada buena</label>
+                  <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="gordo" class="h-4 w-4 rounded border-app-leaf/55" />Gordo</label>
+                  <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="para cría" class="h-4 w-4 rounded border-app-leaf/55" />Para cría</label>
+                </div>
+              </div>
+
+              <div>
+                <label for="modalObservaciones" class="mb-1 block text-xs font-bold">Observaciones</label>
+                <textarea id="modalObservaciones" rows="2" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm"></textarea>
+              </div>
+
+              <div class="pt-1">
+                <button type="submit" class="w-full rounded-md bg-app-leaf px-3 py-2.5 text-sm font-extrabold text-white">Guardar cambios</button>
+              </div>
+            </form>
+          </div>
         </div>
 
-        <section class="rounded-md border border-app-ink/20 glass p-4 shadow-card">
-          <h2 class="mb-3 text-center text-lg font-extrabold">Registros</h2>
-
-          <div class="mb-4 flex gap-2">
-            <button id="exportPdfBtn" type="button" class="w-full rounded-md border-2 border-app-ink bg-white px-3 py-2.5 text-sm font-extrabold text-app-ink shadow-sm transition-colors hover:bg-gray-100">📄 Descargar PDF</button>
-          </div>
-
-          <div class="mb-3 rounded-lg border border-app-leaf/35 bg-white/95 p-3 text-center shadow-sm">
-            <p class="text-[11px] font-extrabold uppercase tracking-[0.14em] text-app-leaf/90">Buscador global</p>
-            <input
-              id="buscadorGeneral"
-              type="search"
-              class="mt-1 w-full rounded-md border border-app-leaf/50 bg-white px-3 py-2.5 text-sm font-semibold shadow-sm"
-              placeholder="Ej: corral 12, Jose Luis, vaca, bueno"
-            />
-
-            <div class="mt-3 text-left">
-              <label for="ordenRegistros" class="mb-1 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-app-leaf/90">Ordenar por</label>
-              <select id="ordenRegistros" class="w-full rounded-md border border-app-leaf/50 bg-white px-3 py-2.5 text-sm font-semibold shadow-sm">
-                <option value="corral_asc" selected>Corral: menor a mayor</option>
-                <option value="reciente">Ingreso: mas reciente</option>
-                <option value="corral_desc">Corral: mayor a menor</option>
-                <option value="cantidad_desc">Cantidad: mayor a menor</option>
-                <option value="cantidad_asc">Cantidad: menor a mayor</option>
-                <option value="alfabetico">Alfabetico (A-Z)</option>
-              </select>
+        <div id="cameraModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-3">
+          <div class="w-full max-w-md rounded-md border border-app-ink/20 bg-white p-3 shadow-2xl">
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="text-sm font-extrabold">Camara</h3>
+              <button id="cerrarCamaraBtn" type="button" class="rounded-md border border-app-leaf/55 px-2 py-1 text-xs font-bold">Cerrar</button>
+            </div>
+            <video id="cameraVideo" autoplay playsinline muted class="h-64 w-full rounded-md bg-black object-cover"></video>
+            <p id="cameraStatus" class="mt-2 text-center text-xs font-semibold text-app-ink/70">Ajustando enfoque...</p>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <button id="tomarFotoBtn" type="button" class="rounded-md bg-app-leaf px-3 py-2 text-sm font-extrabold text-white">Tomar foto</button>
+              <button id="usarArchivoFallbackBtn" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-2 text-sm font-bold">Usar archivo</button>
             </div>
           </div>
-
-          <div id="totalIngresos" class="mb-2 text-right">
-            <p class="text-sm text-app-ink/60"><span class="font-semibold text-app-leaf">Total: </span><span id="totalCantidad" class="font-extrabold text-app-leaf">0</span> cabezas</p>
-          </div>
-
-          <div id="cardsContainer" class="space-y-3"></div>
-        </section>
-      </section>
-
-      <section id="corralesSection" class="hidden">
-        <section class="rounded-md border border-app-ink/20 glass p-4 shadow-card">
-          <h2 class="text-center text-lg font-extrabold">Corrales</h2>
-
-          <div class="mb-4 rounded-lg border-2 border-app-leaf/50 bg-gradient-to-r from-app-leaf/10 to-app-mint/10 p-4 text-center">
-            <p class="text-sm font-semibold uppercase tracking-wider text-app-leaf/80">Total de cabezas ingresadas</p>
-            <p id="totalCabesasCorreales" class="mt-1 text-4xl font-extrabold text-app-leaf">0</p>
-          </div>
-
-          <label class="mt-3 flex items-center justify-center gap-2 rounded-lg border border-app-leaf/35 bg-white/90 px-3 py-2 text-xs font-bold text-app-ink">
-            <input id="habilitarPasillos" type="checkbox" class="h-4 w-4 rounded border-app-leaf/55" />
-            Habilitar pasillos numerados como corrales temporales
-          </label>
-
-          <div class="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
-            <span class="rounded-lg bg-emerald-600 px-2 py-1 text-white">ocupado</span>
-            <span class="rounded-lg bg-emerald-300 px-2 py-1 text-emerald-950">vacio</span>
-            <span class="rounded-lg bg-slate-300 px-2 py-1 text-slate-700">pasillo</span>
-            <span class="rounded-lg bg-sky-300 px-2 py-1 text-sky-950">pasillo habilitado</span>
-            <span class="rounded-lg bg-amber-200 px-2 py-1 text-amber-900">TO</span>
-          </div>
-
-          <div class="mt-3 flex items-center justify-center gap-2">
-            <button id="zoomOutBtn" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-sm font-extrabold">-</button>
-            <button id="zoomInBtn" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-sm font-extrabold">+</button>
-            <button id="centerCorralBtn" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-extrabold">Centrar corral</button>
-          </div>
-
-          <div id="mapaViewport" class="mapa-viewport mt-3 h-[62vh] overflow-hidden rounded-lg border border-app-leaf/45 bg-white/94 p-2">
-            <div id="mapaCanvas" class="mapa-canvas">
-              <div id="mapaGrid" class="mapa-grid"></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="mt-4 rounded-md border border-app-ink/20 glass p-4 shadow-card">
-          <div class="flex flex-col items-center gap-2 text-center">
-            <button id="nuevoEnCorralBtn" type="button" class="hidden rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-bold shadow-sm">Nuevo lote aqui</button>
-            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-app-leaf/90">Corral seleccionado</p>
-            <h3 id="corralDetalleTitulo" class="text-5xl font-black leading-none tracking-tight text-app-ink sm:text-6xl">Selecciona un corral</h3>
-            <p id="corralDetalleSubtitulo" class="text-xs font-semibold uppercase tracking-[0.18em] text-app-ink/65"></p>
-          </div>
-          <div id="corralDetalleContainer" class="mt-3 space-y-2"></div>
-        </section>
-      </section>
-    </main>
-
-    <div id="editarLoteModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/45 p-3">
-      <div class="w-full max-w-md rounded-md border border-app-ink/20 bg-white p-4 shadow-2xl">
-        <div class="flex items-center justify-between">
-          <h3 class="text-base font-extrabold">Editar lote</h3>
-          <button id="cerrarModalBtn" type="button" class="rounded-lg border border-app-leaf/55 px-2 py-1 text-xs font-bold">Cerrar</button>
         </div>
 
-        <form id="editarLoteForm" class="mt-3 space-y-2">
-          <input id="editarLoteId" type="hidden" />
-
-          <div>
-            <label for="modalCorral" class="mb-1 block text-xs font-bold">Corral</label>
-            <input id="modalCorral" list="ubicacionesDatalist" type="text" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
-            <div id="modalCorralOcupacionAviso" class="mt-2 hidden rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"></div>
+        <div id="imageViewerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4">
+          <div class="relative w-full max-w-3xl">
+            <button id="cerrarImageViewerBtn" type="button" class="absolute right-2 top-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs font-bold text-app-ink shadow">
+              Cerrar
+            </button>
+            <img id="imageViewerImg" alt="Foto ampliada" class="max-h-[85vh] w-full rounded-md object-contain" />
           </div>
-
-          <div>
-            <label for="modalRemitente" class="mb-1 block text-xs font-bold">Remitente</label>
-            <input id="modalRemitente" type="text" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
-          </div>
-
-          <div>
-            <label for="modalCategoria" class="mb-1 block text-xs font-bold">Categoria</label>
-            <select id="modalCategoria" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm">
-              <option value="">Seleccionar categoria</option>
-              <option value="Novillo">Novillo</option>
-              <option value="Novillito">Novillito</option>
-              <option value="Vaca">Vaca</option>
-              <option value="Ternero">Ternero</option>
-              <option value="Ternera">Ternera</option>
-              <option value="Vaquilla">Vaquilla</option>
-              <option value="Vaquillita">Vaquillita</option>
-              <option value="Toro">Toro</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="modalCantidad" class="mb-1 block text-xs font-bold">Cantidad</label>
-            <input id="modalCantidad" type="number" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
-          </div>
-
-          <div>
-            <label for="modalEstadoOptions" class="mb-1 block text-xs font-bold">Estado</label>
-            <div id="modalEstadoOptions" class="grid grid-cols-2 gap-2 rounded-md border border-app-leaf/45 bg-white p-2 text-sm">
-              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="conserva" class="h-4 w-4 rounded border-app-leaf/55" />Conserva</label>
-              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada normal" class="h-4 w-4 rounded border-app-leaf/55" />Invernada normal</label>
-              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada buena" class="h-4 w-4 rounded border-app-leaf/55" />Invernada buena</label>
-              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="gordo" class="h-4 w-4 rounded border-app-leaf/55" />Gordo</label>
-              <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="para cría" class="h-4 w-4 rounded border-app-leaf/55" />Para cría</label>
-            </div>
-          </div>
-
-          <div>
-            <label for="modalObservaciones" class="mb-1 block text-xs font-bold">Observaciones</label>
-            <textarea id="modalObservaciones" rows="2" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm"></textarea>
-          </div>
-
-          <div class="pt-1">
-            <button type="submit" class="w-full rounded-md bg-app-leaf px-3 py-2.5 text-sm font-extrabold text-white">Guardar cambios</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <div id="cameraModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-3">
-      <div class="w-full max-w-md rounded-md border border-app-ink/20 bg-white p-3 shadow-2xl">
-        <div class="mb-2 flex items-center justify-between">
-          <h3 class="text-sm font-extrabold">Camara</h3>
-          <button id="cerrarCamaraBtn" type="button" class="rounded-md border border-app-leaf/55 px-2 py-1 text-xs font-bold">Cerrar</button>
         </div>
-        <video id="cameraVideo" autoplay playsinline muted class="h-64 w-full rounded-md bg-black object-cover"></video>
-        <p id="cameraStatus" class="mt-2 text-center text-xs font-semibold text-app-ink/70">Ajustando enfoque...</p>
-        <div class="mt-3 grid grid-cols-2 gap-2">
-          <button id="tomarFotoBtn" type="button" class="rounded-md bg-app-leaf px-3 py-2 text-sm font-extrabold text-white">Tomar foto</button>
-          <button id="usarArchivoFallbackBtn" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-2 text-sm font-bold">Usar archivo</button>
-        </div>
-      </div>
-    </div>
 
-    <div id="imageViewerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4">
-      <div class="relative w-full max-w-3xl">
-        <button id="cerrarImageViewerBtn" type="button" class="absolute right-2 top-2 z-10 rounded-md bg-white/90 px-2 py-1 text-xs font-bold text-app-ink shadow">
-          Cerrar
-        </button>
-        <img id="imageViewerImg" alt="Foto ampliada" class="max-h-[85vh] w-full rounded-md object-contain" />
-      </div>
-    </div>
+        {% include "registros/partials/index_delete_modal.html" %}
 
-    <div id="deleteConfirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4">
-      <div class="w-full max-w-sm rounded-md border border-app-ink/20 bg-white p-4 shadow-2xl">
-        <h3 id="deleteConfirmTitle" class="text-base font-extrabold text-app-ink">Confirmar eliminacion</h3>
-        <p id="deleteConfirmMessage" class="mt-2 text-sm text-app-ink/80">Eliminar este registro?</p>
-        <div class="mt-4 grid grid-cols-2 gap-2">
-          <button id="cancelDeleteBtn" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-2 text-sm font-bold text-app-ink">Cancelar</button>
-          <button id="confirmDeleteBtn" type="button" class="rounded-md bg-red-600 px-3 py-2 text-sm font-extrabold text-white">Eliminar</button>
-        </div>
-      </div>
-    </div>
-
-    <nav class="app-bottom-nav border-t border-app-leaf/35 bg-white/95 px-4 py-2 shadow-[0_-8px_20px_-18px_rgba(0,0,0,.65)] backdrop-blur">
-      <div class="mx-auto grid w-full max-w-md grid-cols-2 gap-2 sm:max-w-xl">
-        <button id="navRegistros" type="button" class="rounded-md bg-app-leaf px-3 py-2 text-sm font-extrabold text-white">Registros</button>
-        <button id="navCorrales" type="button" class="rounded-md border border-app-leaf/50 bg-white px-3 py-2 text-sm font-extrabold text-app-ink">Corrales</button>
-      </div>
-    </nav>
+        {% include "registros/partials/index_bottom_nav.html" %}
 
     <datalist id="remitentesDatalist"></datalist>
     <datalist id="ubicacionesDatalist"></datalist>
@@ -441,8 +656,11 @@
 
       const registrosSection = document.getElementById("registrosSection");
       const corralesSection = document.getElementById("corralesSection");
+      const workspaceShell = document.getElementById("workspaceShell");
+      const appMain = document.getElementById("appMain");
       const navRegistros = document.getElementById("navRegistros");
       const navCorrales = document.getElementById("navCorrales");
+      const toggleDesktopViewBtn = document.getElementById("toggleDesktopViewBtn");
 
       const mapaGrid = document.getElementById("mapaGrid");
       const mapaCanvas = document.getElementById("mapaCanvas");
@@ -499,6 +717,8 @@
       let pendingDeleteConfirmResolve = null;
       let remitenteMarcasActuales = [];
       let isSavingRegistro = false;
+      let currentSection = "registros";
+      let desktopViewEnabled = localStorage.getItem("planillaDesktopView") === "1";
 
       let zoomScale = 0.55;
       let panX = 0;
@@ -512,6 +732,7 @@
       let pinchStartScale = 0;
       let pinchCenterX = 0;
       let pinchCenterY = 0;
+      let hasDragged = false;
 
       function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
@@ -552,6 +773,21 @@
         clampPan();
         mapaCanvas.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
       }
+
+      function fitMapToViewport() {
+        if (!corralesMapa) return;
+        const mapSize = getMapSize();
+        if (mapSize.width === 0 || mapSize.height === 0) return;
+        const vw = mapaViewport.clientWidth - 16;
+        const vh = mapaViewport.clientHeight - 16;
+        const zoomX = vw / mapSize.width;
+        const zoomY = vh / mapSize.height;
+        zoomScale = clamp(Math.min(zoomX, zoomY), 0.25, 3.0);
+        panX = 0;
+        panY = 0;
+        applyMapTransform();
+      }
+
 
       function zoomAround(targetScale, originX, originY) {
         const nextScale = clamp(targetScale, 0.25, 3);
@@ -600,6 +836,7 @@
 
       function setupTouchNavigation() {
         mapaViewport.addEventListener("touchstart", (event) => {
+          hasDragged = false;
           if (event.touches.length === 2) {
             touchMode = "pinch";
             pinchStartDistance = getTouchDistance(event.touches[0], event.touches[1]);
@@ -633,6 +870,9 @@
             event.preventDefault();
             const dx = event.touches[0].clientX - startTouchX;
             const dy = event.touches[0].clientY - startTouchY;
+            if (Math.hypot(dx, dy) > 5) {
+              hasDragged = true;
+            }
             panX = startPanX + dx;
             panY = startPanY + dy;
             applyMapTransform();
@@ -646,6 +886,44 @@
           }
           if (touchMode === "pan") {
             touchMode = "";
+          }
+        });
+      }
+
+      function setupMouseNavigation() {
+        let isMouseDown = false;
+        let startMouseX = 0;
+        let startMouseY = 0;
+        let startPanX = 0;
+        let startPanY = 0;
+
+        mapaViewport.addEventListener("mousedown", (event) => {
+          if (event.button !== 0) return;
+          isMouseDown = true;
+          hasDragged = false;
+          startMouseX = event.clientX;
+          startMouseY = event.clientY;
+          startPanX = panX;
+          startPanY = panY;
+          mapaViewport.style.cursor = "grabbing";
+        });
+
+        window.addEventListener("mousemove", (event) => {
+          if (!isMouseDown) return;
+          const dx = event.clientX - startMouseX;
+          const dy = event.clientY - startMouseY;
+          if (Math.hypot(dx, dy) > 5) {
+            hasDragged = true;
+          }
+          panX = startPanX + dx;
+          panY = startPanY + dy;
+          applyMapTransform();
+        });
+
+        window.addEventListener("mouseup", () => {
+          if (isMouseDown) {
+            isMouseDown = false;
+            mapaViewport.style.cursor = "grab";
           }
         });
       }
@@ -1368,9 +1646,15 @@
       }
 
       function setSection(section) {
+        currentSection = section;
         const isRegistros = section === "registros";
-        registrosSection.classList.toggle("hidden", !isRegistros);
-        corralesSection.classList.toggle("hidden", isRegistros);
+        if (desktopViewEnabled) {
+          registrosSection.classList.remove("hidden");
+          corralesSection.classList.remove("hidden");
+        } else {
+          registrosSection.classList.toggle("hidden", !isRegistros);
+          corralesSection.classList.toggle("hidden", isRegistros);
+        }
 
         navRegistros.className = isRegistros
           ? "rounded-md bg-app-leaf px-3 py-2 text-sm font-extrabold text-white"
@@ -1379,6 +1663,36 @@
         navCorrales.className = !isRegistros
           ? "rounded-md bg-app-leaf px-3 py-2 text-sm font-extrabold text-white"
           : "rounded-md border border-app-leaf/50 bg-white px-3 py-2 text-sm font-extrabold text-app-ink";
+
+        if (desktopViewEnabled) {
+          const targetSection = section === "corrales" ? corralesSection : registrosSection;
+          targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      function applyDesktopView(enabled) {
+        desktopViewEnabled = enabled;
+        localStorage.setItem("planillaDesktopView", enabled ? "1" : "0");
+        workspaceShell.classList.toggle("desktop-view", enabled);
+        appMain.classList.toggle("desktop-view", enabled);
+        const viewModeLabel = document.getElementById("viewModeLabel");
+        if (viewModeLabel) {
+          viewModeLabel.textContent = enabled ? "Modo escritorio" : "Modo móvil";
+        }
+        appMain.classList.toggle("max-w-md", !enabled);
+        appMain.classList.toggle("sm:max-w-xl", !enabled);
+        appMain.classList.toggle("max-w-7xl", enabled);
+        appMain.classList.toggle("sm:max-w-7xl", enabled);
+        if (toggleDesktopViewBtn) {
+          toggleDesktopViewBtn.title = enabled ? "Modo móvil" : "Modo escritorio";
+          const toggleSpan = toggleDesktopViewBtn.querySelector("span");
+          if (toggleSpan) {
+            toggleSpan.textContent = enabled ? "Modo móvil" : "Modo escritorio";
+          }
+        }
+        setSection(currentSection);
+        // Re-fit the map after layout reflow so pan/zoom match the new viewport size
+        setTimeout(() => { fitMapToViewport(); }, 80);
       }
 
       async function fetchRegistrosFiltered() {
@@ -1407,7 +1721,7 @@
         corralesDisponibles = corralesMapa.corrales || [];
         pasillosDisponibles = corralesMapa.pasillos || [];
         syncUbicacionesDatalist();
-        renderMapaCorrales();
+        renderMapaCorrales(true);
       }
 
       async function refreshAllData() {
@@ -1451,8 +1765,11 @@
 
         if (!registrosOrdenados.length) {
           cardsContainer.innerHTML = `
-            <article class="rounded-md border border-dashed border-app-leaf/55 bg-white/98 p-4 text-center shadow-sm">
-              <p class="text-sm font-semibold text-app-ink/70">No hay registros para mostrar.</p>
+            <article class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center shadow-sm">
+              <svg class="mx-auto h-8 w-8 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+              <p class="text-xs font-bold text-slate-400">No hay registros para mostrar.</p>
             </article>
           `;
           return;
@@ -1461,47 +1778,52 @@
         cardsContainer.innerHTML = registrosOrdenados
           .map(
             (item) => `
-              <article class="rounded-md border border-app-leaf/35 bg-white/98 p-4 text-center shadow-sm">
-                <p class="text-[10px] font-bold uppercase tracking-[.16em] text-app-ink/70">Corral</p>
-                <h3 class="mt-1 text-5xl font-extrabold leading-none text-app-ink">${escapeHtml(emptyText(item.corral))}</h3>
+              <article class="rounded-md border border-app-leaf/35 bg-white/98 p-4 text-center shadow-sm flex flex-col justify-between">
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-[.16em] text-app-ink/70">Corral</p>
+                  <h3 class="mt-1 text-5xl font-extrabold leading-none text-app-ink">${escapeHtml(emptyText(item.corral, "-"))}</h3>
 
-                <div class="mt-4 space-y-2 border-t border-app-leaf/20 pt-3">
-                  <div>
-                    <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
-                    <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "-"))}</p>
+                  <div class="mt-4 space-y-2 border-t border-app-leaf/20 pt-3">
+                    <div>
+                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
+                      <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "Sin categoría"))}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Cantidad</p>
+                        <p class="mt-1 text-base font-semibold text-app-ink">${item.cantidad !== null ? item.cantidad : "-"}</p>
+                      </div>
+                      <div>
+                        <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Estado</p>
+                        <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.estado, "Sin estado"))}</p>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Cantidad</p>
-                      <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.cantidad, "-"))}</p>
-                    </div>
-                    <div>
-                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Estado</p>
-                      <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.estado, "-"))}</p>
-                    </div>
+
+                  <div class="mt-3 border-t border-app-leaf/20 pt-3">
+                    <p class="text-lg font-bold text-app-ink">${escapeHtml(emptyText(item.remitente, "Sin remitente"))}</p>
+                    <p class="mt-1 text-sm font-semibold text-app-ink/65">${escapeHtml(emptyText(item.observaciones, "Sin observaciones"))}</p>
                   </div>
                 </div>
 
-                <div class="mt-3 border-t border-app-leaf/20 pt-3">
-                  <p class="text-lg font-bold text-app-ink">${escapeHtml(emptyText(item.remitente))}</p>
-                  <p class="mt-1 text-sm font-semibold text-app-ink/65">${escapeHtml(emptyText(item.observaciones, "Sin observaciones"))}</p>
-                </div>
+                <div>
+                  ${
+                    item.marcaImagen
+                      ? `<div class="mt-3 border-t border-app-leaf/20 pt-3 flex flex-col items-center">
+                          <img src="${item.marcaImagen}" alt="Marca" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded object-cover border border-app-leaf/30 shadow-sm" />
+                          <button type="button" data-action="add-photo" data-id="${item.id}" class="mt-1.5 rounded-md border border-app-leaf/55 bg-white px-2.5 py-1 text-[11px] font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Cambiar foto</button>
+                        </div>`
+                      : `<div class="mt-3 border-t border-app-leaf/20 pt-3 text-center">
+                          <p class="text-xs font-semibold text-app-ink/75">Sin foto</p>
+                          <button type="button" data-action="add-photo" data-id="${item.id}" class="mt-1 rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Agregar foto</button>
+                        </div>`
+                  }
 
-                ${
-                  item.marcaImagen
-                    ? `<div class="mt-3 flex justify-center border-t border-app-leaf/20 pt-3">
-                        <img src="${item.marcaImagen}" alt="Marca del lote" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-lg object-cover" />
-                      </div>`
-                    : `<div class="mt-3 border-t border-app-leaf/20 pt-3 text-center">
-                        <p class="text-xs font-semibold text-app-ink/75">Sin foto</p>
-                        <button data-action="add-photo" data-id="${item.id}" class="mt-1 rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-extrabold">Agregar foto</button>
-                      </div>`
-                }
-
-                <div class="mt-4 flex items-center gap-2">
-                  <button data-action="edit" data-id="${item.id}" class="flex-1 rounded-md border border-app-leaf/55 bg-white px-3 py-2.5 text-sm font-extrabold">Editar</button>
-                  <button data-action="delete" data-id="${item.id}" class="flex-1 rounded-md bg-app-clay px-3 py-2.5 text-sm font-extrabold text-white">Eliminar</button>
+                  <div class="mt-4 flex items-center gap-2">
+                    <button type="button" data-action="edit" data-id="${item.id}" class="flex-1 rounded-md border border-app-leaf/55 bg-white px-3 py-2.5 text-sm font-extrabold text-app-ink shadow-sm hover:bg-slate-50 transition-all duration-200">Editar</button>
+                    <button type="button" data-action="delete" data-id="${item.id}" class="flex-1 rounded-md bg-app-clay px-3 py-2.5 text-sm font-extrabold text-white shadow-md hover:opacity-90 transition-all duration-200">Eliminar</button>
+                  </div>
                 </div>
               </article>
             `,
@@ -1509,7 +1831,7 @@
           .join("");
       }
 
-      function renderMapaCorrales() {
+      function renderMapaCorrales(isFirstRender = false) {
         if (!corralesMapa) return;
 
         mapaGrid.style.gridTemplateColumns = `repeat(${corralesMapa.cols}, 28px)`;
@@ -1561,7 +1883,11 @@
           })
           .join("");
 
-        applyMapTransform();
+        if (isFirstRender) {
+          fitMapToViewport();
+        } else {
+          applyMapTransform();
+        }
       }
 
       function renderCorralDetalle(corral) {
@@ -1570,6 +1896,8 @@
 
         const lotes = registrosAll.filter((item) => (item.corral || "").toString().trim() === corral);
         corralDetalleTitulo.textContent = corral;
+        const selectedCorralSummary = document.getElementById("selectedCorralSummary");
+        const selectedCorralCount = document.getElementById("selectedCorralCount");
         
         // Calcular sumatoria total de animales en el corral
         const totalAnimales = lotes.reduce((suma, item) => suma + (item.cantidad || 0), 0);
@@ -1577,14 +1905,26 @@
         corralDetalleSubtitulo.textContent = totalAnimales > 0 
           ? `${lotesLabel} | Total: ${totalAnimales} animales`
           : lotesLabel;
+        if (selectedCorralSummary) {
+          selectedCorralSummary.textContent = corral;
+        }
+        if (selectedCorralCount) {
+          selectedCorralCount.textContent = lotesLabel;
+        }
         
         nuevoEnCorralBtn.classList.remove("hidden");
 
         if (!lotes.length) {
           corralDetalleSubtitulo.textContent = "0 lotes";
+          if (selectedCorralCount) {
+            selectedCorralCount.textContent = "0 lotes";
+          }
           corralDetalleContainer.innerHTML = `
-            <article class="rounded-lg border border-dashed border-app-leaf/55 bg-white/98 p-3 text-sm text-app-ink/75">
-              Este corral no tiene lotes cargados.
+            <article class="rounded-xl border border-dashed border-slate-300 bg-white/80 p-5 text-center shadow-sm">
+              <svg class="mx-auto h-7 w-7 text-slate-400 mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+              <p class="text-xs font-bold text-slate-400">Este corral no tiene lotes cargados.</p>
             </article>
           `;
           return;
@@ -1593,44 +1933,52 @@
         corralDetalleContainer.innerHTML = lotes
           .map((item) => {
             const marcaHtml = item.marcaImagen
-              ? `<div class="mt-3 flex justify-center border-t border-app-leaf/20 pt-3">
-                  <img src="${item.marcaImagen}" alt="Marca del lote" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-lg object-cover" />
+              ? `<div class="mt-3 border-t border-app-leaf/20 pt-3 flex flex-col items-center">
+                  <img src="${item.marcaImagen}" alt="Marca" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded object-cover border border-app-leaf/30 shadow-sm" />
+                  <button type="button" data-corrales-action="add-photo" data-id="${item.id}" class="mt-1.5 rounded-md border border-app-leaf/55 bg-white px-2.5 py-1 text-[11px] font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Cambiar foto</button>
                 </div>`
               : `<div class="mt-3 border-t border-app-leaf/20 pt-3 text-center">
                   <p class="text-xs font-semibold text-app-ink/75">Sin foto</p>
-                  <button type="button" data-corrales-action="add-photo" data-id="${item.id}" class="mt-1 rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-extrabold">Agregar foto</button>
+                  <button type="button" data-corrales-action="add-photo" data-id="${item.id}" class="mt-1 rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Agregar foto</button>
                 </div>`;
 
             return `
-              <article class="rounded-md border border-app-leaf/35 bg-white/98 p-4 text-center shadow-sm">
-                <p class="text-[10px] font-bold uppercase tracking-[.16em] text-app-ink/70">Corral</p>
-                <h4 class="mt-1 text-4xl font-extrabold leading-none text-app-ink">${escapeHtml(emptyText(item.corral))}</h4>
+              <article class="rounded-md border border-app-leaf/35 bg-white/98 p-4 text-center shadow-sm flex flex-col justify-between">
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-[.16em] text-app-ink/70">Corral</p>
+                  <h3 class="mt-1 text-5xl font-extrabold leading-none text-app-ink">${escapeHtml(emptyText(item.corral, "-"))}</h3>
 
-                <div class="mt-4 space-y-2 border-t border-app-leaf/20 pt-3">
-                  <div>
-                    <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoria</p>
-                    <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "-"))}</p>
+                  <div class="mt-4 space-y-2 border-t border-app-leaf/20 pt-3">
+                    <div>
+                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
+                      <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "Sin categoría"))}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Cantidad</p>
+                        <p class="mt-1 text-base font-semibold text-app-ink">${item.cantidad !== null ? item.cantidad : "-"}</p>
+                      </div>
+                      <div>
+                        <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Estado</p>
+                        <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.estado, "Sin estado"))}</p>
+                      </div>
+                    </div>
                   </div>
 
-                  <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Cantidad</p>
-                      <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.cantidad, "-"))}</p>
-                    </div>
-                    <div>
-                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Estado</p>
-                      <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.estado, "-"))}</p>
-                    </div>
+                  <div class="mt-3 border-t border-app-leaf/20 pt-3">
+                    <p class="text-lg font-bold text-app-ink">${escapeHtml(emptyText(item.remitente, "Sin remitente"))}</p>
+                    <p class="mt-1 text-sm font-semibold text-app-ink/65">${escapeHtml(emptyText(item.observaciones, "Sin observaciones"))}</p>
                   </div>
                 </div>
 
-                <div class="mt-3 border-t border-app-leaf/20 pt-3">
-                  <p class="text-lg font-bold text-app-ink">${escapeHtml(emptyText(item.remitente))}</p>
-                  <p class="mt-1 text-sm font-semibold text-app-ink/65">${escapeHtml(emptyText(item.observaciones, "Sin observaciones"))}</p>
-                </div>
-                ${marcaHtml}
-                <div class="mt-2">
-                  <button type="button" data-corrales-action="edit" data-id="${item.id}" class="w-full rounded-md border border-app-leaf/55 bg-white px-3 py-2.5 text-sm font-extrabold">Editar lote</button>
+                <div>
+                  ${marcaHtml}
+
+                  <div class="mt-4 flex items-center gap-2">
+                    <button type="button" data-corrales-action="edit" data-id="${item.id}" class="flex-1 rounded-md border border-app-leaf/55 bg-white px-3 py-2.5 text-sm font-extrabold text-app-ink shadow-sm hover:bg-slate-50 transition-all duration-200">Editar</button>
+                    <button type="button" data-corrales-action="delete" data-id="${item.id}" class="flex-1 rounded-md bg-app-clay px-3 py-2.5 text-sm font-extrabold text-white shadow-md hover:opacity-90 transition-all duration-200">Eliminar</button>
+                  </div>
                 </div>
               </article>
             `;
@@ -1834,6 +2182,14 @@
         clearMessage();
       });
 
+      document.getElementById("cantidad").addEventListener("wheel", (e) => {
+        e.preventDefault();
+      }, { passive: false });
+
+      modalCantidad.addEventListener("wheel", (e) => {
+        e.preventDefault();
+      }, { passive: false });
+
       cardsContainer.addEventListener("click", async (event) => {
         const button = event.target.closest("button[data-action]");
         if (!button) return;
@@ -1936,6 +2292,10 @@
       });
 
       mapaGrid.addEventListener("click", (event) => {
+        if (hasDragged) {
+          hasDragged = false;
+          return;
+        }
         const target = event.target.closest("button[data-map-corral]");
         if (!target) return;
         renderCorralDetalle(target.dataset.mapCorral);
@@ -1957,6 +2317,27 @@
 
         if (action === "add-photo") {
           openCameraCapture("quick", id);
+          return;
+        }
+
+        if (action === "delete") {
+          const ok = await openDeleteConfirmModal("Eliminar este registro?");
+          if (!ok) return;
+
+          const response = await fetch(`/api/registros/${id}/`, {
+            method: "DELETE",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+          });
+          if (handleAuthError(response)) return;
+          if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            showMessage(body.error || "No se pudo eliminar el registro.", "error");
+            return;
+          }
+          showMessage("Registro eliminado.");
+          await refreshAllData();
         }
       });
 
@@ -2056,6 +2437,12 @@
         setSection("registros");
       });
 
+      if (toggleDesktopViewBtn) {
+        toggleDesktopViewBtn.addEventListener("click", () => {
+          applyDesktopView(!desktopViewEnabled);
+        });
+      }
+
       navRegistros.addEventListener("click", () => setSection("registros"));
       navCorrales.addEventListener("click", () => setSection("corrales"));
 
@@ -2089,7 +2476,7 @@
       function closeAllModals() {
         // Close edit modal
         if (!editarLoteModal.classList.contains("hidden")) {
-          closeEditModal();
+          closeEditarLoteModal();
         }
         // Close image viewer
         if (!imageViewerModal.classList.contains("hidden")) {
@@ -2262,8 +2649,10 @@
         });
       }
 
+      applyDesktopView(desktopViewEnabled);
       setSection("registros");
       setupTouchNavigation();
+      setupMouseNavigation();
       refreshAllData();
 
       if ("serviceWorker" in navigator) {
