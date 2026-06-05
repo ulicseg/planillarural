@@ -151,13 +151,40 @@
           }
 
           /* Desktop View layout and heights */
+          body.desktop-body {
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+          }
+
+          body.desktop-body #appMain {
+            flex: 1;
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+            box-sizing: border-box;
+          }
+
+          body.desktop-body #workspaceShell {
+            flex: 1;
+            min-height: 0;
+            height: 100%;
+          }
+
           .page-shell.desktop-view {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr;
-            align-items: start;
+            align-items: stretch;
             gap: 1.25rem;
             max-width: 100% !important;
             margin: 0 auto;
+            height: 100%;
+            min-height: 0;
           }
 
           .desktop-view #corralesSection {
@@ -167,6 +194,9 @@
             flex-direction: column;
             gap: 1.25rem;
             min-width: 0;
+            height: 100%;
+            min-height: 0;
+            overflow-y: auto;
           }
 
           .desktop-view #registrosSection {
@@ -175,8 +205,17 @@
             display: grid !important;
             grid-template-columns: 1fr 1fr;
             gap: 1.25rem;
-            align-items: start;
+            align-items: stretch;
             min-width: 0;
+            height: 100%;
+            min-height: 0;
+          }
+
+          .desktop-view #registrosSection > div {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
           }
 
           .desktop-view #registrosSection > div:nth-child(1) {
@@ -195,14 +234,17 @@
           }
 
           /* Scroll containers */
-          .desktop-view .form-scroll {
-            max-height: none;
-            overflow-y: visible;
-            padding-right: 0;
+          body.desktop-body .form-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 0.5rem;
           }
 
-          .desktop-view .records-list-scroll {
-            max-height: calc(100vh - 23rem);
+          body.desktop-body .records-list-scroll {
+            flex: 1;
+            min-height: 0;
+            max-height: none;
             overflow-y: auto;
             padding-right: 0.5rem;
           }
@@ -1789,6 +1831,7 @@
         localStorage.setItem("planillaDesktopView", enabled ? "1" : "0");
         workspaceShell.classList.toggle("desktop-view", enabled);
         appMain.classList.toggle("desktop-view", enabled);
+        document.body.classList.toggle("desktop-body", enabled);
         const viewModeLabel = document.getElementById("viewModeLabel");
         if (viewModeLabel) {
           viewModeLabel.textContent = enabled ? "Modo escritorio" : "Modo móvil";
