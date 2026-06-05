@@ -114,6 +114,10 @@
             transition: all 0.15s ease-in-out;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
           }
+          .zoomable-photo {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+          }
 
           .mapa-cell:hover {
             transform: scale(1.08);
@@ -340,18 +344,12 @@
                         </svg>
                         <span>Tomar Foto de Marca</span>
                       </button>
-                      <input id="marca" type="file" accept="image/*" capture="environment" class="sr-only" />
+                      <input id="marca" type="file" accept="image/*" capture="environment" class="sr-only" multiple />
                       
                       <div id="previewWrap" class="mt-3 hidden items-center justify-between gap-3 rounded-xl border border-app-mint/45 bg-app-mint/10 p-2.5">
-                        <div class="flex items-center gap-3">
-                          <img id="previewImg" alt="Vista previa" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded-lg object-cover shadow-md border border-white" />
-                          <div class="text-left">
-                            <p class="text-xs font-bold text-app-ink">Marca cargada</p>
-                            <p class="text-[10px] font-semibold text-app-ink/60">Foto lista para guardar</p>
-                          </div>
-                        </div>
+                        <div id="previewGrid" class="flex flex-wrap items-center gap-2"></div>
                         <button id="quitarImagen" type="button" class="rounded-lg border border-red-200 bg-white hover:bg-red-55 px-3 py-1.5 text-xs font-bold text-red-600 transition-colors">
-                          Quitar
+                          Quitar foto(s)
                         </button>
                       </div>
                     </div>
@@ -610,6 +608,7 @@
               <button id="usarArchivoFallbackBtn" type="button" class="rounded-md border border-app-leaf/55 bg-white px-3 py-2 text-sm font-bold">Usar archivo</button>
             </div>
           </div>
+
         </div>
 
         <div id="imageViewerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4">
@@ -638,8 +637,9 @@
       const marcaInput = document.getElementById("marca");
       const estadoOptions = document.getElementById("estadoOptions");
       const previewWrap = document.getElementById("previewWrap");
-      const previewImg = document.getElementById("previewImg");
+      const previewGrid = document.getElementById("previewGrid");
       const quitarImagenBtn = document.getElementById("quitarImagen");
+      const MAX_MARCA_IMAGES = 6;
       const buscadorGeneral = document.getElementById("buscadorGeneral");
       const ordenRegistros = document.getElementById("ordenRegistros");
       const cardsContainer = document.getElementById("cardsContainer");
@@ -661,6 +661,8 @@
       const navRegistros = document.getElementById("navRegistros");
       const navCorrales = document.getElementById("navCorrales");
       const toggleDesktopViewBtn = document.getElementById("toggleDesktopViewBtn");
+      const refrescarRegistrosBtn = document.getElementById("refrescarRegistrosBtn");
+      const refrescarCorralesBtn = document.getElementById("refrescarCorralesBtn");
 
       const mapaGrid = document.getElementById("mapaGrid");
       const mapaCanvas = document.getElementById("mapaCanvas");
@@ -699,7 +701,7 @@
       const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
       const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 
-      let imagenBase64Actual = "";
+      let imagenBase64Actual = [];
       let registros = [];
       let registrosAll = [];
       let corralesMapa = null;
@@ -719,6 +721,11 @@
       let isSavingRegistro = false;
       let currentSection = "registros";
       let desktopViewEnabled = localStorage.getItem("planillaDesktopView") === "1";
+      let registroDetailCache = new Map();
+      let lastRegistrosSyncSignature = sessionStorage.getItem("registrosSyncSignature") || "";
+      let buscadorDebounceTimer = null;
+      let ultimoQueryProcesado = "";
+      let corralesMapaLoaded = false;
 
       let zoomScale = 0.55;
       let panX = 0;
@@ -1025,11 +1032,14 @@
         for (const item of registrosAll) {
           if (normalizeRemitenteText(item.remitente) !== remitenteNormalizado) continue;
 
-          const marca = (item.marcaImagen || "").toString().trim();
-          if (!marca || seen.has(marca)) continue;
-
-          seen.add(marca);
-          marcas.push(marca);
+          // support multiple saved images per registro
+          const imgs = (item.marcaImagenes && item.marcaImagenes.length) ? item.marcaImagenes : (item.marcaImagen ? [item.marcaImagen] : []);
+          for (const m of imgs) {
+            const marca = (m || "").toString().trim();
+            if (!marca || seen.has(marca)) continue;
+            seen.add(marca);
+            marcas.push(marca);
+          }
         }
 
         return marcas;
@@ -1056,17 +1066,19 @@
 
         remitenteMarcasGrid.innerHTML = marcas
           .map((marca, index) => {
-            const selectedClass = imagenBase64Actual === marca
-              ? "ring-2 ring-app-leaf ring-offset-1"
-              : "ring-1 ring-app-ink/20";
+            const isSelected = Array.isArray(imagenBase64Actual)
+              ? imagenBase64Actual.includes(marca)
+              : imagenBase64Actual === marca;
+            const selectedClass = isSelected ? "ring-2 ring-app-leaf ring-offset-1" : "ring-1 ring-app-ink/20";
             return `
               <button
                 type="button"
-                class="group rounded-md bg-white p-1 ${selectedClass}"
+                class="zoomable-photo group rounded-md bg-white p-1 ${selectedClass}"
+                data-image-open="remitente"
                 data-remitente-marca-index="${index}"
                 title="Usar marca ${index + 1}"
               >
-                <img src="${escapeHtml(marca)}" alt="Marca ${index + 1}" class="zoomable-photo h-14 w-full cursor-pointer rounded object-cover" />
+                <img src="${escapeHtml(marca)}" alt="Marca ${index + 1}" class="h-14 w-full cursor-pointer rounded object-cover" />
               </button>
             `;
           })
@@ -1086,11 +1098,14 @@
         renderRemitenteMarcas(remitente);
         if (!marcas.length) return;
 
-        if (imagenBase64Actual && marcas.includes(imagenBase64Actual)) {
-          return;
-        }
+        // If any of the autofill marcas is already selected, keep current selection.
+        const alreadySelected = Array.isArray(imagenBase64Actual)
+          ? imagenBase64Actual.some((m) => marcas.includes(m))
+          : imagenBase64Actual && marcas.includes(imagenBase64Actual);
+        if (alreadySelected) return;
 
-        imagenBase64Actual = marcas[0];
+        // Default to the first marca (store as array for multi-select)
+        imagenBase64Actual = [marcas[0]];
         showImagePreview(imagenBase64Actual);
         renderRemitenteMarcas(remitente);
       }
@@ -1376,7 +1391,12 @@
           ? navigator.userAgentData.brands.map((item) => item.brand).join(" ")
           : "";
         const haystack = `${ua} ${uaDataBrands}`.toLowerCase();
-        return haystack.includes("android");
+        // Prefer the in-browser camera (mediaDevices) when available because
+        // it allows taking multiple photos in a session. Fall back to the
+        // native camera picker only when getUserMedia is not available.
+        const isAndroid = haystack.includes("android");
+        const supportsMediaDevices = Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        return isAndroid && !supportsMediaDevices;
       }
 
       async function openCameraCapture(target, registroId = null) {
@@ -1475,7 +1495,15 @@
             return;
           }
 
-          imagenBase64Actual = optimizedDataUrl;
+          // append captured photo to current images array (keep compatibility)
+          if (!Array.isArray(imagenBase64Actual)) imagenBase64Actual = imagenBase64Actual ? [imagenBase64Actual] : [];
+          if (imagenBase64Actual.length >= MAX_MARCA_IMAGES) {
+            showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos.`, "error");
+            closeCameraCapture();
+            return;
+          }
+          imagenBase64Actual.push(optimizedDataUrl);
+          if (imagenBase64Actual.length > MAX_MARCA_IMAGES) imagenBase64Actual = imagenBase64Actual.slice(0, MAX_MARCA_IMAGES);
           showImagePreview(imagenBase64Actual);
           closeCameraCapture();
         } catch {
@@ -1505,15 +1533,58 @@
           .replaceAll("'", "&#39;");
       }
 
-      function showImagePreview(base64) {
-        if (!base64) {
-          previewWrap.classList.add("hidden");
-          previewWrap.classList.remove("flex");
-          previewImg.src = "";
+      let lastThumbnailTouchAt = 0;
+
+      function getEventElement(event) {
+        return event && event.target && event.target instanceof Element ? event.target : null;
+      }
+
+      function handleThumbnailActivation(event, onActivate) {
+        const target = getEventElement(event);
+        if (!target) return;
+
+        const button = target.closest("button[data-image-open]");
+        if (!button) return;
+
+        if (event.type === "touchend") {
+          lastThumbnailTouchAt = Date.now();
+          event.preventDefault();
+          event.stopPropagation();
+        } else if (event.type === "click" && Date.now() - lastThumbnailTouchAt < 700) {
           return;
         }
 
-        previewImg.src = base64;
+        const result = onActivate(button);
+        if (result && typeof result.catch === "function") {
+          result.catch(() => {});
+        }
+      }
+
+      function showImagePreview(base64OrArray) {
+        let arr = [];
+        if (!base64OrArray) arr = [];
+        else if (Array.isArray(base64OrArray)) arr = base64OrArray.filter(Boolean);
+        else arr = [base64OrArray];
+
+        // respect max limit
+        arr = arr.slice(0, MAX_MARCA_IMAGES);
+
+        if (!arr.length) {
+          previewWrap.classList.add("hidden");
+          previewWrap.classList.remove("flex");
+          previewGrid.innerHTML = "";
+          return;
+        }
+
+        previewGrid.innerHTML = "";
+        for (const src of arr) {
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = "Vista previa";
+          img.className = "zoomable-photo h-14 w-14 cursor-zoom-in rounded-md object-cover";
+          previewGrid.appendChild(img);
+        }
+
         previewWrap.classList.remove("hidden");
         previewWrap.classList.add("flex");
       }
@@ -1525,10 +1596,46 @@
         imageViewerModal.classList.add("flex");
       }
 
+      async function getRegistroDetailCached(registroId) {
+        const key = String(registroId);
+        if (registroDetailCache.has(key)) {
+          return registroDetailCache.get(key);
+        }
+
+        const response = await fetch(`/api/registros/${encodeURIComponent(key)}/`);
+        if (handleAuthError(response)) return null;
+
+        const body = await response.json().catch(() => ({}));
+        const data = body.data || null;
+        if (data) {
+          registroDetailCache.set(key, data);
+        }
+        return data;
+      }
+
+      async function openRegistroImageViewer(registroId, imageIndex = 0) {
+        const registro = await getRegistroDetailCached(registroId);
+        if (!registro) return;
+
+        const fulls = Array.isArray(registro.marcaImagenesFull) && registro.marcaImagenesFull.length
+          ? registro.marcaImagenesFull
+          : (registro.marcaImagenes || []);
+        const src = fulls[imageIndex] || fulls[0] || registro.marcaImagen || "";
+        openImageViewer(src);
+      }
+
       function closeImageViewer() {
         imageViewerModal.classList.add("hidden");
         imageViewerModal.classList.remove("flex");
         imageViewerImg.src = "";
+      }
+
+      function invalidateRegistroDetailCache(registroId = null) {
+        if (!registroId) {
+          registroDetailCache.clear();
+          return;
+        }
+        registroDetailCache.delete(String(registroId));
       }
 
       function openDeleteConfirmModal(message, title = "Confirmar eliminacion") {
@@ -1633,7 +1740,7 @@
         setEstadoSelection(estadoOptions, registro.estado || "");
         document.getElementById("observaciones").value = registro.observaciones || "";
 
-        imagenBase64Actual = registro.marcaImagen || "";
+        imagenBase64Actual = (registro.marcaImagenes && registro.marcaImagenes.length) ? registro.marcaImagenes : (registro.marcaImagen ? [registro.marcaImagen] : []);
         showImagePreview(imagenBase64Actual);
         renderRemitenteMarcas(normalizeRemitenteText(registro.remitente));
         marcaInput.value = "";
@@ -1696,7 +1803,21 @@
       }
 
       async function fetchRegistrosFiltered() {
-        const q = encodeURIComponent(buscadorGeneral.value.trim());
+        const rawQuery = buscadorGeneral.value.trim();
+        if (!rawQuery) {
+          ultimoQueryProcesado = "";
+          registros = Array.isArray(registrosAll) ? registrosAll.slice() : [];
+          renderCards();
+          return;
+        }
+
+        if (rawQuery === ultimoQueryProcesado) {
+          return;
+        }
+
+        ultimoQueryProcesado = rawQuery;
+
+        const q = encodeURIComponent(rawQuery);
         const response = await fetch(`/api/registros/?q=${q}`);
         if (handleAuthError(response)) return;
         const body = await response.json();
@@ -1714,6 +1835,10 @@
       }
 
       async function fetchCorralesMapa() {
+        if (corralesMapaLoaded) {
+          return;
+        }
+
         const response = await fetch("/api/corrales/mapa/");
         if (handleAuthError(response)) return;
         const body = await response.json();
@@ -1722,10 +1847,49 @@
         pasillosDisponibles = corralesMapa.pasillos || [];
         syncUbicacionesDatalist();
         renderMapaCorrales(true);
+        corralesMapaLoaded = true;
+      }
+
+      async function fetchRegistrosSyncMeta() {
+        const response = await fetch("/api/registros/ultimos-cambios/");
+        if (handleAuthError(response)) return null;
+        const body = await response.json().catch(() => ({}));
+        return body.data || null;
       }
 
       async function refreshAllData() {
-        await Promise.all([fetchRegistrosFiltered(), fetchRegistrosAll(), fetchCorralesMapa()]);
+        const meta = await fetchRegistrosSyncMeta();
+        const signature = meta && meta.signature ? meta.signature : "";
+        const hasDataLoaded = (registrosAll && registrosAll.length) || (registros && registros.length);
+        const unchanged = Boolean(signature) && signature === lastRegistrosSyncSignature && hasDataLoaded;
+
+        if (unchanged) {
+          if (selectedCorral) {
+            renderCorralDetalle(selectedCorral);
+          }
+          updateTotalCabesasCorreales();
+          return;
+        }
+
+        invalidateRegistroDetailCache();
+        const query = buscadorGeneral.value.trim();
+
+        if (query) {
+          await Promise.all([fetchRegistrosFiltered(), fetchRegistrosAll()]);
+        } else {
+          await fetchRegistrosAll();
+          registros = Array.isArray(registrosAll) ? registrosAll.slice() : [];
+          renderCards();
+        }
+
+        if (!corralesMapaLoaded) {
+          await fetchCorralesMapa();
+        }
+
+        lastRegistrosSyncSignature = signature || lastRegistrosSyncSignature;
+        if (lastRegistrosSyncSignature) {
+          sessionStorage.setItem("registrosSyncSignature", lastRegistrosSyncSignature);
+        }
         if (selectedCorral) {
           renderCorralDetalle(selectedCorral);
         }
@@ -1820,10 +1984,26 @@
                         </div>`
                   }
 
-                  <div class="mt-4 flex items-center gap-2">
-                    <button type="button" data-action="edit" data-id="${item.id}" class="flex-1 rounded-md border border-app-leaf/55 bg-white px-3 py-2.5 text-sm font-extrabold text-app-ink shadow-sm hover:bg-slate-50 transition-all duration-200">Editar</button>
-                    <button type="button" data-action="delete" data-id="${item.id}" class="flex-1 rounded-md bg-app-clay px-3 py-2.5 text-sm font-extrabold text-white shadow-md hover:opacity-90 transition-all duration-200">Eliminar</button>
-                  </div>
+                ${(() => {
+                  const imgs = (item.marcaImagenes && item.marcaImagenes.length) ? item.marcaImagenes : (item.marcaImagen ? [item.marcaImagen] : []);
+                  if (imgs.length) {
+                      const imgsHtml = imgs.map((s, index) => `
+                        <button type="button" data-image-open="card" data-registro-id="${item.id}" data-image-index="${index}" class="zoomable-photo shrink-0 rounded-lg border border-transparent p-0 transition-transform active:scale-[0.98]">
+                          <img src="${s}" alt="Marca del lote" class="h-14 w-14 cursor-zoom-in rounded-lg object-cover shadow-sm border border-app-leaf/20" />
+                        </button>
+                      `).join("");
+                    return `<div class="mt-3 flex items-center justify-center gap-2 border-t border-app-leaf/10 pt-3">${imgsHtml}</div>`;
+                  }
+                  return `<div class="mt-3 border-t border-app-leaf/10 pt-3 text-center">
+                            <p class="text-xs font-semibold text-app-ink/70">Sin foto</p>
+                            <button type="button" data-action="add-photo" data-id="${item.id}" class="mt-1.5 rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Agregar foto</button>
+                          </div>`;
+                })()}
+
+                <div class="mt-4 flex items-center gap-2">
+                  <button type="button" data-action="edit" data-id="${item.id}" class="flex-1 rounded-md border border-app-leaf/55 bg-white px-3 py-2.5 text-sm font-extrabold text-app-ink shadow-sm hover:bg-slate-50 transition-all duration-200">Editar</button>
+                  <button type="button" data-action="delete" data-id="${item.id}" class="flex-1 rounded-md bg-app-clay px-3 py-2.5 text-sm font-extrabold text-white shadow-md hover:opacity-90 transition-all duration-200">Eliminar</button>
+                </div>
                 </div>
               </article>
             `,
@@ -1932,15 +2112,22 @@
 
         corralDetalleContainer.innerHTML = lotes
           .map((item) => {
-            const marcaHtml = item.marcaImagen
-              ? `<div class="mt-3 border-t border-app-leaf/20 pt-3 flex flex-col items-center">
-                  <img src="${item.marcaImagen}" alt="Marca" class="zoomable-photo h-14 w-14 cursor-zoom-in rounded object-cover border border-app-leaf/30 shadow-sm" />
-                  <button type="button" data-corrales-action="add-photo" data-id="${item.id}" class="mt-1.5 rounded-md border border-app-leaf/55 bg-white px-2.5 py-1 text-[11px] font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Cambiar foto</button>
-                </div>`
-              : `<div class="mt-3 border-t border-app-leaf/20 pt-3 text-center">
-                  <p class="text-xs font-semibold text-app-ink/75">Sin foto</p>
-                  <button type="button" data-corrales-action="add-photo" data-id="${item.id}" class="mt-1 rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Agregar foto</button>
-                </div>`;
+            const imgs = (item.marcaImagenes && item.marcaImagenes.length) ? item.marcaImagenes : (item.marcaImagen ? [item.marcaImagen] : []);
+            const marcaHtml = imgs.length
+              ? (() => {
+                  const imgsHtml = imgs.map((s, index) => `
+                    <button type="button" data-image-open="corral" data-registro-id="${item.id}" data-image-index="${index}" class="zoomable-photo shrink-0 rounded-lg border border-transparent p-0 transition-transform active:scale-[0.98]">
+                      <img src="${s}" alt="Marca del lote" class="h-14 w-14 cursor-zoom-in rounded-lg object-cover border border-app-leaf/20 shadow-sm" />
+                    </button>
+                  `).join("");
+                  return `<div class="mt-3 flex flex-wrap items-center justify-center gap-2 border-t border-app-leaf/10 pt-3">${imgsHtml}
+                            <button type="button" data-corrales-action="add-photo" data-id="${item.id}" class="rounded-md border border-app-leaf/55 bg-white px-2.5 py-1 text-[11px] font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Cambiar foto</button>
+                          </div>`;
+                })()
+              : `<div class="mt-3 border-t border-app-leaf/10 pt-3 text-center">
+                   <p class="text-xs font-semibold text-app-ink/70">Sin foto</p>
+                   <button type="button" data-corrales-action="add-photo" data-id="${item.id}" class="mt-1 rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Agregar foto</button>
+                 </div>`;
 
             return `
               <article class="rounded-md border border-app-leaf/35 bg-white/98 p-4 text-center shadow-sm flex flex-col justify-between">
@@ -2024,42 +2211,168 @@
         await refreshAllData();
       }
 
-      marcaInput.addEventListener("change", (event) => {
-        const file = event.target.files && event.target.files[0];
-        if (!file) return;
+      marcaInput.addEventListener("change", async (event) => {
+        let files = event.target.files ? Array.from(event.target.files) : [];
+        if (!files.length) return;
 
-        fileToOptimizedImageData(file)
-          .then((optimizedDataUrl) => {
-            imagenBase64Actual = optimizedDataUrl;
-            showImagePreview(imagenBase64Actual);
-          })
-          .catch(() => {
-            showMessage("No se pudo procesar la foto. Intenta otra vez.", "error");
-          });
-      });
+        // Limit incoming files
+        if (files.length > MAX_MARCA_IMAGES) {
+          showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos. Se tomarán las primeras ${MAX_MARCA_IMAGES}.`, "error");
+          files = files.slice(0, MAX_MARCA_IMAGES);
+        }
 
-      quitarImagenBtn.addEventListener("click", () => {
-        imagenBase64Actual = "";
-        marcaInput.value = "";
-        showImagePreview("");
-      });
+        try {
+          const results = await Promise.all(files.map((f) => fileToOptimizedImageData(f)));
 
-      previewImg.addEventListener("click", () => {
-        if (previewImg.src) {
-          openImageViewer(previewImg.src);
+          // Append to existing images instead of replacing (fixes Android camera single-file behavior)
+          const existing = Array.isArray(imagenBase64Actual) ? imagenBase64Actual.slice() : (imagenBase64Actual ? [imagenBase64Actual] : []);
+          let merged = existing.concat(results).filter(Boolean);
+          if (merged.length > MAX_MARCA_IMAGES) {
+            showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos. Se conservarán las primeras ${MAX_MARCA_IMAGES}.`, "error");
+            merged = merged.slice(0, MAX_MARCA_IMAGES);
+          }
+          imagenBase64Actual = merged;
+          showImagePreview(imagenBase64Actual);
+        } catch {
+          showMessage("No se pudo procesar la foto. Intenta otra vez.", "error");
         }
       });
 
-      cardsContainer.addEventListener("click", (event) => {
-        const image = event.target.closest("img.zoomable-photo");
-        if (!image) return;
-        openImageViewer(image.src);
+      quitarImagenBtn.addEventListener("click", () => {
+        imagenBase64Actual = [];
+        marcaInput.value = "";
+        showImagePreview([]);
       });
 
-      corralDetalleContainer.addEventListener("click", (event) => {
-        const image = event.target.closest("img.zoomable-photo");
-        if (!image) return;
-        openImageViewer(image.src);
+      previewGrid.addEventListener("click", (event) => {
+        handleThumbnailActivation(event, (button) => openImageViewer(button.querySelector("img")?.src || ""));
+      });
+
+      previewGrid.addEventListener("touchend", (event) => {
+        handleThumbnailActivation(event, (button) => openImageViewer(button.querySelector("img")?.src || ""));
+      }, { passive: false });
+
+      previewGrid.addEventListener("pointerup", (event) => {
+        handleThumbnailActivation(event, (button) => openImageViewer(button.querySelector("img")?.src || ""));
+      });
+
+      cardsContainer.addEventListener("click", async (event) => {
+        const image = event.target.closest("button[data-image-open]");
+        if (image) {
+          handleThumbnailActivation(event, async (thumb) => {
+            const registroId = thumb.dataset.registroId;
+            const imageIndex = Number(thumb.dataset.imageIndex || 0);
+            if (registroId) {
+              await openRegistroImageViewer(registroId, imageIndex);
+              return;
+            }
+            openImageViewer(thumb.querySelector("img")?.src || "");
+          });
+          return;
+        }
+
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        const id = button.dataset.id;
+        const action = button.dataset.action;
+        const registro = registrosAll.find((item) => String(item.id) === String(id));
+        if (!registro) return;
+
+        if (action === "edit") {
+          setEditState(registro);
+          return;
+        }
+
+        if (action === "add-photo") {
+          openCameraCapture("quick", id);
+          return;
+        }
+
+        if (action === "delete") {
+          const ok = await openDeleteConfirmModal("Eliminar este registro?");
+          if (!ok) return;
+
+          const response = await fetch(`/api/registros/${id}/`, {
+            method: "DELETE",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+          });
+
+          if (handleAuthError(response)) return;
+          if (!response.ok) {
+            showMessage("No se pudo eliminar el registro.", "error");
+            return;
+          }
+
+          showMessage("Registro eliminado.");
+          if (registroIdInput.value === id) {
+            resetFormState();
+          }
+          invalidateRegistroDetailCache(id);
+          await refreshAllData();
+        }
+      });
+
+      cardsContainer.addEventListener("touchend", (event) => {
+        handleThumbnailActivation(event, async (thumb) => {
+          const registroId = thumb.dataset.registroId;
+          const imageIndex = Number(thumb.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(thumb.querySelector("img")?.src || "");
+        });
+      }, { passive: false });
+
+      cardsContainer.addEventListener("pointerup", (event) => {
+        handleThumbnailActivation(event, async (thumb) => {
+          const registroId = thumb.dataset.registroId;
+          const imageIndex = Number(thumb.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(thumb.querySelector("img")?.src || "");
+        });
+      });
+
+      corralDetalleContainer.addEventListener("click", async (event) => {
+        handleThumbnailActivation(event, async (image) => {
+          const registroId = image.dataset.registroId;
+          const imageIndex = Number(image.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(image.querySelector("img")?.src || "");
+        });
+      });
+
+      corralDetalleContainer.addEventListener("touchend", (event) => {
+        handleThumbnailActivation(event, async (image) => {
+          const registroId = image.dataset.registroId;
+          const imageIndex = Number(image.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(image.querySelector("img")?.src || "");
+        });
+      }, { passive: false });
+
+      corralDetalleContainer.addEventListener("pointerup", (event) => {
+        handleThumbnailActivation(event, async (image) => {
+          const registroId = image.dataset.registroId;
+          const imageIndex = Number(image.dataset.imageIndex || 0);
+          if (registroId) {
+            await openRegistroImageViewer(registroId, imageIndex);
+            return;
+          }
+          openImageViewer(image.querySelector("img")?.src || "");
+        });
       });
 
       cerrarImageViewerBtn.addEventListener("click", () => {
@@ -2163,14 +2476,32 @@
           });
 
           if (handleAuthError(response)) return;
-          const body = await response.json().catch(() => ({}));
+          let body = {};
+          try {
+            body = await response.json();
+          } catch (err) {
+            // ignore json parse error
+          }
+
           if (!response.ok) {
-            showMessage(body.error || "No se pudo guardar el registro.", "error");
+            // Temporary debug: show status and server response text if available
+            let text = body && body.error ? body.error : null;
+            if (!text) {
+              try {
+                const txt = await response.text();
+                if (txt) text = txt;
+              } catch (e) {
+                // ignore
+              }
+            }
+            console.error('Save registro failed', response.status, text, body);
+            showMessage(text || `No se pudo guardar el registro. (status ${response.status})`, "error");
             return;
           }
 
           showMessage(id ? "Registro actualizado." : "Registro creado.");
           resetFormState();
+          invalidateRegistroDetailCache(id || null);
           await refreshAllData();
         } finally {
           setGuardarLoading(false);
@@ -2230,12 +2561,16 @@
           if (registroIdInput.value === id) {
             resetFormState();
           }
+          invalidateRegistroDetailCache(id);
           await refreshAllData();
         }
       });
 
       buscadorGeneral.addEventListener("input", () => {
-        fetchRegistrosFiltered();
+        window.clearTimeout(buscadorDebounceTimer);
+        buscadorDebounceTimer = window.setTimeout(() => {
+          fetchRegistrosFiltered();
+        }, 300);
       });
 
       ordenRegistros.addEventListener("change", () => {
@@ -2272,7 +2607,19 @@
         const marca = remitenteMarcasActuales[index] || "";
         if (!marca) return;
 
-        imagenBase64Actual = marca;
+        // Toggle selection in imagenBase64Actual (multi-select)
+        if (!Array.isArray(imagenBase64Actual)) imagenBase64Actual = imagenBase64Actual ? [imagenBase64Actual] : [];
+        const pos = imagenBase64Actual.indexOf(marca);
+        if (pos === -1) {
+          if (imagenBase64Actual.length >= MAX_MARCA_IMAGES) {
+            showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos.`, "error");
+            return;
+          }
+          imagenBase64Actual.push(marca);
+        } else {
+          imagenBase64Actual.splice(pos, 1);
+        }
+
         showImagePreview(imagenBase64Actual);
         renderRemitenteMarcas(normalizeRemitenteText(remitenteInput.value));
       });
@@ -2445,6 +2792,18 @@
 
       navRegistros.addEventListener("click", () => setSection("registros"));
       navCorrales.addEventListener("click", () => setSection("corrales"));
+
+      function refreshPage() {
+        refreshAllData();
+      }
+
+      if (refrescarRegistrosBtn) {
+        refrescarRegistrosBtn.addEventListener("click", refreshPage);
+      }
+
+      if (refrescarCorralesBtn) {
+        refrescarCorralesBtn.addEventListener("click", refreshPage);
+      }
 
       zoomInBtn.addEventListener("click", () => {
         const viewportWidth = mapaViewport.clientWidth - 16;
