@@ -526,7 +526,7 @@
                   </button>
                 </div>
 
-                <div class="mb-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-center">
+                <div class="mb-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-center h-[92px] flex flex-col justify-center">
                   <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Identificador</p>
                   <h3 id="corralDetalleTitulo" class="mt-1 text-xl sm:text-2xl font-black text-app-ink">Selecciona un corral</h3>
                   <p id="corralDetalleSubtitulo" class="mt-1 text-[11px] font-bold uppercase tracking-wider text-app-leaf"></p>
@@ -1910,7 +1910,14 @@
 
       function renderCards() {
         const orden = ordenRegistros ? ordenRegistros.value : "reciente";
-        const registrosOrdenados = [...registros];
+        let filtered = [...registros];
+
+        // Filtrar automaticamente por corral seleccionado si esta activo
+        if (selectedCorral) {
+          filtered = filtered.filter((item) => (item.corral || "").toString().trim().toUpperCase() === selectedCorral.toUpperCase());
+        }
+
+        const registrosOrdenados = filtered;
 
         if (orden === "corral_asc") {
           registrosOrdenados.splice(0, registrosOrdenados.length, ...sortRegistrosByCorral(registrosOrdenados));
@@ -2091,84 +2098,32 @@
         }
         
         nuevoEnCorralBtn.classList.remove("hidden");
+        corralDetalleContainer.innerHTML = "";
+        
+        // Trigger records list filter update
+        renderCards();
+      }
 
-        if (!lotes.length) {
-          corralDetalleSubtitulo.textContent = "0 lotes";
-          if (selectedCorralCount) {
-            selectedCorralCount.textContent = "0 lotes";
-          }
-          corralDetalleContainer.innerHTML = `
-            <article class="rounded-xl border border-dashed border-slate-300 bg-white/80 p-5 text-center shadow-sm">
-              <svg class="mx-auto h-7 w-7 text-slate-400 mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-              </svg>
-              <p class="text-xs font-bold text-slate-400">Este corral no tiene lotes cargados.</p>
-            </article>
-          `;
-          return;
+      function deselectCorral() {
+        selectedCorral = "";
+        renderMapaCorrales();
+
+        corralDetalleTitulo.textContent = "Selecciona un corral";
+        corralDetalleSubtitulo.innerHTML = "&nbsp;";
+        const selectedCorralSummary = document.getElementById("selectedCorralSummary");
+        const selectedCorralCount = document.getElementById("selectedCorralCount");
+        if (selectedCorralSummary) {
+          selectedCorralSummary.textContent = "-";
+        }
+        if (selectedCorralCount) {
+          selectedCorralCount.textContent = "-";
         }
 
-        corralDetalleContainer.innerHTML = lotes
-          .map((item) => {
-            const imgs = (item.marcaImagenes && item.marcaImagenes.length) ? item.marcaImagenes : (item.marcaImagen ? [item.marcaImagen] : []);
-            const marcaHtml = imgs.length
-              ? (() => {
-                  const imgsHtml = imgs.map((s, index) => `
-                    <button type="button" data-image-open="corral" data-registro-id="${item.id}" data-image-index="${index}" class="zoomable-photo shrink-0 rounded-lg border border-transparent p-0 transition-transform active:scale-[0.98]">
-                      <img src="${s}" alt="Marca del lote" class="h-14 w-14 cursor-zoom-in rounded-lg object-cover border border-app-leaf/20 shadow-sm" />
-                    </button>
-                  `).join("");
-                  return `<div class="mt-3 flex flex-wrap items-center justify-center gap-2 border-t border-app-leaf/10 pt-3">${imgsHtml}
-                            <button type="button" data-corrales-action="add-photo" data-id="${item.id}" class="rounded-md border border-app-leaf/55 bg-white px-2.5 py-1 text-[11px] font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Cambiar foto</button>
-                          </div>`;
-                })()
-              : `<div class="mt-3 border-t border-app-leaf/10 pt-3 text-center">
-                   <p class="text-xs font-semibold text-app-ink/70">Sin foto</p>
-                   <button type="button" data-corrales-action="add-photo" data-id="${item.id}" class="mt-1 rounded-md border border-app-leaf/55 bg-white px-3 py-1.5 text-xs font-extrabold text-app-leaf shadow-sm hover:bg-slate-50 transition-all duration-200">Agregar foto</button>
-                 </div>`;
+        nuevoEnCorralBtn.classList.add("hidden");
+        corralDetalleContainer.innerHTML = "";
 
-            return `
-              <article class="rounded-md border border-app-leaf/35 bg-white/98 p-4 text-center shadow-sm flex flex-col justify-between">
-                <div>
-                  <p class="text-[10px] font-bold uppercase tracking-[.16em] text-app-ink/70">Corral</p>
-                  <h3 class="mt-1 text-5xl font-extrabold leading-none text-app-ink">${escapeHtml(emptyText(item.corral, "-"))}</h3>
-
-                  <div class="mt-4 space-y-2 border-t border-app-leaf/20 pt-3">
-                    <div>
-                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
-                      <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "Sin categoría"))}</p>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-2">
-                      <div>
-                        <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Cantidad</p>
-                        <p class="mt-1 text-base font-semibold text-app-ink">${item.cantidad !== null ? item.cantidad : "-"}</p>
-                      </div>
-                      <div>
-                        <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Estado</p>
-                        <p class="mt-1 text-base font-semibold text-app-ink">${escapeHtml(emptyText(item.estado, "Sin estado"))}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="mt-3 border-t border-app-leaf/20 pt-3">
-                    <p class="text-lg font-bold text-app-ink">${escapeHtml(emptyText(item.remitente, "Sin remitente"))}</p>
-                    <p class="mt-1 text-sm font-semibold text-app-ink/65">${escapeHtml(emptyText(item.observaciones, "Sin observaciones"))}</p>
-                  </div>
-                </div>
-
-                <div>
-                  ${marcaHtml}
-
-                  <div class="mt-4 flex items-center gap-2">
-                    <button type="button" data-corrales-action="edit" data-id="${item.id}" class="flex-1 rounded-md border border-app-leaf/55 bg-white px-3 py-2.5 text-sm font-extrabold text-app-ink shadow-sm hover:bg-slate-50 transition-all duration-200">Editar</button>
-                    <button type="button" data-corrales-action="delete" data-id="${item.id}" class="flex-1 rounded-md bg-app-clay px-3 py-2.5 text-sm font-extrabold text-white shadow-md hover:opacity-90 transition-all duration-200">Eliminar</button>
-                  </div>
-                </div>
-              </article>
-            `;
-          })
-          .join("");
+        // Trigger records list filter update
+        renderCards();
       }
 
       async function actualizarMarcaRegistro(registroId, marcaImagen) {
@@ -2625,15 +2580,13 @@
       habilitarPasillosInput.addEventListener("change", () => {
         syncUbicacionesDatalist();
         if (!pasillosHabilitados() && isPasilloValue(selectedCorral)) {
-          selectedCorral = "";
-          corralDetalleTitulo.textContent = "Selecciona un corral";
-          corralDetalleContainer.innerHTML = "";
-          nuevoEnCorralBtn.classList.add("hidden");
+          deselectCorral();
+        } else {
+          renderMapaCorrales();
         }
         if (!pasillosHabilitados() && isPasilloValue(corralInput.value)) {
           showMessage("Pasillos deshabilitados. Activa la casilla en Corrales para usarlos.", "error");
         }
-        renderMapaCorrales();
       });
 
       mapaGrid.addEventListener("click", (event) => {
@@ -2642,8 +2595,16 @@
           return;
         }
         const target = event.target.closest("button[data-map-corral]");
-        if (!target) return;
-        renderCorralDetalle(target.dataset.mapCorral);
+        if (!target) {
+          deselectCorral();
+          return;
+        }
+        const targetCorral = target.dataset.mapCorral;
+        if (selectedCorral === targetCorral) {
+          deselectCorral();
+        } else {
+          renderCorralDetalle(targetCorral);
+        }
       });
 
       corralDetalleContainer.addEventListener("click", async (event) => {
