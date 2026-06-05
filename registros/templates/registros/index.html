@@ -192,11 +192,25 @@
             grid-row: 1;
             display: flex !important;
             flex-direction: column;
-            gap: 1.25rem;
+            gap: 0.75rem;
             min-width: 0;
             height: 100%;
             min-height: 0;
-            overflow-y: auto;
+            overflow-y: hidden !important;
+          }
+
+          body.desktop-body .mapa-viewport {
+            height: 280px !important;
+          }
+
+          body.desktop-body #corralesSection > div {
+            padding: 1rem !important;
+          }
+
+          body.desktop-body #corralesSection label {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+            margin-bottom: 0 !important;
           }
 
           .desktop-view #registrosSection {
@@ -439,6 +453,9 @@
                       </svg>
                     </span>
                     <h2 class="text-base font-black text-app-ink">Lista de Lotes</h2>
+                    <button id="limpiarFiltroCorralBtn" type="button" class="hidden rounded-full bg-app-mint/30 px-2 py-0.5 text-[10px] font-black uppercase text-app-leaf hover:bg-app-mint/50 transition-colors" title="Quitar filtro de corral">
+                      Todos
+                    </button>
                   </div>
                   
                   <button id="exportPdfBtn" type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-sm font-extrabold text-app-ink shadow-sm transition-all active:scale-[0.98]">
@@ -702,6 +719,7 @@
       const ubicacionesDatalist = document.getElementById("ubicacionesDatalist");
       const marcaRapidaInput = document.getElementById("marcaRapidaInput");
       const exportPdfBtn = document.getElementById("exportPdfBtn");
+      const limpiarFiltroCorralBtn = document.getElementById("limpiarFiltroCorralBtn");
 
       const registrosSection = document.getElementById("registrosSection");
       const corralesSection = document.getElementById("corralesSection");
@@ -2142,6 +2160,10 @@
         
         nuevoEnCorralBtn.classList.remove("hidden");
         corralDetalleContainer.innerHTML = "";
+        if (limpiarFiltroCorralBtn) {
+          limpiarFiltroCorralBtn.textContent = `Corral ${corral} ✕`;
+          limpiarFiltroCorralBtn.classList.remove("hidden");
+        }
         
         // Trigger records list filter update
         renderCards();
@@ -2164,6 +2186,9 @@
 
         nuevoEnCorralBtn.classList.add("hidden");
         corralDetalleContainer.innerHTML = "";
+        if (limpiarFiltroCorralBtn) {
+          limpiarFiltroCorralBtn.classList.add("hidden");
+        }
 
         // Trigger records list filter update
         renderCards();
@@ -2794,6 +2819,10 @@
 
       navRegistros.addEventListener("click", () => setSection("registros"));
       navCorrales.addEventListener("click", () => setSection("corrales"));
+
+      if (limpiarFiltroCorralBtn) {
+        limpiarFiltroCorralBtn.addEventListener("click", deselectCorral);
+      }
 
       function refreshPage() {
         refreshAllData();
