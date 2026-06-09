@@ -92,7 +92,7 @@ class Registro(models.Model):
 					image = image.convert("RGB")
 				image.thumbnail((max_size, max_size))
 				buffer = BytesIO()
-				image.save(buffer, format="WEBP", quality=72, method=6)
+				image.save(buffer, format="WEBP", quality=70, method=2)
 				thumb = base64.b64encode(buffer.getvalue()).decode("ascii")
 				return f"data:image/webp;base64,{thumb}"
 		except Exception:

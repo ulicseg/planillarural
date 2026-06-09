@@ -1402,30 +1402,47 @@
           img.src = objectUrl;
         });
 
-        const maxSize = 1920;
-        const width = image.naturalWidth || image.width || maxSize;
-        const height = image.naturalHeight || image.height || maxSize;
-        const scale = Math.min(1, maxSize / Math.max(width, height));
-        const targetWidth = Math.max(1, Math.round(width * scale));
-        const targetHeight = Math.max(1, Math.round(height * scale));
+        const width = image.naturalWidth || image.width || 1200;
+        const height = image.naturalHeight || image.height || 1200;
 
-        const canvas = document.createElement("canvas");
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
+        // 1. Generate optimized full image (max size 1200, quality 0.8)
+        const maxSizeFull = 1200;
+        const scaleFull = Math.min(1, maxSizeFull / Math.max(width, height));
+        const targetWFull = Math.max(1, Math.round(width * scaleFull));
+        const targetHFull = Math.max(1, Math.round(height * scaleFull));
 
-        const context = canvas.getContext("2d");
-        if (!context) {
-          throw new Error("No se pudo preparar la imagen.");
+        const canvasFull = document.createElement("canvas");
+        canvasFull.width = targetWFull;
+        canvasFull.height = targetHFull;
+        const ctxFull = canvasFull.getContext("2d");
+        if (!ctxFull) throw new Error("No se pudo preparar la imagen.");
+        ctxFull.drawImage(image, 0, 0, targetWFull, targetHFull);
+        let fullDataUrl = canvasFull.toDataURL("image/webp", 0.8);
+        if (!fullDataUrl.startsWith("data:image/webp")) {
+          fullDataUrl = canvasFull.toDataURL("image/jpeg", 0.8);
         }
 
-        context.drawImage(image, 0, 0, targetWidth, targetHeight);
+        // 2. Generate thumbnail image (max size 260, quality 0.7)
+        const maxSizeThumb = 260;
+        const scaleThumb = Math.min(1, maxSizeThumb / Math.max(width, height));
+        const targetWThumb = Math.max(1, Math.round(width * scaleThumb));
+        const targetHThumb = Math.max(1, Math.round(height * scaleThumb));
 
-        const webpDataUrl = canvas.toDataURL("image/webp", 0.9);
-        if (webpDataUrl.startsWith("data:image/webp")) {
-          return webpDataUrl;
+        const canvasThumb = document.createElement("canvas");
+        canvasThumb.width = targetWThumb;
+        canvasThumb.height = targetHThumb;
+        const ctxThumb = canvasThumb.getContext("2d");
+        if (!ctxThumb) throw new Error("No se pudo preparar la miniatura.");
+        ctxThumb.drawImage(image, 0, 0, targetWThumb, targetHThumb);
+        let thumbDataUrl = canvasThumb.toDataURL("image/webp", 0.7);
+        if (!thumbDataUrl.startsWith("data:image/webp")) {
+          thumbDataUrl = canvasThumb.toDataURL("image/jpeg", 0.7);
         }
 
-        return canvas.toDataURL("image/jpeg", 0.9);
+        return {
+          full: fullDataUrl,
+          thumb: thumbDataUrl
+        };
       }
 
       function setCameraCaptureReady(ready, statusText = "") {
@@ -1672,8 +1689,9 @@
         }
 
         previewGrid.innerHTML = "";
-        for (const src of arr) {
+        for (const item of arr) {
           const img = document.createElement("img");
+          const src = (typeof item === "object" && item !== null) ? (item.thumb || item.full) : item;
           img.src = src;
           img.alt = "Vista previa";
           img.className = "zoomable-photo h-14 w-14 cursor-zoom-in rounded-md object-cover";
