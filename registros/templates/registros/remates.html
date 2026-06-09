@@ -24,8 +24,7 @@
 
         {% include "registros/partials/remate_selected.html" %}
 
-        {% if es_operador %}
-        <form class="mt-4 grid gap-2 rounded-lg border border-app-leaf/25 bg-white/90 p-3" method="post" action="{% url 'crear-remate' %}">
+        <form class="mt-4 grid gap-2 rounded-lg border border-app-leaf/25 bg-white/90 p-3" method="post" action="{% url 'crear-remate' %}" {% if not es_operador %}onsubmit="alert('Acceso denegado. El rol de invitado es de solo lectura y no permite crear remates.'); return false;"{% endif %}>
           {% csrf_token %}
           <div class="grid gap-2 sm:grid-cols-3">
             <input name="nombre" type="text" class="rounded-md border border-app-leaf/45 bg-white px-3 py-2.5 text-sm font-semibold" placeholder="Nombre del remate" required />
@@ -34,7 +33,6 @@
           </div>
           <button type="submit" class="rounded-md bg-app-leaf px-4 py-2.5 text-sm font-extrabold text-white">Crear y seleccionar</button>
         </form>
-        {% endif %}
       </section>
 
       <section class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -62,12 +60,10 @@
                       {% if es_operador %}Trabajar aquí{% else %}Observar aquí{% endif %}
                     </button>
                   </form>
-                  {% if es_operador %}
-                  <form method="post" action="{% url 'finalizar-remate' remate.id %}">
+                  <form method="post" action="{% url 'finalizar-remate' remate.id %}" {% if not es_operador %}onsubmit="alert('Acceso denegado. El rol de invitado es de solo lectura y no permite finalizar remates.'); return false;"{% endif %}>
                     {% csrf_token %}
                     <button type="submit" class="rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm font-bold">Finalizar</button>
                   </form>
-                  {% endif %}
                 </div>
               </div>
             {% empty %}
