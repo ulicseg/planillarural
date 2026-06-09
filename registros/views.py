@@ -199,19 +199,17 @@ def resolve_marca_imagen_list(payload_value, current_registro=None):
 
 @login_required
 def index(request):
-	if not is_operador(request.user):
-		return HttpResponseForbidden("Usuario sin permisos de operador.")
 	remate = get_remate_activo(request.user)
 	if remate is None:
 		return redirect("remates-home")
-	return render(request, "registros/index.html", {"remate_activo": remate})
+	return render(request, "registros/index.html", {
+		"remate_activo": remate,
+		"es_operador": is_operador(request.user),
+	})
 
 
 @login_required
 def remates_home(request):
-	if not is_operador(request.user):
-		return HttpResponseForbidden("Usuario sin permisos de operador.")
-
 	preferencia = get_preferencia_remate(request.user)
 	remates = Remate.objects.all()
 	return render(
@@ -221,6 +219,7 @@ def remates_home(request):
 			"remate_seleccionado": preferencia.remate,
 			"remates_abiertos": remates.filter(finalizado=False),
 			"remates_finalizados": remates.filter(finalizado=True),
+			"es_operador": is_operador(request.user),
 		},
 	)
 
@@ -253,9 +252,6 @@ def crear_remate(request):
 @login_required
 @require_http_methods(["POST"])
 def seleccionar_remate(request, remate_id):
-	if not is_operador(request.user):
-		return HttpResponseForbidden("Usuario sin permisos de operador.")
-
 	remate = get_object_or_404(Remate, id=remate_id)
 	set_remate_seleccionado(request.user, remate)
 	return redirect("home")

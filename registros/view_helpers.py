@@ -53,7 +53,8 @@ def require_api_login(view_func):
 		if not request.user.is_authenticated:
 			return JsonResponse({"error": "Autenticacion requerida."}, status=401)
 		if not is_operador(request.user):
-			return JsonResponse({"error": "Usuario sin permisos de operador."}, status=403)
+			if request.method != "GET":
+				return JsonResponse({"error": "Acceso denegado. Rol de invitado es de solo lectura."}, status=403)
 		return view_func(request, *args, **kwargs)
 
 	return wrapped

@@ -27,15 +27,72 @@ class RegistrosApiTests(TestCase):
 		self.assertEqual(web_response.status_code, 302)
 		self.assertIn(reverse("login"), web_response.url)
 
-	def test_denies_authenticated_non_operator(self):
+	def test_guest_role_permissions(self):
 		self.client.logout()
 		self.client.login(username="visitante", password="Clave12345")
 
-		api_response = self.client.get(reverse("api-registros"))
-		self.assertEqual(api_response.status_code, 403)
-
+		# Guest can view the home page
 		web_response = self.client.get(reverse("home"))
-		self.assertEqual(web_response.status_code, 403)
+		self.assertEqual(web_response.status_code, 200)
+
+		# Guest can view the remates page
+		remates_response = self.client.get(reverse("remates-home"))
+		self.assertEqual(remates_response.status_code, 200)
+
+		# The guest can change the selected auction to observe
+		select_response = self.client.post(reverse("seleccionar-remate", kwargs={"remate_id": self.remate.id}))
+		self.assertEqual(select_response.status_code, 302)
+
+		# Guest can call GET API endpoints
+		api_list_response = self.client.get(reverse("api-registros"))
+		self.assertEqual(api_list_response.status_code, 200)
+
+		api_map_response = self.client.get(reverse("api-corrales-mapa"))
+		self.assertEqual(api_map_response.status_code, 200)
+
+		# Guest is blocked (403 Forbidden) from POST write operations
+		api_post_response = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "12",
+				"remitente": "Jose Luis Gutierrez",
+				"categoria": "Vaca",
+				"cantidad": 30,
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(api_post_response.status_code, 403)
+
+		# Guest is blocked (403 Forbidden) from PUT edit operations
+		registro = Registro.objects.create(remate=self.remate, corral="10", remitente="Pedro")
+		api_put_response = self.client.put(
+			reverse("api-registro-detail", kwargs={"registro_id": registro.id}),
+			data={
+				"corral": "11",
+				"remitente": "Pedro Gomez",
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(api_put_response.status_code, 403)
+
+		# Guest is blocked (403 Forbidden) from DELETE operations
+		api_delete_response = self.client.delete(reverse("api-registro-detail", kwargs={"registro_id": registro.id}))
+		self.assertEqual(api_delete_response.status_code, 403)
+
+		# Guest is blocked from moving lots
+		api_move_response = self.client.post(
+			reverse("api-registro-mover", kwargs={"registro_id": registro.id}),
+			data={"destinoCorral": "12"},
+			content_type="application/json",
+		)
+		self.assertEqual(api_move_response.status_code, 403)
+
+		# Guest is blocked from creating/finalizing auctions
+		crear_remate_response = self.client.post(reverse("crear-remate"), data={"nombre": "Remate Invitado"})
+		self.assertEqual(crear_remate_response.status_code, 403)
+
+		finalizar_remate_response = self.client.post(reverse("finalizar-remate", kwargs={"remate_id": self.remate.id}))
+		self.assertEqual(finalizar_remate_response.status_code, 403)
 
 	def test_create_and_list_registro(self):
 		create_response = self.client.post(
