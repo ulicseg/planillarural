@@ -27,11 +27,18 @@ self.addEventListener("activate", (event) => {
 });
 
 function isApiCacheable(request, url) {
-  return request.method === "GET" && url.origin === self.location.origin && (
-    url.pathname === "/api/registros/" ||
-    url.pathname.startsWith("/api/registros/") ||
-    url.pathname === "/api/corrales/mapa/" ||
-    url.pathname.startsWith("/api/corrales/")
+  if (request.method !== "GET" || url.origin !== self.location.origin) {
+    return false;
+  }
+  const path = url.pathname;
+  if (path.includes("ultimos-cambios")) {
+    return false;
+  }
+  return (
+    path === "/api/registros/" ||
+    path.startsWith("/api/registros/") ||
+    path === "/api/corrales/mapa/" ||
+    path.startsWith("/api/corrales/")
   );
 }
 
@@ -55,6 +62,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (request.method !== "GET") {
+    if (url.pathname.includes("/api/") || url.pathname.includes("/remates/")) {
+      event.waitUntil(
+        caches.delete(API_CACHE)
+      );
+    }
     return;
   }
 
