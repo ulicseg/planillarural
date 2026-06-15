@@ -123,6 +123,9 @@ def resolve_marca_imagen_list(payload_value, current_registro=None):
 		else:
 			raw_items = [payload_value]
 
+	MAX_MARCA_IMAGES = 5
+	raw_items = raw_items[:MAX_MARCA_IMAGES]
+
 	resolved_items = []
 
 	for item in raw_items:

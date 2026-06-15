@@ -2732,59 +2732,6 @@
         e.preventDefault();
       }, { passive: false });
 
-      cardsContainer.addEventListener("click", async (event) => {
-        const button = event.target.closest("button[data-action]");
-        if (!button) return;
-
-        const id = button.dataset.id;
-        const action = button.dataset.action;
-        const registro = registrosAll.find((item) => String(item.id) === String(id));
-        if (!registro) return;
-
-        if (action === "edit") {
-          setEditState(registro);
-          return;
-        }
-
-        if (action === "add-photo") {
-          if (!ES_OPERADOR) {
-            showMessage("Acceso denegado. El rol de invitado es de solo lectura y no permite subir fotos.", "error");
-            return;
-          }
-          openCameraCapture("quick", id);
-          return;
-        }
-
-        if (action === "delete") {
-          if (!ES_OPERADOR) {
-            showMessage("Acceso denegado. El rol de invitado es de solo lectura y no permite eliminar registros.", "error");
-            return;
-          }
-          const ok = await openDeleteConfirmModal("Eliminar este registro?");
-          if (!ok) return;
-
-          const response = await fetch(`/api/registros/${id}/`, {
-            method: "DELETE",
-            headers: {
-              "X-CSRFToken": getCookie("csrftoken"),
-            },
-          });
-
-          if (handleAuthError(response)) return;
-          if (!response.ok) {
-            showMessage("No se pudo eliminar el registro.", "error");
-            return;
-          }
-
-          showMessage("Registro eliminado.");
-          if (registroIdInput.value === id) {
-            resetFormState();
-          }
-          invalidateRegistroDetailCache(id);
-          await refreshAllData();
-        }
-      });
-
       buscadorGeneral.addEventListener("input", () => {
         window.clearTimeout(buscadorDebounceTimer);
         buscadorDebounceTimer = window.setTimeout(() => {

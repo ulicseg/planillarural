@@ -25,10 +25,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-insecure-key-change-this')
+_SECRET_KEY_DEFAULT = 'dev-insecure-key-change-this'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', _SECRET_KEY_DEFAULT)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
+
+if not DEBUG and SECRET_KEY == _SECRET_KEY_DEFAULT:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured(
+        "DJANGO_SECRET_KEY debe estar definida en producción (DEBUG=False). "
+        "Generá una clave aleatoria segura y configurala como variable de entorno."
+    )
 
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost')
 CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS', '')
@@ -154,6 +162,7 @@ if not DEBUG:
 # Be careful: increasing this value increases memory usage per request.
 # Value is in bytes. Default Django is 2.5MB (2621440).
 # Set to 100MB here as a pragmatic upper bound for multiple images.
-DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', 100 * 1024 * 1024))
-# Also increase file upload memory size used by MultiPartParser when files are uploaded
-FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 100 * 1024 * 1024))
+# 10 MB: allows up to 5 photos at ~2 MB each (base64-encoded).
+# PythonAnywhere free tier has limited RAM; 100 MB per request was a DoS vector.
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', 10 * 1024 * 1024))
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 10 * 1024 * 1024))
