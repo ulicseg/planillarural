@@ -687,3 +687,48 @@ class MapaActivoTests(TestCase):
 	def test_remate_none_cae_al_default(self):
 		from registros.view_helpers import get_mapa_activo
 		self.assertTrue(get_mapa_activo(None).es_default)
+
+
+class NormalizeCorralMapaTests(TestCase):
+	def setUp(self):
+		from registros.models import Mapa
+		self.mapa = Mapa.objects.create(nombre="MB", rows=6, cols=6, layout=[
+			{"row": 1, "col": 1, "row_span": 2, "col_span": 2, "kind": "toril", "label": "TORIL"},
+			{"row": 1, "col": 3, "row_span": 2, "col_span": 2, "kind": "corral", "label": "2"},
+			{"row": 3, "col": 1, "row_span": 1, "col_span": 4, "kind": "pasillo", "label": "PASILLO"},
+		])
+
+	def test_corrales_disponibles_incluye_toril_y_corrales(self):
+		from registros.view_helpers import get_corrales_disponibles
+		corrales = get_corrales_disponibles(self.mapa)
+		self.assertIn("1", corrales)
+		self.assertIn("2", corrales)
+		self.assertNotIn("3", corrales)
+
+	def test_pasillos_numerados_desde_el_mapa(self):
+		from registros.view_helpers import get_pasillos_disponibles
+		self.assertEqual(get_pasillos_disponibles(self.mapa), ["PASILLO 1"])
+
+	def test_normalize_corral_valido(self):
+		from registros.view_helpers import normalize_corral
+		corral, error = normalize_corral("2", self.mapa)
+		self.assertEqual(corral, "2")
+		self.assertIsNone(error)
+
+	def test_normalize_corral_inexistente_estricto(self):
+		from registros.view_helpers import normalize_corral
+		corral, error = normalize_corral("99", self.mapa, strict_known_corrales=True)
+		self.assertIsNone(corral)
+		self.assertIsNotNone(error)
+
+	def test_normalize_pasillo_requiere_allow(self):
+		from registros.view_helpers import normalize_corral
+		corral, error = normalize_corral("PASILLO 1", self.mapa, allow_pasillo=False)
+		self.assertIsNone(corral)
+		self.assertIn("activar", error)
+
+	def test_normalize_pasillo_con_allow(self):
+		from registros.view_helpers import normalize_corral
+		corral, error = normalize_corral("PASILLO 1", self.mapa, allow_pasillo=True)
+		self.assertEqual(corral, "PASILLO 1")
+		self.assertIsNone(error)

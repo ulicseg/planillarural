@@ -4,7 +4,6 @@ from functools import wraps
 from django.conf import settings
 from django.http import JsonResponse
 
-from .corrales_layout import CORRALES_DISPONIBLES, CORRALES_LAYOUT
 from .mapas import PASILLO_LABEL, TORIL_CORRAL_ID
 from .models import Mapa, PreferenciaRemateUsuario, Registro, Remate
 
@@ -141,59 +140,62 @@ def parse_estado(raw_value):
 	return ", ".join(normalized_values), None
 
 
-def get_corrales_disponibles():
+def get_corrales_disponibles(mapa):
 	corrales = [TORIL_CORRAL_ID]
-	for corral in CORRALES_DISPONIBLES:
-		if corral != TORIL_CORRAL_ID:
-			corrales.append(corral)
+	for celda in (mapa.layout if mapa else []):
+		if celda.get("kind") == "corral":
+			label = str(celda.get("label", "")).strip()
+			if label and label != TORIL_CORRAL_ID:
+				corrales.append(label)
 	return corrales
 
 
-def get_pasillos_disponibles():
+def get_pasillos_disponibles(mapa):
 	pasillos = []
-	for index, cell in enumerate((item for item in CORRALES_LAYOUT if item.get("kind") == "pasillo"), start=1):
-		pasillos.append(f"{PASILLO_LABEL} {index}")
+	index = 0
+	for celda in (mapa.layout if mapa else []):
+		if celda.get("kind") == "pasillo":
+			index += 1
+			pasillos.append(f"{PASILLO_LABEL} {index}")
 	return pasillos
 
 
-def build_layout_with_pasillos_numerados():
+def build_layout_with_pasillos_numerados(mapa):
 	layout = []
 	pasillo_index = 0
-	for cell in CORRALES_LAYOUT:
-		if cell.get("kind") == "toril":
-			cell_copy = dict(cell)
+	for celda in (mapa.layout if mapa else []):
+		kind = celda.get("kind")
+		if kind == "toril":
+			cell_copy = dict(celda)
 			cell_copy["corral_id"] = TORIL_CORRAL_ID
 			cell_copy["display_label"] = TORIL_CORRAL_ID
 			layout.append(cell_copy)
 			continue
-
-		if cell.get("kind") != "pasillo":
-			layout.append(cell)
+		if kind != "pasillo":
+			layout.append(dict(celda))
 			continue
-
 		pasillo_index += 1
-		cell_copy = dict(cell)
+		cell_copy = dict(celda)
 		cell_copy["pasillo_id"] = f"{PASILLO_LABEL} {pasillo_index}"
 		cell_copy["display_label"] = f"P{pasillo_index}"
 		layout.append(cell_copy)
-
 	return layout
 
 
-def get_ubicaciones_disponibles(include_pasillos=False, pasillos=None):
-	ubicaciones = get_corrales_disponibles()
+def get_ubicaciones_disponibles(mapa, include_pasillos=False, pasillos=None):
+	ubicaciones = get_corrales_disponibles(mapa)
 	if include_pasillos:
-		ubicaciones.extend(pasillos or get_pasillos_disponibles())
+		ubicaciones.extend(pasillos or get_pasillos_disponibles(mapa))
 	return ubicaciones
 
 
-def normalize_corral(raw_value, allow_pasillo=False, strict_known_corrales=False, pasillos_validos=None):
+def normalize_corral(raw_value, mapa, allow_pasillo=False, strict_known_corrales=False):
 	corral = (raw_value or "").strip().upper()
 	if not corral:
 		return "", None
 
-	pasillos = set(pasillos_validos or get_pasillos_disponibles())
-	corrales_validos = set(get_corrales_disponibles())
+	pasillos = set(get_pasillos_disponibles(mapa))
+	corrales_validos = {c.upper() for c in get_corrales_disponibles(mapa)}
 
 	if corral in corrales_validos:
 		return corral, None

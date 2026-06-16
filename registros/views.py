@@ -29,6 +29,7 @@ from .view_helpers import (
 	CATEGORIAS_PREDEFINIDAS,
 	build_layout_with_pasillos_numerados,
 	get_corrales_disponibles,
+	get_mapa_activo,
 	get_ocupacion_corrales,
 	get_ocupacion_detalle,
 	get_pasillos_disponibles,
@@ -378,9 +379,9 @@ def api_registros(request):
 	if isinstance(payload, dict) and payload.get("__error__") == "payload_too_large":
 		return JsonResponse({"error": "Carga demasiado grande. Reduce el tamaño de las fotos o subilas individualmente."}, status=413)
 
-	pasillos_disponibles = get_pasillos_disponibles()
+	mapa = get_mapa_activo(remate)
 	allow_pasillo = parse_bool(payload.get("allowPasillo"))
-	corral, corral_error = normalize_corral(payload.get("corral"), allow_pasillo=allow_pasillo, pasillos_validos=pasillos_disponibles)
+	corral, corral_error = normalize_corral(payload.get("corral"), mapa, allow_pasillo=allow_pasillo)
 	remitente = (payload.get("remitente") or "").strip()
 	categoria = (payload.get("categoria") or "").strip()
 	estado, estado_error = parse_estado(payload.get("estado"))
@@ -439,9 +440,9 @@ def api_registro_detail(request, registro_id):
 	if isinstance(payload, dict) and payload.get("__error__") == "payload_too_large":
 		return JsonResponse({"error": "Carga demasiado grande. Reduce el tamaño de las fotos o subilas individualmente."}, status=413)
 
-	pasillos_disponibles = get_pasillos_disponibles()
+	mapa = get_mapa_activo(remate)
 	allow_pasillo = parse_bool(payload.get("allowPasillo"))
-	corral, corral_error = normalize_corral(payload.get("corral"), allow_pasillo=allow_pasillo, pasillos_validos=pasillos_disponibles)
+	corral, corral_error = normalize_corral(payload.get("corral"), mapa, allow_pasillo=allow_pasillo)
 	remitente = (payload.get("remitente") or "").strip()
 	categoria = (payload.get("categoria") or "").strip()
 	estado, estado_error = parse_estado(payload.get("estado"))
@@ -486,19 +487,21 @@ def api_registros_ultimos_cambios(request):
 @require_api_login
 def api_corrales_mapa(request):
 	remate = get_remate_activo(request.user)
-	pasillos = get_pasillos_disponibles()
-	layout = build_layout_with_pasillos_numerados()
-	corrales = get_corrales_disponibles()
+	mapa = get_mapa_activo(remate)
+	pasillos = get_pasillos_disponibles(mapa)
+	layout = build_layout_with_pasillos_numerados(mapa)
+	corrales = get_corrales_disponibles(mapa)
 	return JsonResponse(
 		{
 			"data": {
-				"rows": MAP_ROWS,
-				"cols": MAP_COLS,
+				"rows": mapa.rows if mapa else MAP_ROWS,
+				"cols": mapa.cols if mapa else MAP_COLS,
 				"layout": layout,
 				"corrales": corrales,
 				"pasillos": pasillos,
-				"ubicaciones": get_ubicaciones_disponibles(include_pasillos=False, pasillos=pasillos),
+				"ubicaciones": get_ubicaciones_disponibles(mapa, include_pasillos=False, pasillos=pasillos),
 				"ocupacion": get_ocupacion_corrales(remate),
+				"mapaNombre": mapa.nombre if mapa else "",
 			}
 		}
 	)
@@ -520,13 +523,13 @@ def api_registro_mover(request, registro_id):
 	if isinstance(payload, dict) and payload.get("__error__") == "payload_too_large":
 		return JsonResponse({"error": "Carga demasiado grande. Reduce el tamaño de las fotos o subilas individualmente."}, status=413)
 
-	pasillos_disponibles = get_pasillos_disponibles()
+	mapa = get_mapa_activo(remate)
 	allow_pasillo = parse_bool(payload.get("allowPasillo"))
 	destino_corral, corral_error = normalize_corral(
 		payload.get("destinoCorral"),
+		mapa,
 		allow_pasillo=allow_pasillo,
 		strict_known_corrales=True,
-		pasillos_validos=pasillos_disponibles,
 	)
 	if not destino_corral:
 		return JsonResponse({"error": "Debe indicar el corral destino."}, status=400)
