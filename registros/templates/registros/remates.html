@@ -31,6 +31,13 @@
             <input name="fecha" type="date" class="rounded-md border border-app-leaf/45 bg-white px-3 py-2.5 text-sm font-semibold" />
             <input name="lugar" type="text" class="rounded-md border border-app-leaf/45 bg-white px-3 py-2.5 text-sm font-semibold" placeholder="Lugar del remate" />
           </div>
+          <div class="grid gap-2">
+            <select name="mapa_id" class="rounded-md border border-app-leaf/45 bg-white px-3 py-2.5 text-sm font-semibold">
+              {% for mapa in mapas %}
+              <option value="{{ mapa.id }}"{% if mapa.es_default %} selected{% endif %}>{{ mapa.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
           <button type="submit" class="rounded-md bg-app-leaf px-4 py-2.5 text-sm font-extrabold text-white">Crear y seleccionar</button>
         </form>
       </section>

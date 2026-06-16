@@ -750,3 +750,35 @@ class ApiMapasTests(TestCase):
 		self.client.logout()
 		response = self.client.get(reverse("api-mapas"))
 		self.assertEqual(response.status_code, 401)
+
+
+@override_settings(OPERADOR_USERNAMES=["operador1"])
+class CrearRemateMapaTests(TestCase):
+	def setUp(self):
+		self.user = get_user_model().objects.create_user(username="operador1", password="Clave12345")
+		PreferenciaRemateUsuario.objects.create(usuario=self.user, remate=None)
+		self.client.login(username="operador1", password="Clave12345")
+
+	def test_crear_remate_con_mapa_explicito(self):
+		from registros.models import Mapa
+		mapa = Mapa.objects.create(nombre="Margarita Belen", rows=4, cols=6, layout=[
+			{"row": 1, "col": 1, "row_span": 1, "col_span": 1, "kind": "corral", "label": "2"},
+		])
+		response = self.client.post(reverse("crear-remate"), data={"nombre": "Remate MB", "mapa_id": str(mapa.id)})
+		self.assertEqual(response.status_code, 302)
+		remate = Remate.objects.get(nombre="Remate MB")
+		self.assertEqual(remate.mapa_id, mapa.id)
+
+	def test_crear_remate_sin_mapa_usa_default(self):
+		response = self.client.post(reverse("crear-remate"), data={"nombre": "Remate sin mapa"})
+		self.assertEqual(response.status_code, 302)
+		remate = Remate.objects.get(nombre="Remate sin mapa")
+		self.assertTrue(remate.mapa.es_default)
+
+	def test_crear_remate_con_mapa_inexistente_400(self):
+		response = self.client.post(reverse("crear-remate"), data={"nombre": "X", "mapa_id": "99999"})
+		self.assertEqual(response.status_code, 400)
+
+	def test_remates_home_pasa_mapas_al_contexto(self):
+		response = self.client.get(reverse("remates-home"))
+		self.assertIn("mapas", response.context)

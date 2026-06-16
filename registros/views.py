@@ -224,6 +224,7 @@ def remates_home(request):
 			"remates_abiertos": remates.filter(finalizado=False),
 			"remates_finalizados": remates.filter(finalizado=True),
 			"es_operador": is_operador(request.user),
+			"mapas": Mapa.objects.all(),
 		},
 	)
 
@@ -246,8 +247,19 @@ def crear_remate(request):
 	if not nombre:
 		nombre = f"Remate {timezone.localdate().strftime('%Y-%m')}"
 
+	mapa_id_raw = (request.POST.get("mapa_id") or "").strip()
+	mapa = None
+	if mapa_id_raw:
+		if not mapa_id_raw.isdigit():
+			return HttpResponseBadRequest("Mapa invalido.")
+		mapa = Mapa.objects.filter(id=int(mapa_id_raw)).first()
+		if mapa is None:
+			return HttpResponseBadRequest("Mapa inexistente.")
+	if mapa is None:
+		mapa = Mapa.objects.filter(es_default=True).first()
+
 	with transaction.atomic():
-		remate = Remate.objects.create(nombre=nombre, fecha=fecha, lugar=lugar)
+		remate = Remate.objects.create(nombre=nombre, fecha=fecha, lugar=lugar, mapa=mapa)
 		set_remate_seleccionado(request.user, remate)
 
 	return redirect("home")
