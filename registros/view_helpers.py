@@ -5,6 +5,7 @@ from django.conf import settings
 from django.http import JsonResponse
 
 from .corrales_layout import CORRALES_DISPONIBLES, CORRALES_LAYOUT
+from .mapas import PASILLO_LABEL, TORIL_CORRAL_ID
 from .models import PreferenciaRemateUsuario, Registro, Remate
 
 
@@ -16,8 +17,6 @@ ESTADOS_PREDEFINIDOS_MAP = {
 	"gordo": "gordo",
 	"para cría": "para cría",
 }
-PASILLO_LABEL = "PASILLO"
-TORIL_CORRAL_ID = "1"
 
 
 def is_operador(user):

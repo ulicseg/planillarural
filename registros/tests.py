@@ -559,3 +559,58 @@ class FotoCacheControlTests(TestCase):
 		self.assertIn(response.status_code, [200, 404])
 		if response.status_code == 200:
 			self.assertIn("private", response.get("Cache-Control", ""))
+
+
+from registros.corrales_layout import MAP_ROWS, MAP_COLS, CORRALES_LAYOUT
+
+
+class MapaValidacionTests(TestCase):
+	def test_layout_valido_no_devuelve_errores(self):
+		from registros.mapas import validar_layout
+		layout = [
+			{"row": 1, "col": 1, "row_span": 2, "col_span": 3, "kind": "toril", "label": "TORIL"},
+			{"row": 1, "col": 4, "row_span": 2, "col_span": 3, "kind": "corral", "label": "2"},
+		]
+		self.assertEqual(validar_layout(4, 6, layout), [])
+
+	def test_celda_fuera_de_grilla(self):
+		from registros.mapas import validar_layout
+		layout = [{"row": 1, "col": 5, "row_span": 1, "col_span": 4, "kind": "corral", "label": "2"}]
+		errores = validar_layout(4, 6, layout)
+		self.assertTrue(any("grilla" in e for e in errores))
+
+	def test_celdas_solapadas(self):
+		from registros.mapas import validar_layout
+		layout = [
+			{"row": 1, "col": 1, "row_span": 2, "col_span": 2, "kind": "corral", "label": "2"},
+			{"row": 2, "col": 2, "row_span": 1, "col_span": 1, "kind": "corral", "label": "3"},
+		]
+		errores = validar_layout(4, 4, layout)
+		self.assertTrue(any("solapa" in e for e in errores))
+
+	def test_kind_invalido(self):
+		from registros.mapas import validar_layout
+		layout = [{"row": 1, "col": 1, "row_span": 1, "col_span": 1, "kind": "rampa", "label": "x"}]
+		self.assertTrue(any("kind" in e for e in validar_layout(4, 4, layout)))
+
+	def test_label_corral_reservado_toril(self):
+		from registros.mapas import validar_layout
+		layout = [{"row": 1, "col": 1, "row_span": 1, "col_span": 1, "kind": "corral", "label": "1"}]
+		self.assertTrue(any("reservado" in e for e in validar_layout(4, 4, layout)))
+
+	def test_sin_corrales(self):
+		from registros.mapas import validar_layout
+		layout = [{"row": 1, "col": 1, "row_span": 1, "col_span": 1, "kind": "pasillo", "label": "PASILLO"}]
+		self.assertTrue(any("corral" in e for e in validar_layout(4, 4, layout)))
+
+	def test_labels_corral_duplicados(self):
+		from registros.mapas import validar_layout
+		layout = [
+			{"row": 1, "col": 1, "row_span": 1, "col_span": 1, "kind": "corral", "label": "2"},
+			{"row": 2, "col": 1, "row_span": 1, "col_span": 1, "kind": "corral", "label": "2"},
+		]
+		self.assertTrue(any("duplicad" in e for e in validar_layout(4, 4, layout)))
+
+	def test_layout_real_es_valido(self):
+		from registros.mapas import validar_layout
+		self.assertEqual(validar_layout(MAP_ROWS, MAP_COLS, list(CORRALES_LAYOUT)), [])
