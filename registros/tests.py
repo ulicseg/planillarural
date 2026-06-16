@@ -782,3 +782,51 @@ class CrearRemateMapaTests(TestCase):
 	def test_remates_home_pasa_mapas_al_contexto(self):
 		response = self.client.get(reverse("remates-home"))
 		self.assertIn("mapas", response.context)
+
+
+import tempfile
+from pathlib import Path
+from django.core.management import CommandError
+
+
+class ImportarMapaCommandTests(TestCase):
+	def _crear_xlsx(self, ruta):
+		from openpyxl import Workbook
+		wb = Workbook()
+		ws = wb.active
+		ws.merge_cells("A1:C2")
+		ws["A1"] = "TORIL"
+		ws.merge_cells("D1:F2")
+		ws["D1"] = "2"
+		ws["A3"] = "PASILLO"
+		wb.save(ruta)
+
+	def test_importar_crea_mapa_desde_excel(self):
+		from registros.models import Mapa
+		with tempfile.TemporaryDirectory() as tmp:
+			ruta = Path(tmp) / "mb.xlsx"
+			self._crear_xlsx(ruta)
+			call_command("importar_mapa", excel=str(ruta), nombre="Margarita Belen")
+
+		mapa = Mapa.objects.get(nombre="Margarita Belen")
+		self.assertEqual(mapa.cols, 6)
+		self.assertEqual(mapa.rows, 3)
+		kinds = {(c["kind"], c["label"]) for c in mapa.layout}
+		self.assertIn(("toril", "TORIL"), kinds)
+		self.assertIn(("corral", "2"), kinds)
+		self.assertIn(("pasillo", "PASILLO"), kinds)
+
+	def test_importar_nombre_duplicado_falla(self):
+		from registros.models import Mapa
+		Mapa.objects.create(nombre="Margarita Belen", rows=4, cols=6, layout=[
+			{"row": 1, "col": 1, "row_span": 1, "col_span": 1, "kind": "corral", "label": "2"},
+		])
+		with tempfile.TemporaryDirectory() as tmp:
+			ruta = Path(tmp) / "mb.xlsx"
+			self._crear_xlsx(ruta)
+			with self.assertRaises(CommandError):
+				call_command("importar_mapa", excel=str(ruta), nombre="Margarita Belen")
+
+	def test_importar_archivo_inexistente_falla(self):
+		with self.assertRaises(CommandError):
+			call_command("importar_mapa", excel="no_existe.xlsx", nombre="X")
