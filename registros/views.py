@@ -322,7 +322,7 @@ def api_registro_foto(request, registro_id, index=0):
 			image_data = base64.b64decode(base64_data)
 
 			response = HttpResponse(image_data, content_type=content_type)
-			response["Cache-Control"] = "public, max-age=86400"  # Cache por 1 dia
+			response["Cache-Control"] = "private, max-age=86400"
 			return response
 		except Exception:
 			raise Http404("La foto esta dañada.")
@@ -330,7 +330,7 @@ def api_registro_foto(request, registro_id, index=0):
 		try:
 			image_data = base64.b64decode(image_data_url)
 			response = HttpResponse(image_data, content_type="image/webp")
-			response["Cache-Control"] = "public, max-age=86400"
+			response["Cache-Control"] = "private, max-age=86400"
 			return response
 		except Exception:
 			raise Http404("La foto no se pudo procesar.")

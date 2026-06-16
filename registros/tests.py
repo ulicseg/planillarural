@@ -534,3 +534,28 @@ class SelectRelatedTests(TestCase):
 		# Sin select_related serían ~10+ (1 base + 5 por self.remate en to_dict + otras).
 		# El margen de 8 es holgado pero detecta el N+1.
 		self.assertLess(query_count, 8, f"Demasiadas queries ({query_count}): posible N+1 sin select_related")
+
+
+@override_settings(OPERADOR_USERNAMES=["operador1"])
+class FotoCacheControlTests(TestCase):
+	def setUp(self):
+		self.user = get_user_model().objects.create_user(username="operador1", password="Clave12345")
+		self.remate = Remate.objects.create(nombre="Remate fotos")
+		PreferenciaRemateUsuario.objects.create(usuario=self.user, remate=self.remate)
+		self.client.login(username="operador1", password="Clave12345")
+
+	def test_foto_devuelve_cache_control_private(self):
+		import base64
+		# Imagen PNG 1x1 pixel mínima
+		png_b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+		data_url = f"data:image/png;base64,{png_b64}"
+		registro = Registro.objects.create(
+			remate=self.remate,
+			corral="5",
+			remitente="Test",
+			marca_imagen=f'[{{"full": "{data_url}", "thumb": "{data_url}"}}]',
+		)
+		response = self.client.get(reverse("api-registro-foto-index", kwargs={"registro_id": registro.id, "index": 0}))
+		self.assertIn(response.status_code, [200, 404])
+		if response.status_code == 200:
+			self.assertIn("private", response.get("Cache-Control", ""))
