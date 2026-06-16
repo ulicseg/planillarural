@@ -407,6 +407,49 @@ class RegistrosApiTests(TestCase):
 		self.assertEqual(len(db_reg._parse_marca_images()), 0)
 
 
+@override_settings(OPERADOR_USERNAMES=["operador1"])
+class RemateFinalizadoTests(TestCase):
+	def setUp(self):
+		self.user = get_user_model().objects.create_user(username="operador1", password="Clave12345")
+		self.remate = Remate.objects.create(nombre="Remate cerrado", finalizado=True)
+		PreferenciaRemateUsuario.objects.create(usuario=self.user, remate=self.remate)
+		self.client.login(username="operador1", password="Clave12345")
+
+	def test_post_sobre_remate_finalizado_devuelve_409(self):
+		response = self.client.post(
+			reverse("api-registros"),
+			data={"corral": "12", "remitente": "Juan"},
+			content_type="application/json",
+		)
+		self.assertEqual(response.status_code, 409)
+
+	def test_put_sobre_remate_finalizado_devuelve_409(self):
+		# crear el registro directamente en DB (sin HTTP, para evitar la propia regla)
+		registro = Registro.objects.create(remate=self.remate, corral="12", remitente="Juan")
+		response = self.client.put(
+			reverse("api-registro-detail", kwargs={"registro_id": registro.id}),
+			data={"corral": "13", "remitente": "Juan editado"},
+			content_type="application/json",
+		)
+		self.assertEqual(response.status_code, 409)
+
+	def test_delete_sobre_remate_finalizado_devuelve_409(self):
+		registro = Registro.objects.create(remate=self.remate, corral="12", remitente="Juan")
+		response = self.client.delete(
+			reverse("api-registro-detail", kwargs={"registro_id": registro.id})
+		)
+		self.assertEqual(response.status_code, 409)
+
+	def test_mover_sobre_remate_finalizado_devuelve_409(self):
+		registro = Registro.objects.create(remate=self.remate, corral="12", remitente="Juan")
+		response = self.client.post(
+			reverse("api-registro-mover", kwargs={"registro_id": registro.id}),
+			data={"destinoCorral": "13"},
+			content_type="application/json",
+		)
+		self.assertEqual(response.status_code, 409)
+
+
 @override_settings(OPERADOR_USERNAMES=["operador1", "operador2"])
 class LimpiezaRemateTests(TestCase):
 	def test_limpiar_remate_elimina_registros_y_sesiones_sin_borrar_usuarios(self):

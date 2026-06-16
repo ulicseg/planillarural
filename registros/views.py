@@ -369,6 +369,9 @@ def api_registros(request):
 		response = JsonResponse({"data": [item.to_dict(include_full=False) for item in registros]})
 		return apply_browser_cache_headers(response, etag_value, last_modified)
 
+	if remate.finalizado:
+		return JsonResponse({"error": "Este remate ya fue finalizado y no acepta cambios."}, status=409)
+
 	payload = parse_json_body(request)
 	if payload is None:
 		return HttpResponseBadRequest("JSON invalido")
@@ -413,6 +416,9 @@ def api_registro_detail(request, registro_id):
 		return JsonResponse({"error": "Debes seleccionar un remate."}, status=409)
 
 	registro = get_object_or_404(Registro, id=registro_id, remate=remate)
+
+	if request.method != "GET" and remate.finalizado:
+		return JsonResponse({"error": "Este remate ya fue finalizado y no acepta cambios."}, status=409)
 
 	if request.method == "GET":
 		etag_value, last_modified = make_registro_detail_etag(registro, include_full=True)
@@ -504,6 +510,9 @@ def api_registro_mover(request, registro_id):
 	remate = get_remate_activo(request.user)
 	if remate is None:
 		return JsonResponse({"error": "Debes seleccionar un remate."}, status=409)
+
+	if remate.finalizado:
+		return JsonResponse({"error": "Este remate ya fue finalizado y no acepta cambios."}, status=409)
 
 	payload = parse_json_body(request)
 	if payload is None:
