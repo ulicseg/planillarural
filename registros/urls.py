@@ -20,6 +20,7 @@ urlpatterns = [
     path("api/registros/<int:registro_id>/foto/", views.api_registro_foto, name="api-registro-foto"),
     path("api/registros/<int:registro_id>/foto/<int:index>/", views.api_registro_foto, name="api-registro-foto-index"),
     path("api/registros/<int:registro_id>/mover/", views.api_registro_mover, name="api-registro-mover"),
+    path("api/mapas/", views.api_mapas, name="api-mapas"),
     path("api/corrales/mapa/", views.api_corrales_mapa, name="api-corrales-mapa"),
     path("api/corrales/<str:corral>/ocupacion/", views.api_corral_ocupacion, name="api-corral-ocupacion"),
 ]

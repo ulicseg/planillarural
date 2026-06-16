@@ -24,7 +24,7 @@ from django.utils.http import http_date
 from django.views.decorators.http import require_http_methods
 
 from .corrales_layout import MAP_COLS, MAP_ROWS
-from .models import Registro, Remate
+from .models import Mapa, Registro, Remate
 from .view_helpers import (
 	CATEGORIAS_PREDEFINIDAS,
 	build_layout_with_pasillos_numerados,
@@ -563,3 +563,10 @@ def api_corral_ocupacion(request, corral):
 
 	registros = get_ocupacion_detalle(corral_clean, remate, exclude_id=exclude_id)
 	return JsonResponse({"data": {"corral": corral_clean, "ocupado": len(registros) > 0, "registros": registros}})
+
+
+@require_http_methods(["GET"])
+@require_api_login
+def api_mapas(request):
+	mapas = Mapa.objects.all()
+	return JsonResponse({"data": [mapa.to_dict() for mapa in mapas]})

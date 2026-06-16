@@ -732,3 +732,21 @@ class NormalizeCorralMapaTests(TestCase):
 		corral, error = normalize_corral("PASILLO 1", self.mapa, allow_pasillo=True)
 		self.assertEqual(corral, "PASILLO 1")
 		self.assertIsNone(error)
+
+
+@override_settings(OPERADOR_USERNAMES=["operador1"])
+class ApiMapasTests(TestCase):
+	def setUp(self):
+		self.user = get_user_model().objects.create_user(username="operador1", password="Clave12345")
+		self.client.login(username="operador1", password="Clave12345")
+
+	def test_lista_mapas_incluye_default(self):
+		response = self.client.get(reverse("api-mapas"))
+		self.assertEqual(response.status_code, 200)
+		nombres = [m["nombre"] for m in response.json()["data"]]
+		self.assertIn("Sociedad Rural", nombres)
+
+	def test_requiere_autenticacion(self):
+		self.client.logout()
+		response = self.client.get(reverse("api-mapas"))
+		self.assertEqual(response.status_code, 401)
