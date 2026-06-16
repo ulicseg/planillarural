@@ -469,3 +469,36 @@ class LimpiezaRemateTests(TestCase):
 		self.assertEqual(Registro.objects.count(), 0)
 		self.assertEqual(Session.objects.count(), 0)
 		self.assertEqual(user_model.objects.count(), 2)
+
+
+class RemateActivoFallbackTests(TestCase):
+	def setUp(self):
+		self.user = get_user_model().objects.create_user(username="tester", password="Clave12345")
+		# Limpiar remates creados por migraciones para tener estado predecible
+		Remate.objects.all().delete()
+		# Sin PreferenciaRemateUsuario con remate — fuerza el fallback
+
+	def test_fallback_prefiere_remate_abierto(self):
+		# Remate más nuevo pero finalizado
+		finalizado = Remate.objects.create(nombre="Finalizado reciente", finalizado=True)
+		# Remate más viejo pero abierto
+		import time; time.sleep(0.01)  # asegurar orden temporal
+		abierto = Remate.objects.create(nombre="Abierto antiguo", finalizado=False)
+		# Esperar un instante y crear otro finalizado más nuevo aún
+		time.sleep(0.01)
+		Remate.objects.create(nombre="Finalizado mas nuevo", finalizado=True)
+
+		from registros.view_helpers import get_remate_activo
+		result = get_remate_activo(self.user)
+		self.assertEqual(result.id, abierto.id)
+
+	def test_fallback_usa_cualquiera_si_no_hay_abiertos(self):
+		Remate.objects.create(nombre="Solo cerrado", finalizado=True)
+		from registros.view_helpers import get_remate_activo
+		result = get_remate_activo(self.user)
+		self.assertIsNotNone(result)
+
+	def test_fallback_none_si_no_hay_remates(self):
+		from registros.view_helpers import get_remate_activo
+		result = get_remate_activo(self.user)
+		self.assertIsNone(result)

@@ -44,6 +44,9 @@ def get_remate_activo(usuario):
 	remate = get_remate_seleccionado(usuario)
 	if remate is not None:
 		return remate
+	abierto = Remate.objects.filter(finalizado=False).order_by("-created_at", "-id").first()
+	if abierto is not None:
+		return abierto
 	return Remate.objects.order_by("-created_at", "-id").first()
 
 
