@@ -650,3 +650,18 @@ class MapaModelTests(TestCase):
 		mapa = Mapa.objects.create(nombre="Test", rows=4, cols=6, layout=self._layout_valido())
 		remate = Remate.objects.create(nombre="R con mapa", mapa=mapa)
 		self.assertEqual(remate.mapa_id, mapa.id)
+
+
+class MapaSeedTests(TestCase):
+	def test_existe_un_unico_mapa_default(self):
+		from registros.models import Mapa
+		defaults = Mapa.objects.filter(es_default=True)
+		self.assertEqual(defaults.count(), 1)
+
+	def test_mapa_default_replica_el_plano_actual(self):
+		from registros.models import Mapa
+		from registros.corrales_layout import MAP_ROWS, MAP_COLS, CORRALES_LAYOUT
+		mapa = Mapa.objects.get(es_default=True)
+		self.assertEqual(mapa.rows, MAP_ROWS)
+		self.assertEqual(mapa.cols, MAP_COLS)
+		self.assertEqual(len(mapa.layout), len(CORRALES_LAYOUT))
