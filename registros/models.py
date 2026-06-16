@@ -3,15 +3,47 @@ import json
 from io import BytesIO
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from PIL import Image
+
+
+class Mapa(models.Model):
+	nombre = models.CharField(max_length=160, unique=True)
+	rows = models.PositiveSmallIntegerField()
+	cols = models.PositiveSmallIntegerField()
+	layout = models.JSONField()
+	es_default = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["nombre"]
+
+	def __str__(self):
+		return self.nombre
+
+	def clean(self):
+		from .mapas import validar_layout
+		errores = validar_layout(self.rows, self.cols, self.layout)
+		if errores:
+			raise ValidationError({"layout": errores})
+
+	def to_dict(self):
+		return {
+			"id": self.id,
+			"nombre": self.nombre,
+			"rows": self.rows,
+			"cols": self.cols,
+		}
 
 
 class Remate(models.Model):
 	nombre = models.CharField(max_length=140)
 	fecha = models.DateField(null=True, blank=True)
 	lugar = models.CharField(max_length=160, blank=True)
+	mapa = models.ForeignKey("Mapa", on_delete=models.SET_NULL, null=True, blank=True, related_name="remates")
 	finalizado = models.BooleanField(default=False)
 	finalizado_at = models.DateTimeField(null=True, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True)

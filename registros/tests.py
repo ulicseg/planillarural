@@ -614,3 +614,39 @@ class MapaValidacionTests(TestCase):
 	def test_layout_real_es_valido(self):
 		from registros.mapas import validar_layout
 		self.assertEqual(validar_layout(MAP_ROWS, MAP_COLS, list(CORRALES_LAYOUT)), [])
+
+
+from django.core.exceptions import ValidationError
+
+
+class MapaModelTests(TestCase):
+	def _layout_valido(self):
+		return [
+			{"row": 1, "col": 1, "row_span": 2, "col_span": 3, "kind": "toril", "label": "TORIL"},
+			{"row": 1, "col": 4, "row_span": 2, "col_span": 3, "kind": "corral", "label": "2"},
+		]
+
+	def test_mapa_valido_pasa_full_clean(self):
+		from registros.models import Mapa
+		mapa = Mapa(nombre="Test", rows=4, cols=6, layout=self._layout_valido())
+		mapa.full_clean()
+
+	def test_mapa_invalido_levanta_validation_error(self):
+		from registros.models import Mapa
+		mapa = Mapa(nombre="Roto", rows=4, cols=6, layout=[
+			{"row": 1, "col": 1, "row_span": 1, "col_span": 1, "kind": "corral", "label": "1"},
+		])
+		with self.assertRaises(ValidationError):
+			mapa.full_clean()
+
+	def test_to_dict_es_liviano(self):
+		from registros.models import Mapa
+		mapa = Mapa.objects.create(nombre="Test", rows=4, cols=6, layout=self._layout_valido())
+		d = mapa.to_dict()
+		self.assertEqual(set(d.keys()), {"id", "nombre", "rows", "cols"})
+
+	def test_remate_tiene_fk_mapa(self):
+		from registros.models import Mapa
+		mapa = Mapa.objects.create(nombre="Test", rows=4, cols=6, layout=self._layout_valido())
+		remate = Remate.objects.create(nombre="R con mapa", mapa=mapa)
+		self.assertEqual(remate.mapa_id, mapa.id)
