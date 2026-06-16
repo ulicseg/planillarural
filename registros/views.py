@@ -1,9 +1,12 @@
 import base64
 import hashlib
 import json
+import logging
 import re
 from datetime import datetime
 from functools import wraps
+
+logger = logging.getLogger(__name__)
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -120,7 +123,8 @@ def resolve_marca_imagen_list(payload_value, current_registro=None):
 			try:
 				raw_items = json.loads(payload_value)
 			except Exception:
-				raw_items = [payload_value]
+				logger.warning("marcaImagen: JSON malformado recibido, se descarta: %.120r", payload_value)
+				raw_items = []
 		else:
 			raw_items = [payload_value]
 
@@ -279,12 +283,13 @@ def finalizar_remate(request, remate_id):
 	if not is_operador(request.user):
 		return HttpResponseForbidden("Usuario sin permisos de operador.")
 
-	remate = get_object_or_404(Remate, id=remate_id)
-	if not remate.finalizado:
-		remate.finalizado = True
-		remate.finalizado_at = timezone.now()
-		remate.save(update_fields=["finalizado", "finalizado_at", "updated_at"])
-
+	if not Remate.objects.filter(id=remate_id).exists():
+		raise Http404
+	Remate.objects.filter(id=remate_id, finalizado=False).update(
+		finalizado=True,
+		finalizado_at=timezone.now(),
+		updated_at=timezone.now(),
+	)
 	return redirect("remates-home")
 
 
@@ -338,7 +343,8 @@ def api_registro_foto(request, registro_id, index=0):
 			response["Cache-Control"] = "private, max-age=86400"
 			return response
 		except Exception:
-			raise Http404("La foto esta dañada.")
+			logger.exception("Foto corrupta en registro id=%s index=%s", registro_id, index)
+			return HttpResponse("La foto esta dañada.", status=422, content_type="text/plain")
 	else:
 		try:
 			image_data = base64.b64decode(image_data_url)
@@ -346,7 +352,8 @@ def api_registro_foto(request, registro_id, index=0):
 			response["Cache-Control"] = "private, max-age=86400"
 			return response
 		except Exception:
-			raise Http404("La foto no se pudo procesar.")
+			logger.exception("Foto no decodificable (raw base64) en registro id=%s index=%s", registro_id, index)
+			return HttpResponse("La foto no se pudo procesar.", status=422, content_type="text/plain")
 
 
 @require_http_methods(["GET", "POST"])
@@ -402,6 +409,10 @@ def api_registros(request):
 		return JsonResponse({"error": corral_error}, status=400)
 	if not remitente:
 		return JsonResponse({"error": "Remitente es obligatorio."}, status=400)
+	if len(remitente) > 140:
+		return JsonResponse({"error": "Remitente no puede superar 140 caracteres."}, status=400)
+	if len((payload.get("observaciones") or "").strip()) > 2000:
+		return JsonResponse({"error": "Observaciones no puede superar 2000 caracteres."}, status=400)
 	if categoria and categoria not in CATEGORIAS_PREDEFINIDAS:
 		return JsonResponse({"error": "Categoria invalida. Debe ser una categoria predefinida."}, status=400)
 	if estado_error:
@@ -463,6 +474,10 @@ def api_registro_detail(request, registro_id):
 		return JsonResponse({"error": corral_error}, status=400)
 	if not remitente:
 		return JsonResponse({"error": "Remitente es obligatorio."}, status=400)
+	if len(remitente) > 140:
+		return JsonResponse({"error": "Remitente no puede superar 140 caracteres."}, status=400)
+	if len((payload.get("observaciones") or "").strip()) > 2000:
+		return JsonResponse({"error": "Observaciones no puede superar 2000 caracteres."}, status=400)
 	if categoria and categoria not in CATEGORIAS_PREDEFINIDAS:
 		return JsonResponse({"error": "Categoria invalida. Debe ser una categoria predefinida."}, status=400)
 	if estado_error:

@@ -7,7 +7,7 @@
         <span class="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9.5px] font-black uppercase tracking-wide text-emerald-300 border border-emerald-500/30 whitespace-nowrap">PR</span>
         <span class="truncate text-[10.5px] font-extrabold uppercase tracking-wider text-amber-300">Remate Activo</span>
       </div>
-      <h1 class="truncate text-base sm:text-lg font-black tracking-tight text-white leading-tight">{{ remate_activo.nombre }}</h1>
+      <h1 class="line-clamp-2 break-words text-base sm:text-lg font-black tracking-tight text-white leading-tight" title="{{ remate_activo.nombre }}">{{ remate_activo.nombre }}</h1>
       <p class="truncate text-[12.5px] font-semibold text-slate-400 leading-tight mt-0.5">
         {% if remate_activo.fecha %}{{ remate_activo.fecha|date:"d/m/Y" }}{% else %}Sin fecha{% endif %}{% if remate_activo.lugar %} · {{ remate_activo.lugar }}{% endif %}
       </p>

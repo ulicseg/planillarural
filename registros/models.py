@@ -1,6 +1,9 @@
 import base64
 import json
+import logging
 from io import BytesIO
+
+logger = logging.getLogger(__name__)
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -95,9 +98,9 @@ class PreferenciaRemateUsuario(models.Model):
 
 class Registro(models.Model):
 	remate = models.ForeignKey(Remate, on_delete=models.SET_NULL, null=True, blank=True, related_name="registros")
-	corral = models.CharField(max_length=40)
-	remitente = models.CharField(max_length=140)
-	categoria = models.CharField(max_length=80, blank=True)
+	corral = models.CharField(max_length=40, db_index=True)
+	remitente = models.CharField(max_length=140, db_index=True)
+	categoria = models.CharField(max_length=80, blank=True, db_index=True)
 	cantidad = models.PositiveIntegerField(null=True, blank=True)
 	estado = models.CharField(max_length=80, blank=True)
 	observaciones = models.TextField(blank=True)
@@ -128,6 +131,7 @@ class Registro(models.Model):
 				thumb = base64.b64encode(buffer.getvalue()).decode("ascii")
 				return f"data:image/webp;base64,{thumb}"
 		except Exception:
+			logger.exception("Error generando thumbnail para registro")
 			return data_url
 
 	def _parse_marca_images(self):
@@ -139,6 +143,7 @@ class Registro(models.Model):
 		try:
 			parsed = json.loads(self.marca_imagen)
 		except Exception:
+			logger.exception("JSON malformado en marca_imagen del registro id=%s", self.pk)
 			parsed = self.marca_imagen
 
 		if isinstance(parsed, list):

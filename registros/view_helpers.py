@@ -1,8 +1,12 @@
 import json
+import logging
 from functools import wraps
 
 from django.conf import settings
+from django.db import IntegrityError
 from django.http import JsonResponse
+
+logger = logging.getLogger(__name__)
 
 from .mapas import PASILLO_LABEL, TORIL_CORRAL_ID
 from .models import Mapa, PreferenciaRemateUsuario, Registro, Remate
@@ -23,7 +27,10 @@ def is_operador(user):
 
 
 def get_preferencia_remate(usuario):
-	preferencia, _ = PreferenciaRemateUsuario.objects.get_or_create(usuario=usuario)
+	try:
+		preferencia, _ = PreferenciaRemateUsuario.objects.get_or_create(usuario=usuario)
+	except IntegrityError:
+		preferencia = PreferenciaRemateUsuario.objects.get(usuario=usuario)
 	return preferencia
 
 

@@ -45,7 +45,9 @@ CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS', '')
 if not CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS = [
         f"https://{host}" for host in ALLOWED_HOSTS if host not in ("127.0.0.1", "localhost")
-    ] + ["http://127.0.0.1", "http://localhost"]
+    ]
+    if DEBUG:
+        CSRF_TRUSTED_ORIGINS += ["http://127.0.0.1", "http://localhost"]
 
 
 # Application definition
@@ -157,6 +159,10 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Allow larger JSON payloads when clients send base64-encoded images.
 # Be careful: increasing this value increases memory usage per request.
@@ -166,3 +172,29 @@ if not DEBUG:
 # PythonAnywhere free tier has limited RAM; 100 MB per request was a DoS vector.
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', 10 * 1024 * 1024))
 FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 10 * 1024 * 1024))
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "registros": {
+            "handlers": ["console"],
+            "level": os.getenv("REGISTROS_LOG_LEVEL", "WARNING"),
+            "propagate": False,
+        },
+    },
+}

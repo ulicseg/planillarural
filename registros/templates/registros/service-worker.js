@@ -1,6 +1,6 @@
-const APP_CACHE = "planilla-rural-v2";
-const STATIC_CACHE = "planilla-rural-static-v2";
-const API_CACHE = "planilla-rural-api-v1";
+const APP_CACHE = "planilla-rural-v3";
+const STATIC_CACHE = "planilla-rural-static-v3";
+const API_CACHE = "planilla-rural-api-v2";
 
 const APP_SHELL = [
   "/login/",
@@ -71,18 +71,25 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (request.mode === "navigate") {
+    const isAuthenticatedPage = url.pathname === "/" || url.pathname.startsWith("/remates");
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(APP_CACHE).then((cache) => cache.put(request, copy));
+          // Solo cachear páginas públicas (login). Las páginas autenticadas contienen
+          // datos de sesión (ES_OPERADOR, REMATE_ID) que no deben servirse tras logout.
+          if (!isAuthenticatedPage) {
+            const copy = response.clone();
+            caches.open(APP_CACHE).then((cache) => cache.put(request, copy));
+          }
           return response;
         })
         .catch(async () => {
+          if (isAuthenticatedPage) {
+            const loginFallback = await caches.match("/login/");
+            return loginFallback || Response.error();
+          }
           const fromRequest = await caches.match(request);
-          if (fromRequest) return fromRequest;
-          const loginFallback = await caches.match("/login/");
-          return loginFallback || Response.error();
+          return fromRequest || Response.error();
         }),
     );
     return;

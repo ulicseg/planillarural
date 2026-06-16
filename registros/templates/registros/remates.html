@@ -91,7 +91,7 @@
                       {% if remate.fecha %}{{ remate.fecha|date:"d/m/Y" }}{% else %}Sin fecha{% endif %}
                       {% if remate.lugar %} · {{ remate.lugar }}{% endif %}
                     </p>
-                    <p class="text-xs font-semibold text-app-ink/60">Finalizado el {% if remate.finalizado_at %}{{ remate.finalizado_at|date:"d/m/Y H:i" }}{% else %}sin fecha{% endif %}</p>
+                    <p class="text-xs font-semibold text-app-ink/60">{% if remate.finalizado_at %}Finalizado el {{ remate.finalizado_at|date:"d/m/Y H:i" }}{% else %}Finalizado{% endif %}</p>
                   </div>
                   {% if remate_seleccionado and remate_seleccionado.id == remate.id %}
                     <span class="rounded-full bg-slate-200 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-700">Seleccionado</span>
