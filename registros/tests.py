@@ -502,3 +502,35 @@ class RemateActivoFallbackTests(TestCase):
 		from registros.view_helpers import get_remate_activo
 		result = get_remate_activo(self.user)
 		self.assertIsNone(result)
+
+
+@override_settings(OPERADOR_USERNAMES=["operador1"])
+class SelectRelatedTests(TestCase):
+	def setUp(self):
+		self.user = get_user_model().objects.create_user(username="operador1", password="Clave12345")
+		self.remate = Remate.objects.create(nombre="Remate N+1")
+		PreferenciaRemateUsuario.objects.create(usuario=self.user, remate=self.remate)
+		self.client.login(username="operador1", password="Clave12345")
+		for i in range(5):
+			Registro.objects.create(remate=self.remate, corral=str(i + 2), remitente=f"Remitente {i}")
+
+	def test_api_registros_get_no_hace_n_mas_1_queries(self):
+		from django.db import connection, reset_queries
+		from django.conf import settings as django_settings
+
+		original_debug = django_settings.DEBUG
+		django_settings.DEBUG = True
+		reset_queries()
+
+		response = self.client.get(reverse("api-registros"))
+
+		query_count = len(connection.queries)
+		django_settings.DEBUG = original_debug
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(len(response.json()["data"]), 5)
+
+		# Con 5 registros y select_related el conteo debe ser constante.
+		# Sin select_related serían ~10+ (1 base + 5 por self.remate en to_dict + otras).
+		# El margen de 8 es holgado pero detecta el N+1.
+		self.assertLess(query_count, 8, f"Demasiadas queries ({query_count}): posible N+1 sin select_related")

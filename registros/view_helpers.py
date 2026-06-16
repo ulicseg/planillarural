@@ -217,7 +217,7 @@ def get_ocupacion_corrales(remate):
 
 
 def get_ocupacion_detalle(corral, remate, exclude_id=None):
-	queryset = Registro.objects.filter(corral=corral, remate=remate)
+	queryset = Registro.objects.filter(corral=corral, remate=remate).select_related("remate")
 	if exclude_id is not None:
 		queryset = queryset.exclude(id=exclude_id)
 	return [item.to_dict() for item in queryset]

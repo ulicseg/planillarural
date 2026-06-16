@@ -345,7 +345,7 @@ def api_registros(request):
 
 	if request.method == "GET":
 		query = (request.GET.get("q") or "").strip()
-		registros = Registro.objects.filter(remate=remate)
+		registros = Registro.objects.filter(remate=remate).select_related("remate")
 
 		if query:
 			filters = (
