@@ -6,7 +6,7 @@ from django.http import JsonResponse
 
 from .corrales_layout import CORRALES_DISPONIBLES, CORRALES_LAYOUT
 from .mapas import PASILLO_LABEL, TORIL_CORRAL_ID
-from .models import PreferenciaRemateUsuario, Registro, Remate
+from .models import Mapa, PreferenciaRemateUsuario, Registro, Remate
 
 
 CATEGORIAS_PREDEFINIDAS = {"Novillo", "Novillito", "Vaca", "Ternero", "Ternera", "Ternera/o", "Vaquilla", "Vaquillita", "Toro"}
@@ -47,6 +47,12 @@ def get_remate_activo(usuario):
 	if abierto is not None:
 		return abierto
 	return Remate.objects.order_by("-created_at", "-id").first()
+
+
+def get_mapa_activo(remate):
+	if remate is not None and remate.mapa_id:
+		return remate.mapa
+	return Mapa.objects.filter(es_default=True).first()
 
 
 def require_api_login(view_func):

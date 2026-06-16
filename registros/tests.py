@@ -665,3 +665,25 @@ class MapaSeedTests(TestCase):
 		self.assertEqual(mapa.rows, MAP_ROWS)
 		self.assertEqual(mapa.cols, MAP_COLS)
 		self.assertEqual(len(mapa.layout), len(CORRALES_LAYOUT))
+
+
+class MapaActivoTests(TestCase):
+	def test_remate_sin_mapa_cae_al_default(self):
+		from registros.view_helpers import get_mapa_activo
+		from registros.models import Mapa
+		remate = Remate.objects.create(nombre="Sin mapa")
+		mapa = get_mapa_activo(remate)
+		self.assertTrue(mapa.es_default)
+
+	def test_remate_con_mapa_devuelve_su_mapa(self):
+		from registros.view_helpers import get_mapa_activo
+		from registros.models import Mapa
+		otro = Mapa.objects.create(nombre="Margarita Belen", rows=4, cols=6, layout=[
+			{"row": 1, "col": 1, "row_span": 1, "col_span": 1, "kind": "corral", "label": "2"},
+		])
+		remate = Remate.objects.create(nombre="Con mapa", mapa=otro)
+		self.assertEqual(get_mapa_activo(remate).id, otro.id)
+
+	def test_remate_none_cae_al_default(self):
+		from registros.view_helpers import get_mapa_activo
+		self.assertTrue(get_mapa_activo(None).es_default)
