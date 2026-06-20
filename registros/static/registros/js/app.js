@@ -1217,6 +1217,8 @@
         localStorage.setItem("planillaDesktopView", enabled ? "1" : "0");
         workspaceShell.classList.toggle("desktop-view", enabled);
         appMain.classList.toggle("desktop-view", enabled);
+        workspaceShell.classList.toggle("es-invitado", !ES_OPERADOR);
+        appMain.classList.toggle("es-invitado", !ES_OPERADOR);
         document.body.classList.toggle("desktop-body", enabled);
         const viewModeLabel = document.getElementById("viewModeLabel");
         if (viewModeLabel) {
