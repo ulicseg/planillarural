@@ -1458,6 +1458,7 @@
             `,
           )
           .join("");
+        aplicarModoFinalizado();
       }
 
       function renderMapaCorrales(isFirstRender = false) {
@@ -2605,6 +2606,27 @@
           }
         });
       }
+
+      function aplicarModoFinalizado() {
+        if (typeof REMATE_FINALIZADO === "undefined" || !REMATE_FINALIZADO) {
+          return;
+        }
+        const banner = document.getElementById("remateFinalizadoBanner");
+        if (banner) banner.classList.remove("hidden");
+        const form = document.getElementById("registroForm");
+        if (form) {
+          form.querySelectorAll("input, select, textarea, button").forEach((el) => {
+            el.disabled = true;
+          });
+        }
+        document.querySelectorAll('button[data-action]').forEach((btn) => {
+          const action = btn.getAttribute("data-action");
+          if (action === "edit" || action === "delete" || action === "add-photo") {
+            btn.disabled = true;
+          }
+        });
+      }
+      aplicarModoFinalizado();
 
       applyDesktopView(desktopViewEnabled);
       setSection("registros");

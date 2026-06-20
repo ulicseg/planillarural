@@ -6,6 +6,7 @@ from django.test import override_settings
 from django.urls import reverse
 
 from .models import PreferenciaRemateUsuario, Registro, Remate
+from .view_helpers import set_remate_seleccionado
 
 
 @override_settings(OPERADOR_USERNAMES=["operador1", "operador2"])
@@ -830,3 +831,23 @@ class ImportarMapaCommandTests(TestCase):
 	def test_importar_archivo_inexistente_falla(self):
 		with self.assertRaises(CommandError):
 			call_command("importar_mapa", excel="no_existe.xlsx", nombre="X")
+
+
+class IndexPageTests(TestCase):
+	def setUp(self):
+		User = get_user_model()
+		self.user = User.objects.create_user(username="operador1", password="x")
+
+	def test_index_marca_remate_finalizado_true(self):
+		remate = Remate.objects.create(nombre="Cerrado", finalizado=True)
+		set_remate_seleccionado(self.user, remate)
+		self.client.force_login(self.user)
+		resp = self.client.get("/")
+		self.assertContains(resp, "const REMATE_FINALIZADO = true;")
+
+	def test_index_marca_remate_finalizado_false(self):
+		remate = Remate.objects.create(nombre="Abierto", finalizado=False)
+		set_remate_seleccionado(self.user, remate)
+		self.client.force_login(self.user)
+		resp = self.client.get("/")
+		self.assertContains(resp, "const REMATE_FINALIZADO = false;")
