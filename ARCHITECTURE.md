@@ -31,13 +31,16 @@ URL (registros/urls.py)
 No hay build step, ni framework SPA, ni bundler. El frontend es:
 
 - **Páginas HTML renderizadas por Django Templates:**
-  - `index.html` — la UI principal (~3350 líneas, con todo el JS inline).
+  - `index.html` — la UI principal; el markup vive acá y el JS (~2600 líneas) se carga desde `static/registros/js/app.js`.
   - `remates.html` — selector/gestor de remates.
   - `login.html` — login.
-  - `base.html` — layout común; carga Tailwind, fuentes Manrope y jsPDF desde CDNs.
+  - `base.html` — layout común de login/remates.
   - Parciales en `templates/registros/partials/`.
-- **CDNs externos:** Tailwind (`cdn.tailwindcss.com`), Google Fonts, jsPDF. No se compila CSS ni JS localmente.
-- **Único asset estático real:** el ícono de la app (`static/registros/icons/app-icon.svg`).
+- **Tailwind pre-compilado:** el CSS se genera una vez con `npx tailwindcss@3` (config en `tailwind.config.js`) y se commitea en `static/registros/css/app.css`, servido vía `{% static %}`. **Ya no se usa el CDN runtime** (`cdn.tailwindcss.com`). Esto mantiene "sin build step" en deploy: el CSS viaja ya compilado; se regenera localmente al agregar clases nuevas.
+- **CDNs externos restantes:** Google Fonts (Manrope) y jsPDF.
+- **Assets estáticos:** el ícono de la app (`static/registros/icons/app-icon.svg`), `app.js` y `app.css`.
+- **Flags inyectados por el template** que el JS lee: `ES_OPERADOR`, `REMATE_ID` y `REMATE_FINALIZADO` (este último activa un banner de solo-lectura y deshabilita el formulario cuando el remate está cerrado). A un invitado se le aplica la clase `es-invitado` en el shell para su layout de escritorio.
+- **CI:** `.github/workflows/ci.yml` corre tests + `check --deploy` + `pip-audit` en cada push a `main` y cada PR.
 
 ### Cómo se comunican frontend y backend
 
@@ -127,7 +130,10 @@ La app es instalable y funciona parcialmente offline. Piezas:
 - **Invalidación en escrituras:** cualquier request no-GET a rutas `/api/` o `/remates/` dispara `caches.delete(API_CACHE)`, garantizando que tras una mutación el cache de API se reconstruya.
 
 ### Polling de cambios (no es realtime)
-No hay WebSockets ni `setInterval`. La sincronización es **bajo demanda**: `refreshAllData()` (línea 2011) se llama al inicio, al tocar "refrescar", y después de cada escritura. Primero pide `/api/registros/ultimos-cambios/`, compara la `signature` con `lastRegistrosSyncSignature` (persistida en `sessionStorage`) y solo recarga la lista completa si cambió. Esto evita transferir datos innecesariamente.
+No hay WebSockets ni `setInterval`. La sincronización es **bajo demanda**: `refreshAllData()` se llama al inicio, al tocar "refrescar", y después de cada escritura. Primero pide `/api/registros/ultimos-cambios/`, compara la `signature` con `lastRegistrosSyncSignature` (persistida en `sessionStorage`) y solo recarga la lista completa si cambió. Esto evita transferir datos innecesariamente.
+
+### Manejo offline
+`ultimos-cambios` se excluye del caché del SW (debe ser fresco), así que en una recarga sin red ese `fetch` falla. `refreshAllData()` detecta ese caso (`OFFLINE_SENTINEL`) y, en vez de abortar, **degrada a leer la lista que el SW sí cacheó** (`/api/registros/`), evitando que la app quede vacía. Las escrituras (`fetch` POST/PUT/DELETE) están envueltas en try/catch que muestran "Sin conexión …" ante caída de red en lugar de lanzar un rechazo no capturado. Listeners `online`/`offline` avisan al usuario y re-sincronizan al volver la conexión.
 
 ---
 

@@ -24,7 +24,12 @@ python manage.py collectstatic --noinput
 # Domain-specific management commands (in registros/management/commands/):
 python manage.py setup_operadores --password "<clave>"   # create/reset the 2 operator users
 python manage.py limpiar_remate --force                  # wipe all Registro rows + sessions to prep a real auction
+
+# Regenerate the compiled Tailwind CSS after adding new utility classes (requires Node):
+npx tailwindcss@3 -c tailwind.config.js -i registros/static/registros/css/tailwind.src.css -o registros/static/registros/css/app.css --minify
 ```
+
+CI runs the test suite, `check --deploy`, and `pip-audit` on every push to `main` and every PR (`.github/workflows/ci.yml`).
 
 Required env vars (defaults are dev-only): `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, `OPERADOR_USERNAMES`. See README.md for the full PythonAnywhere deploy walkthrough.
 
@@ -70,7 +75,13 @@ List and detail GET endpoints use ETag/Last-Modified via `make_*_etag` + `apply_
 
 ### Frontend
 
-No build step and no SPA framework. `base.html` loads Tailwind, jsPDF, and fonts from CDNs. The entire app UI and ~2600 lines of vanilla JS live inline in `templates/registros/index.html` (with partials in `templates/registros/partials/`). The JS calls the JSON API directly. It's also a PWA (`manifest.webmanifest`, service worker at `/sw.js`). The only real static asset is the app icon.
+No build step and no SPA framework. The ~2600 lines of vanilla JS live in `static/registros/js/app.js` (loaded by `index.html`); the UI markup is in `templates/registros/index.html` (with partials in `templates/registros/partials/`). The JS calls the JSON API directly. It's also a PWA (`manifest.webmanifest`, service worker at `/sw.js`).
+
+`index.html` injects three server-side values the JS reads: `ES_OPERADOR` (role), `REMATE_ID` (active auction), and `REMATE_FINALIZADO` (whether the active remate is closed — drives a read-only banner and disables the form). A guest gets the `es-invitado` class on the shell for its desktop layout.
+
+**Tailwind is pre-compiled, not the runtime CDN.** The CSS is generated once with `npx tailwindcss@3` (config in `tailwind.config.js`, input in `static/registros/css/tailwind.src.css`) and committed as `static/registros/css/app.css`, served via `{% static %}`. This keeps "no build step" at deploy time — regenerate locally and commit when you add new classes (see Commands). jsPDF and fonts still load from CDNs. Static assets: the app icon, `app.js`, and `app.css`.
+
+**Offline (PWA):** the service worker serves the cached registro list via stale-while-revalidate. On an offline reload, `refreshAllData()` falls back to that cache instead of blanking the page, and write `fetch`es are wrapped so a network failure shows "Sin conexión …" instead of throwing.
 
 ## Project conventions
 
