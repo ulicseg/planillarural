@@ -843,7 +843,7 @@
 
           cameraCaptureReadyAt = Date.now() + 450;
           setTimeout(() => {
-            setCameraCaptureReady(true, "Acerca y mantÃ©n estable para mejor nitidez.");
+            setCameraCaptureReady(true, "Acerca y mantén estable para mejor nitidez.");
           }, 450);
 
           cameraModal.classList.remove("hidden");
@@ -1220,17 +1220,17 @@
         document.body.classList.toggle("desktop-body", enabled);
         const viewModeLabel = document.getElementById("viewModeLabel");
         if (viewModeLabel) {
-          viewModeLabel.textContent = enabled ? "Modo escritorio" : "Modo mÃ³vil";
+          viewModeLabel.textContent = enabled ? "Modo escritorio" : "Modo móvil";
         }
         appMain.classList.toggle("max-w-md", !enabled);
         appMain.classList.toggle("sm:max-w-xl", !enabled);
         appMain.classList.toggle("max-w-7xl", enabled);
         appMain.classList.toggle("sm:max-w-7xl", enabled);
         if (toggleDesktopViewBtn) {
-          toggleDesktopViewBtn.title = enabled ? "Modo mÃ³vil" : "Modo escritorio";
+          toggleDesktopViewBtn.title = enabled ? "Modo móvil" : "Modo escritorio";
           const toggleSpan = toggleDesktopViewBtn.querySelector("span");
           if (toggleSpan) {
-            toggleSpan.textContent = enabled ? "Modo mÃ³vil" : "Modo escritorio";
+            toggleSpan.textContent = enabled ? "Modo móvil" : "Modo escritorio";
           }
         }
         setSection(currentSection);
@@ -1305,7 +1305,7 @@
         if (meta === OFFLINE_SENTINEL) {
           const hasDataLoaded = (registrosAll && registrosAll.length) || (registros && registros.length);
           if (hasDataLoaded) {
-            showMessage("Sin conexiÃ³n â€” mostrando datos guardados.", "error");
+            showMessage("Sin conexión — mostrando datos guardados.", "error");
           }
           return;
         }
@@ -1407,8 +1407,8 @@
 
                   <div class="mt-4 space-y-2 border-t border-app-leaf/20 pt-3">
                     <div>
-                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">CategorÃ­a</p>
-                      <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "Sin categorÃ­a"))}</p>
+                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
+                      <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "Sin categoría"))}</p>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-2">
@@ -1583,8 +1583,8 @@
 
                       <div class="mt-4 space-y-2 border-t border-app-leaf/20 pt-3">
                         <div>
-                          <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">CategorÃ­a</p>
-                          <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "Sin categorÃ­a"))}</p>
+                          <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
+                          <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "Sin categoría"))}</p>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-2">
@@ -1708,7 +1708,7 @@
 
         // Limit incoming files
         if (files.length > MAX_MARCA_IMAGES) {
-          showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos. Se tomarÃ¡n las primeras ${MAX_MARCA_IMAGES}.`, "error");
+          showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos. Se tomarán las primeras ${MAX_MARCA_IMAGES}.`, "error");
           files = files.slice(0, MAX_MARCA_IMAGES);
         }
 
@@ -1719,7 +1719,7 @@
           const existing = Array.isArray(imagenBase64Actual) ? imagenBase64Actual.slice() : (imagenBase64Actual ? [imagenBase64Actual] : []);
           let merged = existing.concat(results).filter(Boolean);
           if (merged.length > MAX_MARCA_IMAGES) {
-            showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos. Se conservarÃ¡n las primeras ${MAX_MARCA_IMAGES}.`, "error");
+            showMessage(`Solo se permiten hasta ${MAX_MARCA_IMAGES} fotos. Se conservarán las primeras ${MAX_MARCA_IMAGES}.`, "error");
             merged = merged.slice(0, MAX_MARCA_IMAGES);
           }
           imagenBase64Actual = merged;
@@ -1818,7 +1818,7 @@
             await refreshAllData();
           } catch (e) {
             if (e instanceof TypeError) {
-              showMessage("Sin conexiÃ³n. No se pudo eliminar.", "error");
+              showMessage("Sin conexión. No se pudo eliminar.", "error");
             } else {
               throw e;
             }
@@ -2024,7 +2024,7 @@
           await refreshAllData();
         } catch (e) {
           if (e instanceof TypeError) {
-            showMessage("Sin conexiÃ³n. No se pudo guardar.", "error");
+            showMessage("Sin conexión. No se pudo guardar.", "error");
           } else {
             throw e;
           }
@@ -2182,7 +2182,7 @@
             await refreshAllData();
           } catch (e) {
             if (e instanceof TypeError) {
-              showMessage("Sin conexiÃ³n. No se pudo eliminar.", "error");
+              showMessage("Sin conexión. No se pudo eliminar.", "error");
             } else {
               throw e;
             }
@@ -2270,7 +2270,7 @@
           await refreshAllData();
         } catch (e) {
           if (e instanceof TypeError) {
-            showMessage("Sin conexiÃ³n. No se pudo guardar.", "error");
+            showMessage("Sin conexión. No se pudo guardar.", "error");
           } else {
             throw e;
           }
@@ -2495,7 +2495,7 @@
         const c = (corral || "").toString().trim().toUpperCase();
         const num = parseInt(c, 10);
         if (!isNaN(num)) {
-          // Rellenamos con 0 para que los nÃºmeros ordenen bien (00001, 00012)
+          // Rellenamos con 0 para que los números ordenen bien (00001, 00012)
           return num.toString().padStart(5, '0');
         }
         return c;
@@ -2508,7 +2508,7 @@
         doc.setFontSize(18);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(0, 0, 0); 
-        doc.text("Planilla Rural - ExportaciÃ³n de Corrales", 14, 15);
+        doc.text("Planilla Rural - Exportación de Corrales", 14, 15);
         
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
@@ -2523,7 +2523,7 @@
           return 0;
         });
 
-        const tableColumn = ["Corral", "Remitente", "CategorÃ­a", "Estado", "Cant.", "Observaciones", "Corral Nuevo 1", "Corral Nuevo 2"];
+        const tableColumn = ["Corral", "Remitente", "Categoría", "Estado", "Cant.", "Observaciones", "Corral Nuevo 1", "Corral Nuevo 2"];
         const tableRows = [];
 
         registrosOrdenados.forEach(item => {
