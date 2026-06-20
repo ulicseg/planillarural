@@ -15,32 +15,9 @@
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="{% static 'registros/css/app.css' %}" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-        <script>
-          tailwind.config = {
-            theme: {
-              extend: {
-                fontFamily: {
-                  sans: ["Manrope", "ui-sans-serif", "sans-serif"],
-                },
-                colors: {
-                  app: {
-                    ink: "#0f1f1b",
-                    mint: "#9cc9b1",
-                    leaf: "#1f5f48",
-                    clay: "#7a461f",
-                    cream: "#ece8dc",
-                  },
-                },
-                boxShadow: {
-                  card: "0 18px 36px -24px rgba(10, 26, 21, 0.55)",
-                },
-              },
-            },
-          };
-        </script>
         <style>
           body {
             background:
