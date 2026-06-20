@@ -1394,6 +1394,7 @@
               <p class="text-xs font-bold text-slate-400">No hay registros para mostrar.</p>
             </article>
           `;
+          aplicarModoFinalizado();
           return;
         }
 
