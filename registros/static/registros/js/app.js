@@ -1303,10 +1303,22 @@
         const meta = await fetchRegistrosSyncMeta();
 
         if (meta === OFFLINE_SENTINEL) {
-          const hasDataLoaded = (registrosAll && registrosAll.length) || (registros && registros.length);
-          if (hasDataLoaded) {
-            showMessage("Sin conexión — mostrando datos guardados.", "error");
+          // Recarga offline: el SW puede servir /api/registros/ desde caché aunque
+          // ultimos-cambios (no cacheable) haya fallado. Intentar leer la lista igual.
+          const yaHabiaDatos = (registrosAll && registrosAll.length) || (registros && registros.length);
+          if (!yaHabiaDatos) {
+            try {
+              await fetchRegistrosAll();
+              registros = Array.isArray(registrosAll) ? registrosAll.slice() : [];
+              renderCards();
+              if (!corralesMapaLoaded) {
+                await fetchCorralesMapa();
+              }
+            } catch (e) {
+              // sin caché disponible tampoco; seguimos al aviso
+            }
           }
+          showMessage("Sin conexión — mostrando datos guardados.", "error");
           return;
         }
 
@@ -1684,14 +1696,20 @@
           marcaImagen,
         };
 
-        const response = await fetch(`/api/registros/${registroId}/`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken"),
-          },
-          body: JSON.stringify(payload),
-        });
+        let response;
+        try {
+          response = await fetch(`/api/registros/${registroId}/`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: JSON.stringify(payload),
+          });
+        } catch (err) {
+          showMessage("Sin conexión — no se pudo completar la acción.", "error");
+          return;
+        }
 
         if (handleAuthError(response)) return;
         const body = await response.json().catch(() => ({}));
@@ -1987,14 +2005,20 @@
             }
           }
 
-          const response = await fetch(url, {
-            method,
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": getCookie("csrftoken"),
-            },
-            body: JSON.stringify(payload),
-          });
+          let response;
+          try {
+            response = await fetch(url, {
+              method,
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+              },
+              body: JSON.stringify(payload),
+            });
+          } catch (err) {
+            showMessage("Sin conexión — no se pudo guardar. Reintentá cuando vuelva la red.", "error");
+            return;
+          }
 
           if (handleAuthError(response)) return;
           let body = {};
@@ -2005,7 +2029,6 @@
           }
 
           if (!response.ok) {
-            // Temporary debug: show status and server response text if available
             let text = body && body.error ? body.error : null;
             if (!text) {
               try {
@@ -2015,7 +2038,6 @@
                 // ignore
               }
             }
-            console.error('Save registro failed', response.status, text, body);
             showMessage(text || `No se pudo guardar el registro. (status ${response.status})`, "error");
             return;
           }
@@ -2628,6 +2650,14 @@
         });
       }
       aplicarModoFinalizado();
+
+      window.addEventListener("offline", () => {
+        showMessage("Sin conexión — trabajando con datos guardados.", "error");
+      });
+      window.addEventListener("online", () => {
+        showMessage("Conexión restablecida.");
+        refreshAllData();
+      });
 
       applyDesktopView(desktopViewEnabled);
       setSection("registros");
