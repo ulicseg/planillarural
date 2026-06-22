@@ -138,12 +138,25 @@
           return { width: 0, height: 0 };
         }
 
-        // Si el DOM del mapa está renderizado y visible, medir sus dimensiones reales directas
-        if (mapaGrid && mapaGrid.scrollWidth > 0 && mapaGrid.scrollHeight > 0) {
-          return {
-            width: mapaGrid.scrollWidth,
-            height: mapaGrid.scrollHeight,
-          };
+        // Medir el bounding box REAL de las celdas. No usar scrollWidth/scrollHeight:
+        // el grid se estira para llenar el viewport cuando el mapa es mas chico que
+        // este (mapas angostos como el de Frias), y entonces scrollWidth/Height
+        // reportan el tamaño del contenedor estirado, no el del mapa. offsetLeft/Top/
+        // Width/Height ignoran el transform de zoom y dan la geometria real del contenido.
+        if (mapaGrid) {
+          const celdas = mapaGrid.querySelectorAll(".mapa-cell");
+          if (celdas.length) {
+            let width = 0;
+            let height = 0;
+            celdas.forEach((celda) => {
+              width = Math.max(width, celda.offsetLeft + celda.offsetWidth);
+              height = Math.max(height, celda.offsetTop + celda.offsetHeight);
+            });
+            if (width > 0 && height > 0) {
+              // sumar el padding del grid (4px por lado)
+              return { width: width + 4, height: height + 4 };
+            }
+          }
         }
 
         // Fallback matemático de respaldo por si el mapa está oculto en display: none
