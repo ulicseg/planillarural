@@ -1,4 +1,4 @@
-﻿      const form = document.getElementById("registroForm");
+      const form = document.getElementById("registroForm");
       const registroIdInput = document.getElementById("registroId");
       const guardarBtn = document.getElementById("guardarBtn");
       const cancelarEdicionBtn = document.getElementById("cancelarEdicion");
@@ -134,12 +134,13 @@
       }
 
       function getMapSize() {
-        if (!corralesMapa) {
+        if (!corralesMapa || !corralesMapa.cols || !corralesMapa.rows) {
           return { width: 0, height: 0 };
         }
+        // Cada celda mide 28px, hay un gap de 2px entre celdas, y un padding de 4px en cada lado (8px total)
         return {
-          width: corralesMapa.cols * 28,
-          height: corralesMapa.rows * 28,
+          width: corralesMapa.cols * 30 + 6,
+          height: corralesMapa.rows * 30 + 6,
         };
       }
 
@@ -220,8 +221,9 @@
         const viewportWidth = mapaViewport.clientWidth - 16;
         const viewportHeight = mapaViewport.clientHeight - 16;
 
-        const centerX = ((col - 1) + colSpan / 2) * 28;
-        const centerY = ((row - 1) + rowSpan / 2) * 28;
+        // Considera el ancho de celda de 28px, gap de 2px y padding inicial de 4px en el cálculo preciso del centro
+        const centerX = 3 + (col - 1) * 30 + colSpan * 15;
+        const centerY = 3 + (row - 1) * 30 + rowSpan * 15;
 
         panX = viewportWidth / 2 - centerX * zoomScale;
         panY = viewportHeight / 2 - centerY * zoomScale;
