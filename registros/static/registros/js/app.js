@@ -134,13 +134,24 @@
       }
 
       function getMapSize() {
-        if (!corralesMapa || !corralesMapa.cols || !corralesMapa.rows) {
+        if (!corralesMapa) {
           return { width: 0, height: 0 };
         }
-        // Cada celda mide 28px, gap de 2px, padding lateral/superior de 4px, y padding inferior de 48px (52px vertical)
+
+        // Si el DOM del mapa está renderizado y visible, medir sus dimensiones reales directas
+        if (mapaGrid && mapaGrid.scrollWidth > 0 && mapaGrid.scrollHeight > 0) {
+          return {
+            width: mapaGrid.scrollWidth,
+            height: mapaGrid.scrollHeight,
+          };
+        }
+
+        // Fallback matemático de respaldo por si el mapa está oculto en display: none
+        const cols = corralesMapa.cols || 13;
+        const rows = corralesMapa.rows || 35;
         return {
-          width: corralesMapa.cols * 30 + 6,
-          height: corralesMapa.rows * 30 + 50,
+          width: cols * 30 + 6,
+          height: rows * 30 + 50,
         };
       }
 
