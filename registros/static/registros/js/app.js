@@ -49,6 +49,11 @@
       const corralDetalleSubtitulo = document.getElementById("corralDetalleSubtitulo");
       const corralDetalleContainer = document.getElementById("corralDetalleContainer");
       const nuevoEnCorralBtn = document.getElementById("nuevoEnCorralBtn");
+      const desktopCorralBar = document.getElementById("desktopCorralBar");
+      const desktopCorralNombre = document.getElementById("desktopCorralNombre");
+      const desktopCorralResumen = document.getElementById("desktopCorralResumen");
+      const desktopNuevoEnCorralBtn = document.getElementById("desktopNuevoEnCorralBtn");
+      const desktopCorralCerrar = document.getElementById("desktopCorralCerrar");
       const editarLoteModal = document.getElementById("editarLoteModal");
       const cerrarModalBtn = document.getElementById("cerrarModalBtn");
       const editarLoteForm = document.getElementById("editarLoteForm");
@@ -172,9 +177,14 @@
         const vh = mapaViewport.clientHeight - 16;
         const zoomX = vw / mapSize.width;
         const zoomY = vh / mapSize.height;
-        zoomScale = clamp(Math.min(zoomX, zoomY), 0.25, 3.0);
-        panX = 0;
-        panY = 0;
+        // Acercamos un poco mas que el "fit" exacto para que el mapa no se vea lejano;
+        // queda pannable y centrado en el viewport.
+        const contain = Math.min(zoomX, zoomY);
+        zoomScale = clamp(contain * 1.2, 0.3, 3.0);
+        const scaledW = mapSize.width * zoomScale;
+        const scaledH = mapSize.height * zoomScale;
+        panX = (mapaViewport.clientWidth - scaledW) / 2;
+        panY = (mapaViewport.clientHeight - scaledH) / 2;
         applyMapTransform();
       }
 
@@ -1559,6 +1569,11 @@
         
         nuevoEnCorralBtn.classList.remove("hidden");
 
+        // Barra compacta de corral seleccionado (escritorio): identificador + resumen.
+        if (desktopCorralNombre) desktopCorralNombre.textContent = corral;
+        if (desktopCorralResumen) desktopCorralResumen.textContent = corralDetalleSubtitulo.textContent;
+        if (desktopCorralBar) desktopCorralBar.classList.add("is-active");
+
         if (!desktopViewEnabled) {
           if (!lotes.length) {
             corralDetalleContainer.innerHTML = `
@@ -1671,6 +1686,7 @@
         }
 
         nuevoEnCorralBtn.classList.add("hidden");
+        if (desktopCorralBar) desktopCorralBar.classList.remove("is-active");
         corralDetalleContainer.innerHTML = "";
         if (limpiarFiltroCorralBtn) {
           limpiarFiltroCorralBtn.classList.add("hidden");
@@ -2318,11 +2334,18 @@
         }
       });
 
-      nuevoEnCorralBtn.addEventListener("click", () => {
+      function iniciarNuevoEnCorral() {
         resetFormState();
         document.getElementById("corral").value = selectedCorral;
         setSection("registros");
-      });
+      }
+      nuevoEnCorralBtn.addEventListener("click", iniciarNuevoEnCorral);
+      if (desktopNuevoEnCorralBtn) {
+        desktopNuevoEnCorralBtn.addEventListener("click", iniciarNuevoEnCorral);
+      }
+      if (desktopCorralCerrar) {
+        desktopCorralCerrar.addEventListener("click", deselectCorral);
+      }
 
       if (toggleDesktopViewBtn) {
         toggleDesktopViewBtn.addEventListener("click", () => {
