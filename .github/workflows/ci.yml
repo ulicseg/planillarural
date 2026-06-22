@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Correr tests
+        run: python manage.py test registros
+      - name: Check de deploy
+        env:
+          DJANGO_DEBUG: "False"
+          DJANGO_SECRET_KEY: "ci-secret-key-no-usar-en-produccion-1234567890abcdef"
+          DJANGO_ALLOWED_HOSTS: "example.com"
+        run: python manage.py check --deploy
+      - name: Auditar dependencias
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt

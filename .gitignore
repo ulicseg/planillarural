@@ -47,3 +47,11 @@ dist/
 
 # Project local assets not required in repo
 Gemini_Generated_Image_*.png
+
+# Tooling local (Claude Code / MCP / Playwright)
+.claude/
+.mcp.json
+.playwright-mcp/
+
+# Screenshots de auditoría (artefactos locales en la raíz)
+/0*.png

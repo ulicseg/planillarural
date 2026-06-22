@@ -15,32 +15,9 @@
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="{% static 'registros/css/app.css' %}" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-        <script>
-          tailwind.config = {
-            theme: {
-              extend: {
-                fontFamily: {
-                  sans: ["Manrope", "ui-sans-serif", "sans-serif"],
-                },
-                colors: {
-                  app: {
-                    ink: "#0f1f1b",
-                    mint: "#9cc9b1",
-                    leaf: "#1f5f48",
-                    clay: "#7a461f",
-                    cream: "#ece8dc",
-                  },
-                },
-                boxShadow: {
-                  card: "0 18px 36px -24px rgba(10, 26, 21, 0.55)",
-                },
-              },
-            },
-          };
-        </script>
         <style>
           body {
             background:
@@ -323,12 +300,15 @@
         </style>
       </head>
       <body class="min-h-screen font-sans text-app-ink overflow-x-hidden">
+        <div id="remateFinalizadoBanner" class="hidden bg-app-clay/15 border-b border-app-clay/40 text-app-clay text-center text-sm font-bold py-2 px-3">
+          Remate finalizado — solo lectura
+        </div>
         <main id="appMain" class="mx-auto w-full max-w-md px-4 pb-24 pt-5 sm:max-w-xl sm:px-6">
           {% include "registros/partials/index_header.html" %}
 
           <div id="workspaceShell" class="page-shell workspace-shell">
             
-            <!-- SECCIÃ“N REGISTROS (Formulario y Listado) -->
+            <!-- SECCIÓN REGISTROS (Formulario y Listado) -->
             <section id="registrosSection">
               
               <!-- Formulario de Carga -->
@@ -370,9 +350,9 @@
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
-                        <label for="categoria" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">CategorÃ­a</label>
+                        <label for="categoria" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">Categoría</label>
                         <select id="categoria" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10">
-                          <option value="">Seleccionar categorÃ­a</option>
+                          <option value="">Seleccionar categoría</option>
                           <option value="Novillo">Novillo</option>
                           <option value="Novillito">Novillito</option>
                           <option value="Vaca">Vaca</option>
@@ -398,7 +378,7 @@
                         <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="invernada normal" class="h-4 w-4 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Invernada normal</label>
                         <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="invernada buena" class="h-4 w-4 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Invernada buena</label>
                         <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="gordo" class="h-4 w-4 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Gordo</label>
-                        <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="para crÃ­a" class="h-4 w-4 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Para crÃ­a</label>
+                        <label class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-app-mint/20 cursor-pointer transition-colors"><input type="checkbox" value="para cría" class="h-4 w-4 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" />Para cría</label>
                       </div>
                     </div>
 
@@ -493,11 +473,11 @@
                       <label for="ordenRegistros" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-leaf/80">Ordenar por</label>
                       <select id="ordenRegistros" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10">
                         <option value="corral_asc" selected>Corral: menor a mayor</option>
-                        <option value="reciente">Ingreso: mÃ¡s reciente</option>
+                        <option value="reciente">Ingreso: más reciente</option>
                         <option value="corral_desc">Corral: mayor a menor</option>
                         <option value="cantidad_desc">Cantidad: mayor a menor</option>
                         <option value="cantidad_asc">Cantidad: menor a mayor</option>
-                        <option value="alfabetico">AlfabÃ©tico (A-Z)</option>
+                        <option value="alfabetico">Alfabético (A-Z)</option>
                       </select>
                     </div>
                   </div>
@@ -517,7 +497,7 @@
 
             </section>
 
-            <!-- SECCIÃ“N CORRALES (Mapa y Detalle Corral Seleccionado) -->
+            <!-- SECCIÓN CORRALES (Mapa y Detalle Corral Seleccionado) -->
             <section id="corralesSection" class="hidden">
               
               <!-- Mapa Interactivo -->
@@ -564,7 +544,7 @@
                   <!-- Referencia de Colores -->
                   <div class="flex flex-wrap items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-slate-500">
                     <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-sky-700"></span>Ocupado</span>
-                    <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-sky-300"></span>VacÃ­o</span>
+                    <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-sky-300"></span>Vacío</span>
                     <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-slate-300"></span>Pasillo</span>
                     <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-emerald-300"></span>Pasillo Habilitado</span>
                     <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-sm bg-amber-200"></span>Toril (TO)</span>
@@ -585,7 +565,7 @@
                   </div>
                   
                   <button id="nuevoEnCorralBtn" type="button" class="hidden rounded-lg bg-app-leaf hover:bg-emerald-800 px-3 py-1.5 text-xs font-extrabold text-white shadow-sm transition-all active:scale-[0.98]">
-                    Nuevo Lote AquÃ­
+                    Nuevo Lote Aquí
                   </button>
                 </div>
 
@@ -649,7 +629,7 @@
                   <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada normal" class="h-4 w-4 rounded border-app-leaf/55" />Invernada normal</label>
                   <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="invernada buena" class="h-4 w-4 rounded border-app-leaf/55" />Invernada buena</label>
                   <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="gordo" class="h-4 w-4 rounded border-app-leaf/55" />Gordo</label>
-                  <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="para crÃ­a" class="h-4 w-4 rounded border-app-leaf/55" />Para crÃ­a</label>
+                  <label class="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-app-mint/45"><input type="checkbox" value="para cría" class="h-4 w-4 rounded border-app-leaf/55" />Para cría</label>
                 </div>
               </div>
 
@@ -683,7 +663,7 @@
 
         <div id="imageViewerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4">
           <div class="relative w-full max-w-3xl h-[85vh] flex items-center justify-center overflow-hidden rounded-md bg-black/50 select-none">
-            <!-- BotÃ³n de Cerrar -->
+            <!-- Botón de Cerrar -->
             <button id="cerrarImageViewerBtn" type="button" class="absolute right-3 top-3 z-20 rounded-lg bg-white/90 hover:bg-white px-3 py-1.5 text-xs font-extrabold text-app-ink shadow transition-all duration-200">
               Cerrar
             </button>
@@ -713,6 +693,7 @@
     <script>
       const ES_OPERADOR = {{ es_operador|yesno:"true,false" }};
       const REMATE_ID = "{{ remate_activo.id }}";
+      const REMATE_FINALIZADO = {{ remate_activo.finalizado|yesno:"true,false" }};
     </script>
     <script src="{% static 'registros/js/app.js' %}"></script>
   </body>

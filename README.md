@@ -189,6 +189,14 @@ python manage.py check --deploy
 python manage.py createsuperuser
 ```
 
+## CSS de Tailwind
+El archivo `registros/static/registros/css/app.css` esta precompilado y commiteado. Si agregás clases nuevas en templates o JS, regenerarlo (requiere Node):
+
+```bash
+# Regenerar el CSS de Tailwind tras agregar clases nuevas (requiere Node):
+npx tailwindcss@3 -c tailwind.config.js -i registros/static/registros/css/tailwind.src.css -o registros/static/registros/css/app.css --minify
+```
+
 ## Gobernanza AI
 - Reglas globales: `.github/instructions/copilot.instructions.md`
 - Agentes por dominio: `agents/*`
