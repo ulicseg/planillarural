@@ -137,10 +137,10 @@
         if (!corralesMapa || !corralesMapa.cols || !corralesMapa.rows) {
           return { width: 0, height: 0 };
         }
-        // Cada celda mide 28px, hay un gap de 2px entre celdas, y un padding de 4px en cada lado (8px total)
+        // Cada celda mide 28px, gap de 2px, padding lateral/superior de 4px, y padding inferior de 48px (52px vertical)
         return {
           width: corralesMapa.cols * 30 + 6,
-          height: corralesMapa.rows * 30 + 6,
+          height: corralesMapa.rows * 30 + 50,
         };
       }
 
