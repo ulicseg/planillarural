@@ -319,6 +319,7 @@
           startPanX = panX;
           startPanY = panY;
           mapaViewport.style.cursor = "grabbing";
+          document.body.classList.add("dragging-map");
 
           function onMouseMove(event) {
             const dx = event.clientX - startMouseX;
@@ -333,11 +334,17 @@
           function onMouseUp() {
             isMouseDown = false;
             mapaViewport.style.cursor = "grab";
+            document.body.classList.remove("dragging-map");
             window.removeEventListener("mousemove", onMouseMove);
             window.removeEventListener("mouseup", onMouseUp);
+            window.removeEventListener("selectstart", onSelectStart);
+          }
+          function onSelectStart(e) {
+            e.preventDefault();
           }
           window.addEventListener("mousemove", onMouseMove);
           window.addEventListener("mouseup", onMouseUp);
+          window.addEventListener("selectstart", onSelectStart);
         });
 
         // Rueda / trackpad: panea el mapa (vertical y horizontal). El zoom sigue
