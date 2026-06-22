@@ -88,6 +88,9 @@
           .mapa-canvas {
             transform-origin: 0 0;
             will-change: transform;
+            /* Ancho segun el contenido, no estirado al viewport: asi los mapas
+               angostos (ej. Frias) quedan centrados y no pegados a un lado. */
+            width: max-content;
           }
 
           .mapa-cell {
