@@ -177,7 +177,67 @@
           }
 
           body.desktop-body .mapa-viewport {
-            height: 280px !important;
+            height: 100% !important;
+            min-height: 220px;
+          }
+
+          /* La columna del mapa usa todo el alto disponible (la tarjeta de detalle
+             separada se oculta en escritorio; el corral seleccionado se muestra en
+             una barra compacta dentro de la tarjeta del mapa). */
+          .desktop-view #corralesSection .map-card {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+          }
+
+          .desktop-view #corralesSection .map-card-body {
+            flex: 1 1 auto;
+            min-height: 0;
+          }
+
+          .desktop-view #corralesSection .map-frame {
+            flex: 1 1 auto;
+            min-height: 0;
+          }
+
+          .desktop-view .corral-detalle-card {
+            display: none !important;
+          }
+
+          /* Barra compacta de corral seleccionado: oculta salvo en escritorio y con seleccion activa. */
+          #desktopCorralBar {
+            display: none;
+          }
+
+          .desktop-view #desktopCorralBar.is-active {
+            display: flex;
+          }
+
+          /* Header compacto en escritorio: recupera alto vertical para las 3 columnas. */
+          body.desktop-body #appMain {
+            padding-top: 0.4rem !important;
+          }
+
+          body.desktop-body #appMain > header {
+            margin-bottom: 0.5rem !important;
+            padding-top: 0.6rem !important;
+            padding-bottom: 0.6rem !important;
+          }
+
+          body.desktop-body #appMain > header #totalCabesasCorreales {
+            font-size: 1.5rem !important;
+          }
+
+          /* Estado de la Hacienda mas compacto en escritorio (menos alto en el form). */
+          .desktop-view #estadoOptions {
+            padding: 0.5rem !important;
+            gap: 0.25rem !important;
+          }
+
+          .desktop-view #estadoOptions label {
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.25rem !important;
           }
 
           body.desktop-body #corralesSection > div {
@@ -501,7 +561,7 @@
             <section id="corralesSection" class="hidden">
               
               <!-- Mapa Interactivo -->
-              <div class="rounded-2xl border border-white/40 bg-white/80 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+              <div class="map-card rounded-2xl border border-white/40 bg-white/80 p-4 sm:p-5 shadow-xl backdrop-blur-md">
                 <div class="mb-4 flex items-center justify-between border-b border-app-leaf/10 pb-3">
                   <div class="flex items-center gap-2">
                     <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-app-leaf/10 text-app-leaf">
@@ -513,14 +573,26 @@
                   </div>
                 </div>
 
-                <div class="flex flex-col gap-3.5">
+                <!-- Barra compacta de corral seleccionado (solo escritorio) -->
+                <div id="desktopCorralBar" class="mb-3 items-center justify-between gap-2 rounded-xl border border-app-leaf/25 bg-app-mint/15 px-3 py-2">
+                  <div class="flex min-w-0 items-center gap-2">
+                    <button id="desktopCorralCerrar" type="button" title="Quitar selección" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-app-leaf/30 bg-white text-sm font-black text-app-leaf transition-colors hover:bg-slate-50">✕</button>
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-black leading-tight text-app-ink"><span class="text-app-leaf">Corral</span> <span id="desktopCorralNombre">-</span></p>
+                      <p id="desktopCorralResumen" class="truncate text-[11px] font-bold leading-tight text-app-ink/60">&nbsp;</p>
+                    </div>
+                  </div>
+                  <button id="desktopNuevoEnCorralBtn" type="button" class="shrink-0 rounded-lg bg-app-leaf px-3 py-1.5 text-xs font-extrabold text-white shadow-sm transition-all hover:bg-emerald-800 active:scale-[0.98]">Nuevo Lote Aquí</button>
+                </div>
+
+                <div class="map-card-body flex flex-col gap-3.5">
                   <label class="flex items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 px-4 py-3 text-xs font-bold text-app-ink cursor-pointer shadow-sm transition-all duration-150">
                     <input id="habilitarPasillos" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" {% if not es_operador %}disabled{% endif %} />
                     <span>Habilitar pasillos como corrales temporales</span>
                   </label>
 
                   <!-- Mapa Viewport con Canvas -->
-                  <div class="relative rounded-xl border border-slate-800 bg-[#090d10] p-1.5 shadow-2xl overflow-hidden">
+                  <div class="map-frame relative rounded-xl border border-slate-800 bg-[#090d10] p-1.5 shadow-2xl overflow-hidden">
                     
                     <!-- Controles flotantes en el mapa -->
                     <div class="absolute right-3.5 top-3.5 z-10 flex flex-col gap-1.5">
@@ -553,7 +625,7 @@
               </div>
 
               <!-- Detalle del Corral Seleccionado -->
-              <div class="rounded-2xl border border-white/40 bg-white/80 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+              <div class="corral-detalle-card rounded-2xl border border-white/40 bg-white/80 p-4 sm:p-5 shadow-xl backdrop-blur-md">
                 <div class="mb-3 flex items-center justify-between border-b border-app-leaf/10 pb-3">
                   <div class="flex items-center gap-2">
                     <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-app-leaf/10 text-app-leaf">
