@@ -339,6 +339,17 @@
           window.addEventListener("mousemove", onMouseMove);
           window.addEventListener("mouseup", onMouseUp);
         });
+
+        // Rueda / trackpad: panea el mapa (vertical y horizontal). El zoom sigue
+        // siendo con los botones o pinch. clampPan (dentro de applyMapTransform)
+        // limita el paneo para que se pueda llegar hasta la ultima fila.
+        mapaViewport.addEventListener("wheel", (event) => {
+          event.preventDefault();
+          const factor = event.deltaMode === 1 ? 16 : 1; // lineas vs pixeles
+          panY -= event.deltaY * factor;
+          panX -= event.deltaX * factor;
+          applyMapTransform();
+        }, { passive: false });
       }
 
       function getCookie(name) {
