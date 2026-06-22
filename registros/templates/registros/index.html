@@ -205,17 +205,17 @@
             display: none !important;
           }
 
-          /* Barra compacta de corral seleccionado: oculta salvo en escritorio y con seleccion activa. */
+          /* Barra compacta de corral seleccionado: oculta salvo con seleccion activa. */
           #desktopCorralBar {
             display: none !important;
           }
 
-          .desktop-view #desktopCorralBar.is-active {
+          #desktopCorralBar.is-active {
             display: flex !important;
           }
 
-          /* Ocultar el título del mapa en escritorio cuando hay selección activa */
-          .desktop-view #desktopCorralBar.is-active ~ #mapTitleContainer {
+          /* Ocultar el título del mapa cuando hay selección activa */
+          #desktopCorralBar.is-active ~ #mapTitleContainer {
             display: none !important;
           }
 
@@ -426,6 +426,7 @@
                           <option value="Novillo">Novillo</option>
                           <option value="Novillito">Novillito</option>
                           <option value="Vaca">Vaca</option>
+                          <option value="Vaca con cría">Vaca con cría</option>
                           <option value="Ternero">Ternero</option>
                           <option value="Ternera">Ternera</option>
                           <option value="Ternera/o">Ternera/o</option>
@@ -691,6 +692,7 @@
                   <option value="Novillo">Novillo</option>
                   <option value="Novillito">Novillito</option>
                   <option value="Vaca">Vaca</option>
+                  <option value="Vaca con cría">Vaca con cría</option>
                   <option value="Ternero">Ternero</option>
                   <option value="Ternera">Ternera</option>
                   <option value="Vaquilla">Vaquilla</option>

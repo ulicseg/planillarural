@@ -12,7 +12,7 @@ from .mapas import PASILLO_LABEL, TORIL_CORRAL_ID
 from .models import Mapa, PreferenciaRemateUsuario, Registro, Remate
 
 
-CATEGORIAS_PREDEFINIDAS = {"Novillo", "Novillito", "Vaca", "Ternero", "Ternera", "Ternera/o", "Vaquilla", "Vaquillita", "Toro"}
+CATEGORIAS_PREDEFINIDAS = {"Novillo", "Novillito", "Vaca", "Vaca con cría", "Ternero", "Ternera", "Ternera/o", "Vaquilla", "Vaquillita", "Toro"}
 ESTADOS_PREDEFINIDOS_MAP = {
 	"conserva": "conserva",
 	"invernada normal": "invernada normal",
