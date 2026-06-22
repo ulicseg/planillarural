@@ -207,11 +207,16 @@
 
           /* Barra compacta de corral seleccionado: oculta salvo en escritorio y con seleccion activa. */
           #desktopCorralBar {
-            display: none;
+            display: none !important;
           }
 
           .desktop-view #desktopCorralBar.is-active {
-            display: flex;
+            display: flex !important;
+          }
+
+          /* Ocultar el título del mapa en escritorio cuando hay selección activa */
+          .desktop-view #desktopCorralBar.is-active ~ #mapTitleContainer {
+            display: none !important;
           }
 
           /* Header compacto en escritorio: recupera alto vertical para las 3 columnas. */
@@ -563,7 +568,17 @@
               <!-- Mapa Interactivo -->
               <div class="map-card rounded-2xl border border-white/40 bg-white/80 p-4 sm:p-5 shadow-xl backdrop-blur-md">
                 <div class="mb-4 flex items-center justify-between border-b border-app-leaf/10 pb-3">
-                  <div class="flex items-center gap-2">
+                  <!-- Barra compacta de corral seleccionado (solo escritorio) -->
+                  <div id="desktopCorralBar" class="items-center gap-2 rounded-xl border border-app-leaf/25 bg-app-mint/15 px-3 py-1.5">
+                    <button id="desktopCorralCerrar" type="button" title="Quitar selección" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-app-leaf/30 bg-white text-xs font-black text-app-leaf transition-colors hover:bg-slate-50">✕</button>
+                    <div class="min-w-0">
+                      <p class="truncate text-xs font-black leading-tight text-app-ink"><span class="text-app-leaf">Corral</span> <span id="desktopCorralNombre">-</span></p>
+                      <p id="desktopCorralResumen" class="truncate text-[10px] font-bold leading-tight text-app-ink/60">&nbsp;</p>
+                    </div>
+                    <button id="desktopNuevoEnCorralBtn" type="button" class="shrink-0 rounded-lg bg-app-leaf px-2.5 py-1 text-[10px] font-extrabold text-white shadow-sm transition-all hover:bg-emerald-800 active:scale-[0.98]">Nuevo Lote Aquí</button>
+                  </div>
+
+                  <div id="mapTitleContainer" class="flex items-center gap-2">
                     <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-app-leaf/10 text-app-leaf">
                       <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -576,18 +591,6 @@
                     <input id="habilitarPasillos" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-app-leaf focus:ring-app-leaf/20" {% if not es_operador %}disabled{% endif %} />
                     <span>Habilitar pasillos<span class="hidden sm:inline"> como corrales temporales</span></span>
                   </label>
-                </div>
-
-                <!-- Barra compacta de corral seleccionado (solo escritorio) -->
-                <div id="desktopCorralBar" class="mb-3 items-center justify-between gap-2 rounded-xl border border-app-leaf/25 bg-app-mint/15 px-3 py-2">
-                  <div class="flex min-w-0 items-center gap-2">
-                    <button id="desktopCorralCerrar" type="button" title="Quitar selección" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-app-leaf/30 bg-white text-sm font-black text-app-leaf transition-colors hover:bg-slate-50">✕</button>
-                    <div class="min-w-0">
-                      <p class="truncate text-sm font-black leading-tight text-app-ink"><span class="text-app-leaf">Corral</span> <span id="desktopCorralNombre">-</span></p>
-                      <p id="desktopCorralResumen" class="truncate text-[11px] font-bold leading-tight text-app-ink/60">&nbsp;</p>
-                    </div>
-                  </div>
-                  <button id="desktopNuevoEnCorralBtn" type="button" class="shrink-0 rounded-lg bg-app-leaf px-3 py-1.5 text-xs font-extrabold text-white shadow-sm transition-all hover:bg-emerald-800 active:scale-[0.98]">Nuevo Lote Aquí</button>
                 </div>
 
                 <div class="map-card-body flex flex-col gap-3.5">
