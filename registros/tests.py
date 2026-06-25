@@ -851,3 +851,14 @@ class IndexPageTests(TestCase):
 		self.client.force_login(self.user)
 		resp = self.client.get("/")
 		self.assertContains(resp, "const REMATE_FINALIZADO = false;")
+
+
+class UserManualPageTests(TestCase):
+	def test_user_manual_accessible_without_login(self):
+		resp = self.client.get(reverse("user-manual"))
+		self.assertEqual(resp.status_code, 200)
+		self.assertTemplateUsed(resp, "registros/manual.html")
+		self.assertContains(resp, "Manual de Usuario")
+		# Verificar que las rutas de imágenes se hayan reemplazado
+		self.assertContains(resp, "/static/registros/capturas/")
+		self.assertNotContains(resp, "docs/capturas/")

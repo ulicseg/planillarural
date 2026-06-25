@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import os
 import json
 import logging
 import re
@@ -204,6 +205,25 @@ def resolve_marca_imagen_list(payload_value, current_registro=None):
 
 
 # PAGES VIEWS
+
+def user_manual(request):
+	manual_path = os.path.join(settings.BASE_DIR, "MANUAL_USUARIO.md")
+	content = ""
+	if os.path.exists(manual_path):
+		try:
+			with open(manual_path, "r", encoding="utf-8") as f:
+				content = f.read()
+		except Exception as e:
+			logger.exception("Error al leer MANUAL_USUARIO.md")
+			content = f"Error al cargar el manual: {e}"
+	else:
+		content = "El archivo MANUAL_USUARIO.md no se encuentra en la raíz del proyecto."
+
+	# Reemplazar la ruta de imágenes relativas docs/capturas/ por estáticas
+	content = content.replace("docs/capturas/", "/static/registros/capturas/")
+
+	return render(request, "registros/manual.html", {"content": content})
+
 
 @login_required
 def index(request):
