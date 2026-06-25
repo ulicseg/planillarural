@@ -185,7 +185,7 @@
         </a>
         <div>
           <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-700">Documentación oficial</span>
-          <h1 class="text-lg font-black leading-none text-slate-900 sm:text-xl">Manual de Usuario</h1>
+          <h1 id="manual-header-title" class="text-lg font-black leading-none text-slate-900 sm:text-xl">Manual de Usuario</h1>
         </div>
       </div>
 
@@ -257,6 +257,16 @@
 
       <!-- Columna Derecha: Contenido del Manual -->
       <section class="min-w-0 flex-1">
+        <!-- Pestañas de Documentación -->
+        <div class="flex gap-1 mb-6 rounded-2xl bg-emerald-950/5 p-1 border border-emerald-900/5 max-w-sm sm:max-w-md">
+          <button id="tab-manual-btn" class="flex-1 rounded-xl px-4 py-2 text-xs sm:text-sm font-extrabold transition-all text-emerald-900 bg-white shadow-sm border border-emerald-950/5 focus:outline-none">
+            Manual de Usuario
+          </button>
+          <button id="tab-sales-btn" class="flex-1 rounded-xl px-4 py-2 text-xs sm:text-sm font-extrabold transition-all text-slate-500 hover:text-slate-800 focus:outline-none">
+            Presentación Comercial
+          </button>
+        </div>
+
         <article class="rounded-3xl border border-white bg-white/80 p-6 shadow-md backdrop-blur sm:p-8 md:p-10">
           <div id="manual-body">
             <!-- El contenido HTML renderizado por marked aparecerá aquí -->
@@ -315,6 +325,9 @@
   <script type="text/markdown" id="markdown-content">
 {{ content|safe }}
   </script>
+  <script type="text/markdown" id="sales-markdown-content">
+{{ sales_content|safe }}
+  </script>
 {% endblock %}
 
 {% block scripts %}
@@ -328,14 +341,53 @@
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // 1. Renderizar Markdown con marked.js
-      const rawMarkdown = document.getElementById("markdown-content").textContent;
+      // 1. Obtener contenidos de Markdown crudo
+      const rawManualMarkdown = document.getElementById("markdown-content").textContent;
+      const rawSalesMarkdown = document.getElementById("sales-markdown-content").textContent;
       const manualBody = document.getElementById("manual-body");
+      const headerTitle = document.getElementById("manual-header-title");
       
+      const tabManualBtn = document.getElementById("tab-manual-btn");
+      const tabSalesBtn = document.getElementById("tab-sales-btn");
+      
+      let currentTab = "manual"; // "manual" o "sales"
+      let searchMatches = [];
+      let currentMatchIndex = -1;
+
+      // Elementos de búsqueda estáticos
+      const searchInput = document.getElementById("search-input");
+      const matchCountSpan = document.getElementById("match-count");
+      const mobileMatchCountSpan = document.getElementById("mobile-match-count");
+      const prevMatchBtn = document.getElementById("prev-match");
+      const nextMatchBtn = document.getElementById("next-match");
+
+      const updateTabUI = () => {
+        if (currentTab === "manual") {
+          tabManualBtn.className = "flex-1 rounded-xl px-4 py-2 text-xs sm:text-sm font-extrabold transition-all text-emerald-900 bg-white shadow-sm border border-emerald-950/5 focus:outline-none";
+          tabSalesBtn.className = "flex-1 rounded-xl px-4 py-2 text-xs sm:text-sm font-extrabold transition-all text-slate-500 hover:text-slate-800 focus:outline-none";
+        } else {
+          tabSalesBtn.className = "flex-1 rounded-xl px-4 py-2 text-xs sm:text-sm font-extrabold transition-all text-emerald-900 bg-white shadow-sm border border-emerald-950/5 focus:outline-none";
+          tabManualBtn.className = "flex-1 rounded-xl px-4 py-2 text-xs sm:text-sm font-extrabold transition-all text-slate-500 hover:text-slate-800 focus:outline-none";
+        }
+      };
+
       const renderManual = () => {
+        const rawMarkdown = currentTab === "manual" ? rawManualMarkdown : rawSalesMarkdown;
         if (rawMarkdown && typeof marked !== 'undefined') {
           manualBody.innerHTML = marked.parse(rawMarkdown);
-          setupInteractivity();
+          
+          // Reconstruir TOC dinámicamente
+          buildTOC();
+          
+          // Actualizar título de cabecera y título del documento
+          if (headerTitle) {
+            headerTitle.textContent = currentTab === "manual" ? "Manual de Usuario" : "Presentación Comercial";
+          }
+          document.title = (currentTab === "manual" ? "Manual de Usuario" : "Presentación Comercial") + " - Planilla Rural";
+          
+          // Limpiar búsqueda
+          searchInput.value = "";
+          performSearch();
         } else {
           manualBody.innerHTML = `
             <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-800 shadow-sm max-w-lg mx-auto my-12">
@@ -350,17 +402,14 @@
         }
       };
 
-      if (typeof marked !== 'undefined') {
-        renderManual();
-      } else {
-        setTimeout(renderManual, 200);
-      }
-
-      function setupInteractivity() {
-        // 2. Construir Tabla de Contenidos (TOC) Dinámica
+      function buildTOC() {
         const headings = manualBody.querySelectorAll("h2, h3");
         const tocList = document.getElementById("toc-list");
         const mobileTocList = document.getElementById("mobile-toc-list");
+
+        // Limpiar TOC anterior
+        tocList.innerHTML = "";
+        mobileTocList.innerHTML = "";
 
         headings.forEach((heading, index) => {
           // Generar un ID único amigable si no existe
@@ -411,14 +460,18 @@
           });
         });
 
-        // 3. ScrollSpy con IntersectionObserver
+        // Configurar ScrollSpy para estas cabeceras
+        if (window.headingObserver) {
+          window.headingObserver.disconnect();
+        }
+
         const observerOptions = {
           root: null,
           rootMargin: "0px 0px -70% 0px",
           threshold: 0
         };
 
-        const observer = new IntersectionObserver((entries) => {
+        window.headingObserver = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               const id = entry.target.id;
@@ -446,284 +499,299 @@
           });
         }, observerOptions);
 
-        headings.forEach((heading) => observer.observe(heading));
+        headings.forEach((heading) => window.headingObserver.observe(heading));
+      }
 
-        // 4. Modal Visor de Imágenes
-        const modal = document.getElementById("image-modal");
-        const modalImg = document.getElementById("modal-img");
-        const modalCaption = document.getElementById("modal-caption");
-        const closeModalBtn = document.getElementById("close-modal");
-        const zoomInBtn = document.getElementById("zoom-in");
-        const zoomOutBtn = document.getElementById("zoom-out");
-        const zoomResetBtn = document.getElementById("zoom-reset");
-        const zoomLevelSpan = document.getElementById("zoom-level");
+      // Render inicial
+      if (typeof marked !== 'undefined') {
+        renderManual();
+      } else {
+        setTimeout(renderManual, 200);
+      }
 
-        let scale = 1;
-        let isDragging = false;
-        let startX = 0, startY = 0;
-        let translateX = 0, translateY = 0;
-
-        manualBody.addEventListener("click", (e) => {
-          if (e.target.tagName.toLowerCase() === "img") {
-            modalImg.src = e.target.src;
-            modalCaption.textContent = e.target.alt;
-            
-            scale = 1;
-            translateX = 0;
-            translateY = 0;
-            updateTransform();
-
-            modal.classList.remove("hidden");
-            setTimeout(() => {
-              modal.classList.remove("opacity-0");
-              modal.classList.add("opacity-100");
-            }, 10);
-          }
-        });
-
-        function updateTransform() {
-          modalImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-          zoomLevelSpan.textContent = `${Math.round(scale * 100)}%`;
+      // Handlers de los tab buttons
+      tabManualBtn.addEventListener("click", () => {
+        if (currentTab !== "manual") {
+          currentTab = "manual";
+          updateTabUI();
+          renderManual();
         }
+      });
 
-        function closeModal() {
-          modal.classList.remove("opacity-100");
-          modal.classList.add("opacity-0");
-          setTimeout(() => {
-            modal.classList.add("hidden");
-          }, 300);
+      tabSalesBtn.addEventListener("click", () => {
+        if (currentTab !== "sales") {
+          currentTab = "sales";
+          updateTabUI();
+          renderManual();
         }
+      });
 
-        closeModalBtn.addEventListener("click", closeModal);
-        modal.addEventListener("click", (e) => {
-          if (e.target === modal || e.target.id === "close-modal") {
-            closeModal();
-          }
-        });
+      // 4. Modal Visor de Imágenes (Configuración única)
+      const modal = document.getElementById("image-modal");
+      const modalImg = document.getElementById("modal-img");
+      const modalCaption = document.getElementById("modal-caption");
+      const closeModalBtn = document.getElementById("close-modal");
+      const zoomInBtn = document.getElementById("zoom-in");
+      const zoomOutBtn = document.getElementById("zoom-out");
+      const zoomResetBtn = document.getElementById("zoom-reset");
+      const zoomLevelSpan = document.getElementById("zoom-level");
 
-        zoomInBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          scale = Math.min(scale + 0.25, 4);
-          updateTransform();
-        });
+      let scale = 1;
+      let isDragging = false;
+      let startX = 0, startY = 0;
+      let translateX = 0, translateY = 0;
 
-        zoomOutBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          scale = Math.max(scale - 0.25, 0.5);
-          updateTransform();
-        });
-
-        zoomResetBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
+      manualBody.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() === "img") {
+          modalImg.src = e.target.src;
+          modalCaption.textContent = e.target.alt;
+          
           scale = 1;
           translateX = 0;
           translateY = 0;
           updateTransform();
-        });
 
-        modalImg.addEventListener("mousedown", (e) => {
-          e.preventDefault();
-          if (scale <= 1) return;
-          isDragging = true;
-          startX = e.clientX - translateX;
-          startY = e.clientY - translateY;
-          modalImg.style.transition = "none";
-        });
-
-        window.addEventListener("mousemove", (e) => {
-          if (!isDragging) return;
-          translateX = e.clientX - startX;
-          translateY = e.clientY - startY;
-          updateTransform();
-        });
-
-        window.addEventListener("mouseup", () => {
-          if (isDragging) {
-            isDragging = false;
-            modalImg.style.transition = "transform 0.2s ease";
-          }
-        });
-
-        // 5. Drawer de TOC para Móviles
-        const mobileTocDrawer = document.getElementById("mobile-toc-drawer");
-        const mobileTocContent = document.getElementById("mobile-toc-content");
-        const mobileTocToggle = document.getElementById("mobile-toc-toggle");
-        const closeMobileTocBtn = document.getElementById("close-mobile-toc");
-        const mobileTocBackdrop = document.getElementById("mobile-toc-backdrop");
-
-        function openMobileTocDrawer() {
-          mobileTocDrawer.classList.remove("hidden");
+          modal.classList.remove("hidden");
           setTimeout(() => {
-            mobileTocDrawer.classList.add("opacity-100");
-            mobileTocContent.classList.remove("translate-y-full");
+            modal.classList.remove("opacity-0");
+            modal.classList.add("opacity-100");
           }, 10);
         }
+      });
 
-        function closeMobileTocDrawer() {
-          mobileTocContent.classList.add("translate-y-full");
-          mobileTocDrawer.classList.remove("opacity-100");
-          setTimeout(() => {
-            mobileTocDrawer.classList.add("hidden");
-          }, 300);
+      function updateTransform() {
+        modalImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        zoomLevelSpan.textContent = `${Math.round(scale * 100)}%`;
+      }
+
+      function closeModal() {
+        modal.classList.remove("opacity-100");
+        modal.classList.add("opacity-0");
+        setTimeout(() => {
+          modal.classList.add("hidden");
+        }, 300);
+      }
+
+      closeModalBtn.addEventListener("click", closeModal);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal || e.target.id === "close-modal") {
+          closeModal();
         }
+      });
 
-        mobileTocToggle.addEventListener("click", openMobileTocDrawer);
-        closeMobileTocBtn.addEventListener("click", closeMobileTocDrawer);
-        mobileTocBackdrop.addEventListener("click", closeMobileTocDrawer);
+      zoomInBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        scale = Math.min(scale + 0.25, 4);
+        updateTransform();
+      });
 
-        // 6. Buscador con Resaltador
-        const searchInput = document.getElementById("search-input");
-        const matchCountSpan = document.getElementById("match-count");
-        const mobileMatchCountSpan = document.getElementById("mobile-match-count");
-        const prevMatchBtn = document.getElementById("prev-match");
-        const nextMatchBtn = document.getElementById("next-match");
+      zoomOutBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        scale = Math.max(scale - 0.25, 0.5);
+        updateTransform();
+      });
+
+      zoomResetBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        scale = 1;
+        translateX = 0;
+        translateY = 0;
+        updateTransform();
+      });
+
+      modalImg.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        if (scale <= 1) return;
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        modalImg.style.transition = "none";
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        updateTransform();
+      });
+
+      window.addEventListener("mouseup", () => {
+        if (isDragging) {
+          isDragging = false;
+          modalImg.style.transition = "transform 0.2s ease";
+        }
+      });
+
+      // 5. Drawer de TOC para Móviles (Configuración única)
+      const mobileTocDrawer = document.getElementById("mobile-toc-drawer");
+      const mobileTocContent = document.getElementById("mobile-toc-content");
+      const mobileTocToggle = document.getElementById("mobile-toc-toggle");
+      const closeMobileTocBtn = document.getElementById("close-mobile-toc");
+      const mobileTocBackdrop = document.getElementById("mobile-toc-backdrop");
+
+      function openMobileTocDrawer() {
+        mobileTocDrawer.classList.remove("hidden");
+        setTimeout(() => {
+          mobileTocDrawer.classList.add("opacity-100");
+          mobileTocContent.classList.remove("translate-y-full");
+        }, 10);
+      }
+
+      function closeMobileTocDrawer() {
+        mobileTocContent.classList.add("translate-y-full");
+        mobileTocDrawer.classList.remove("opacity-100");
+        setTimeout(() => {
+          mobileTocDrawer.classList.add("hidden");
+        }, 300);
+      }
+
+      mobileTocToggle.addEventListener("click", openMobileTocDrawer);
+      closeMobileTocBtn.addEventListener("click", closeMobileTocDrawer);
+      mobileTocBackdrop.addEventListener("click", closeMobileTocDrawer);
+
+      // 6. Buscador con Resaltador (Configuración única)
+      function performSearch() {
+        const query = searchInput.value.trim().toLowerCase();
         
-        let searchMatches = [];
-        let currentMatchIndex = -1;
+        removeHighlights();
+        searchMatches = [];
+        currentMatchIndex = -1;
 
-        function performSearch() {
-          const query = searchInput.value.trim().toLowerCase();
-          
-          removeHighlights();
-          searchMatches = [];
-          currentMatchIndex = -1;
-
-          if (!query) {
-            matchCountSpan.textContent = "";
-            mobileMatchCountSpan.textContent = "";
-            prevMatchBtn.disabled = true;
-            nextMatchBtn.disabled = true;
-            return;
-          }
-
-          highlightText(manualBody, query);
-          searchMatches = Array.from(document.querySelectorAll("mark.search-highlight"));
-
-          if (searchMatches.length > 0) {
-            currentMatchIndex = 0;
-            prevMatchBtn.disabled = false;
-            nextMatchBtn.disabled = false;
-            const statusText = `1 de ${searchMatches.length}`;
-            matchCountSpan.textContent = statusText;
-            mobileMatchCountSpan.textContent = statusText;
-            scrollToMatch(0);
-          } else {
-            const noResultsText = "Sin resultados";
-            matchCountSpan.textContent = noResultsText;
-            mobileMatchCountSpan.textContent = noResultsText;
-            prevMatchBtn.disabled = true;
-            nextMatchBtn.disabled = true;
-          }
+        if (!query) {
+          matchCountSpan.textContent = "";
+          mobileMatchCountSpan.textContent = "";
+          prevMatchBtn.disabled = true;
+          nextMatchBtn.disabled = true;
+          return;
         }
 
-        function removeHighlights() {
-          const highlights = document.querySelectorAll("mark.search-highlight");
-          highlights.forEach((highlight) => {
-            const parent = highlight.parentNode;
-            if (parent) {
-              parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
-              parent.normalize();
-            }
-          });
-        }
+        highlightText(manualBody, query);
+        searchMatches = Array.from(document.querySelectorAll("mark.search-highlight"));
 
-        function highlightText(element, query) {
-          if (element.nodeType === 3) {
-            const text = element.textContent;
-            const lowerText = text.toLowerCase();
-            let index = lowerText.indexOf(query);
-
-            if (index >= 0) {
-              const parent = element.parentNode;
-              if (parent && parent.toggleAttribute && parent.tagName !== "SCRIPT" && parent.tagName !== "STYLE" && parent.tagName !== "MARK") {
-                const fragment = document.createDocumentFragment();
-                let lastIndex = 0;
-
-                while (index >= 0) {
-                  fragment.appendChild(document.createTextNode(text.substring(lastIndex, index)));
-
-                  const mark = document.createElement("mark");
-                  mark.className = "search-highlight bg-amber-200 text-slate-900 rounded-sm px-0.5";
-                  mark.textContent = text.substring(index, index + query.length);
-                  fragment.appendChild(mark);
-
-                  lastIndex = index + query.length;
-                  index = lowerText.indexOf(query, lastIndex);
-                }
-
-                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
-                parent.replaceChild(fragment, element);
-              }
-            }
-          } else if (element.nodeType === 1 && element.childNodes.length > 0) {
-            for (let i = element.childNodes.length - 1; i >= 0; i--) {
-              highlightText(element.childNodes[i], query);
-            }
-          }
-        }
-
-        function scrollToMatch(index) {
-          if (index < 0 || index >= searchMatches.length) return;
-
-          searchMatches.forEach((m) => m.classList.remove("bg-amber-400", "ring-2", "ring-amber-500"));
-
-          const activeMatch = searchMatches[index];
-          activeMatch.classList.add("bg-amber-400", "ring-2", "ring-amber-500");
-          activeMatch.scrollIntoView({ behavior: "smooth", block: "center" });
-
-          const statusText = `${index + 1} de ${searchMatches.length}`;
+        if (searchMatches.length > 0) {
+          currentMatchIndex = 0;
+          prevMatchBtn.disabled = false;
+          nextMatchBtn.disabled = false;
+          const statusText = `1 de ${searchMatches.length}`;
           matchCountSpan.textContent = statusText;
           mobileMatchCountSpan.textContent = statusText;
+          scrollToMatch(0);
+        } else {
+          const noResultsText = "Sin resultados";
+          matchCountSpan.textContent = noResultsText;
+          mobileMatchCountSpan.textContent = noResultsText;
+          prevMatchBtn.disabled = true;
+          nextMatchBtn.disabled = true;
         }
+      }
 
-        searchInput.addEventListener("input", performSearch);
-
-        prevMatchBtn.addEventListener("click", () => {
-          if (searchMatches.length === 0) return;
-          currentMatchIndex = (currentMatchIndex - 1 + searchMatches.length) % searchMatches.length;
-          scrollToMatch(currentMatchIndex);
+      function removeHighlights() {
+        const highlights = document.querySelectorAll("mark.search-highlight");
+        highlights.forEach((highlight) => {
+          const parent = highlight.parentNode;
+          if (parent) {
+            parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+            parent.normalize();
+          }
         });
+      }
 
-        nextMatchBtn.addEventListener("click", () => {
-          if (searchMatches.length === 0) return;
-          currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-          scrollToMatch(currentMatchIndex);
-        });
+      function highlightText(element, query) {
+        if (element.nodeType === 3) {
+          const text = element.textContent;
+          const lowerText = text.toLowerCase();
+          let index = lowerText.indexOf(query);
 
-        // 7. Alternar Vista Escritorio/Móvil
-        const toggleDesktopViewBtn = document.getElementById("toggleDesktopViewBtn");
-        let desktopViewEnabled = localStorage.getItem("planillaDesktopView") === "1";
+          if (index >= 0) {
+            const parent = element.parentNode;
+            if (parent && parent.toggleAttribute && parent.tagName !== "SCRIPT" && parent.tagName !== "STYLE" && parent.tagName !== "MARK") {
+              const fragment = document.createDocumentFragment();
+              let lastIndex = 0;
 
-        function applyDesktopView(enabled) {
-          desktopViewEnabled = enabled;
-          localStorage.setItem("planillaDesktopView", enabled ? "1" : "0");
-          
-          if (enabled) {
-            document.body.classList.add("desktop-view-forced");
-            document.body.classList.remove("mobile-view-forced");
-            
-            toggleDesktopViewBtn.title = "Modo móvil";
-            toggleDesktopViewBtn.querySelector("span").textContent = "Modo móvil";
-            toggleDesktopViewBtn.classList.add("bg-emerald-600", "text-white", "hover:bg-emerald-700");
-            toggleDesktopViewBtn.classList.remove("bg-emerald-50", "text-emerald-800", "hover:bg-emerald-100");
-          } else {
-            document.body.classList.remove("desktop-view-forced");
-            document.body.classList.add("mobile-view-forced");
-            
-            toggleDesktopViewBtn.title = "Modo escritorio";
-            toggleDesktopViewBtn.querySelector("span").textContent = "Modo escritorio";
-            toggleDesktopViewBtn.classList.remove("bg-emerald-600", "text-white", "hover:bg-emerald-700");
-            toggleDesktopViewBtn.classList.add("bg-emerald-50", "text-emerald-800", "hover:bg-emerald-100");
+              while (index >= 0) {
+                fragment.appendChild(document.createTextNode(text.substring(lastIndex, index)));
+
+                const mark = document.createElement("mark");
+                mark.className = "search-highlight bg-amber-200 text-slate-900 rounded-sm px-0.5";
+                mark.textContent = text.substring(index, index + query.length);
+                fragment.appendChild(mark);
+
+                lastIndex = index + query.length;
+                index = lowerText.indexOf(query, lastIndex);
+              }
+
+              fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+              parent.replaceChild(fragment, element);
+            }
+          }
+        } else if (element.nodeType === 1 && element.childNodes.length > 0) {
+          for (let i = element.childNodes.length - 1; i >= 0; i--) {
+            highlightText(element.childNodes[i], query);
           }
         }
-
-        toggleDesktopViewBtn.addEventListener("click", () => {
-          applyDesktopView(!desktopViewEnabled);
-        });
-
-        // Aplicar estado inicial
-        applyDesktopView(desktopViewEnabled);
       }
+
+      function scrollToMatch(index) {
+        if (index < 0 || index >= searchMatches.length) return;
+
+        searchMatches.forEach((m) => m.classList.remove("bg-amber-400", "ring-2", "ring-amber-500"));
+
+        const activeMatch = searchMatches[index];
+        activeMatch.classList.add("bg-amber-400", "ring-2", "ring-amber-500");
+        activeMatch.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        const statusText = `${index + 1} de ${searchMatches.length}`;
+        matchCountSpan.textContent = statusText;
+        mobileMatchCountSpan.textContent = statusText;
+      }
+
+      searchInput.addEventListener("input", performSearch);
+
+      prevMatchBtn.addEventListener("click", () => {
+        if (searchMatches.length === 0) return;
+        currentMatchIndex = (currentMatchIndex - 1 + searchMatches.length) % searchMatches.length;
+        scrollToMatch(currentMatchIndex);
+      });
+
+      nextMatchBtn.addEventListener("click", () => {
+        if (searchMatches.length === 0) return;
+        currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+        scrollToMatch(currentMatchIndex);
+      });
+
+      // 7. Alternar Vista Escritorio/Móvil (Configuración única)
+      const toggleDesktopViewBtn = document.getElementById("toggleDesktopViewBtn");
+      let desktopViewEnabled = localStorage.getItem("planillaDesktopView") === "1";
+
+      function applyDesktopView(enabled) {
+        desktopViewEnabled = enabled;
+        localStorage.setItem("planillaDesktopView", enabled ? "1" : "0");
+        
+        if (enabled) {
+          document.body.classList.add("desktop-view-forced");
+          document.body.classList.remove("mobile-view-forced");
+          
+          toggleDesktopViewBtn.title = "Modo móvil";
+          toggleDesktopViewBtn.querySelector("span").textContent = "Modo móvil";
+          toggleDesktopViewBtn.classList.add("bg-emerald-600", "text-white", "hover:bg-emerald-700");
+          toggleDesktopViewBtn.classList.remove("bg-emerald-50", "text-emerald-800", "hover:bg-emerald-100");
+        } else {
+          document.body.classList.remove("desktop-view-forced");
+          document.body.classList.add("mobile-view-forced");
+          
+          toggleDesktopViewBtn.title = "Modo escritorio";
+          toggleDesktopViewBtn.querySelector("span").textContent = "Modo escritorio";
+          toggleDesktopViewBtn.classList.remove("bg-emerald-600", "text-white", "hover:bg-emerald-700");
+          toggleDesktopViewBtn.classList.add("bg-emerald-50", "text-emerald-800", "hover:bg-emerald-100");
+        }
+      }
+
+      toggleDesktopViewBtn.addEventListener("click", () => {
+        applyDesktopView(!desktopViewEnabled);
+      });
+
+      // Aplicar estado inicial
+      applyDesktopView(desktopViewEnabled);
     });
   </script>
 {% endblock %}

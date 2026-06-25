@@ -219,10 +219,26 @@ def user_manual(request):
 	else:
 		content = "El archivo MANUAL_USUARIO.md no se encuentra en la raíz del proyecto."
 
+	sales_path = os.path.join(settings.BASE_DIR, "PRESENTACION_VENTAS.md")
+	sales_content = ""
+	if os.path.exists(sales_path):
+		try:
+			with open(sales_path, "r", encoding="utf-8") as f:
+				sales_content = f.read()
+		except Exception as e:
+			logger.exception("Error al leer PRESENTACION_VENTAS.md")
+			sales_content = f"Error al cargar la presentación de ventas: {e}"
+	else:
+		sales_content = "El archivo PRESENTACION_VENTAS.md no se encuentra en la raíz del proyecto."
+
 	# Reemplazar la ruta de imágenes relativas docs/capturas/ por estáticas
 	content = content.replace("docs/capturas/", "/static/registros/capturas/")
+	sales_content = sales_content.replace("docs/capturas/", "/static/registros/capturas/")
 
-	return render(request, "registros/manual.html", {"content": content})
+	return render(request, "registros/manual.html", {
+		"content": content,
+		"sales_content": sales_content,
+	})
 
 
 @login_required
