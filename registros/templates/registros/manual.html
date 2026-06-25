@@ -287,349 +287,376 @@
 {% block scripts %}
   <script src="{% static 'registros/js/marked.min.js' %}"></script>
   <script>
+    // Fallback de CDN si falla la carga local
+    if (typeof marked === 'undefined') {
+      console.warn("marked.min.js no se cargó localmente. Intentando cargar desde CDN...");
+      document.write('<script src="https://cdn.jsdelivr.net/npm/marked/dist/marked.min.js"><\/script>');
+    }
+  </script>
+  <script>
     document.addEventListener("DOMContentLoaded", () => {
       // 1. Renderizar Markdown con marked.js
       const rawMarkdown = document.getElementById("markdown-content").textContent;
       const manualBody = document.getElementById("manual-body");
       
-      if (rawMarkdown && typeof marked !== 'undefined') {
-        manualBody.innerHTML = marked.parse(rawMarkdown);
-      } else {
-        manualBody.innerHTML = "<p class='text-red-600 font-semibold'>Error al inicializar el parseador de Markdown.</p>";
-      }
-
-      // 2. Construir Tabla de Contenidos (TOC) Dinámica
-      const headings = manualBody.querySelectorAll("h2, h3");
-      const tocList = document.getElementById("toc-list");
-      const mobileTocList = document.getElementById("mobile-toc-list");
-
-      headings.forEach((heading, index) => {
-        // Generar un ID único amigable si no existe
-        if (!heading.id) {
-          const cleanText = heading.textContent
-            .toLowerCase()
-            .trim()
-            .replace(/[^\w\s-]/g, "")
-            .replace(/[\s_]+/g, "-");
-          heading.id = `sec-${cleanText || index}`;
-        }
-
-        // Crear elementos de enlace para desktop y móvil
-        const liDesktop = document.createElement("li");
-        const aDesktop = document.createElement("a");
-        aDesktop.href = `#${heading.id}`;
-        aDesktop.textContent = heading.textContent;
-
-        const liMobile = document.createElement("li");
-        const aMobile = document.createElement("a");
-        aMobile.href = `#${heading.id}`;
-        aMobile.textContent = heading.textContent;
-
-        // Estilos según el nivel de título
-        if (heading.tagName.toLowerCase() === "h2") {
-          aDesktop.className = "block py-1.5 px-3 text-sm font-semibold text-slate-700 hover:text-emerald-800 rounded-xl hover:bg-emerald-50/70 transition-all border-l-2 border-transparent hover:border-emerald-500";
-          liDesktop.className = "mt-2";
-
-          aMobile.className = "block py-2.5 px-4 text-sm font-bold text-slate-700 hover:text-emerald-800 rounded-2xl hover:bg-emerald-50 transition-all";
-          liMobile.className = "mt-2";
+      const renderManual = () => {
+        if (rawMarkdown && typeof marked !== 'undefined') {
+          manualBody.innerHTML = marked.parse(rawMarkdown);
+          setupInteractivity();
         } else {
-          aDesktop.className = "block py-1 px-3 pl-6 text-xs text-slate-500 hover:text-emerald-800 rounded-lg hover:bg-emerald-50/50 transition-all border-l border-transparent hover:border-emerald-500/50";
-          liDesktop.className = "mt-0.5";
-
-          aMobile.className = "block py-1.5 px-4 pl-8 text-xs font-semibold text-slate-500 hover:text-emerald-800 rounded-xl hover:bg-emerald-50/50 transition-all";
-          liMobile.className = "mt-0.5";
+          manualBody.innerHTML = `
+            <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-800 shadow-sm max-w-lg mx-auto my-12">
+              <svg class="mx-auto h-12 w-12 text-red-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 class="text-base font-extrabold mb-1">Error al inicializar el manual</h3>
+              <p class="text-xs text-red-700/80 mb-4">No se pudo cargar el parseador de Markdown (marked.min.js). Si estás administrando el sitio, asegurate de correr <code>python manage.py collectstatic</code> en el servidor y recargar la aplicación.</p>
+              <button onclick="window.location.reload()" class="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-red-700 transition-colors">Reintentar</button>
+            </div>
+          `;
         }
-
-        liDesktop.appendChild(aDesktop);
-        tocList.appendChild(liDesktop);
-
-        liMobile.appendChild(aMobile);
-        mobileTocList.appendChild(liMobile);
-
-        // Click handler para cerrar el drawer móvil tras clickear sección
-        aMobile.addEventListener("click", () => {
-          closeMobileTocDrawer();
-        });
-      });
-
-      // 3. ScrollSpy con IntersectionObserver
-      const observerOptions = {
-        root: null,
-        rootMargin: "0px 0px -70% 0px",
-        threshold: 0
       };
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const id = entry.target.id;
+      if (typeof marked !== 'undefined') {
+        renderManual();
+      } else {
+        setTimeout(renderManual, 200);
+      }
+
+      function setupInteractivity() {
+        // 2. Construir Tabla de Contenidos (TOC) Dinámica
+        const headings = manualBody.querySelectorAll("h2, h3");
+        const tocList = document.getElementById("toc-list");
+        const mobileTocList = document.getElementById("mobile-toc-list");
+
+        headings.forEach((heading, index) => {
+          // Generar un ID único amigable si no existe
+          if (!heading.id) {
+            const cleanText = heading.textContent
+              .toLowerCase()
+              .trim()
+              .replace(/[^\w\s-]/g, "")
+              .replace(/[\s_]+/g, "-");
+            heading.id = `sec-${cleanText || index}`;
+          }
+
+          // Crear elementos de enlace para desktop y móvil
+          const liDesktop = document.createElement("li");
+          const aDesktop = document.createElement("a");
+          aDesktop.href = `#${heading.id}`;
+          aDesktop.textContent = heading.textContent;
+
+          const liMobile = document.createElement("li");
+          const aMobile = document.createElement("a");
+          aMobile.href = `#${heading.id}`;
+          aMobile.textContent = heading.textContent;
+
+          // Estilos según el nivel de título
+          if (heading.tagName.toLowerCase() === "h2") {
+            aDesktop.className = "block py-1.5 px-3 text-sm font-semibold text-slate-700 hover:text-emerald-800 rounded-xl hover:bg-emerald-50/70 transition-all border-l-2 border-transparent hover:border-emerald-500";
+            liDesktop.className = "mt-2";
+
+            aMobile.className = "block py-2.5 px-4 text-sm font-bold text-slate-700 hover:text-emerald-800 rounded-2xl hover:bg-emerald-50 transition-all";
+            liMobile.className = "mt-2";
+          } else {
+            aDesktop.className = "block py-1 px-3 pl-6 text-xs text-slate-500 hover:text-emerald-800 rounded-lg hover:bg-emerald-50/50 transition-all border-l border-transparent hover:border-emerald-500/50";
+            liDesktop.className = "mt-0.5";
+
+            aMobile.className = "block py-1.5 px-4 pl-8 text-xs font-semibold text-slate-500 hover:text-emerald-800 rounded-xl hover:bg-emerald-50/50 transition-all";
+            liMobile.className = "mt-0.5";
+          }
+
+          liDesktop.appendChild(aDesktop);
+          tocList.appendChild(liDesktop);
+
+          liMobile.appendChild(aMobile);
+          mobileTocList.appendChild(liMobile);
+
+          // Click handler para cerrar el drawer móvil tras clickear sección
+          aMobile.addEventListener("click", () => {
+            closeMobileTocDrawer();
+          });
+        });
+
+        // 3. ScrollSpy con IntersectionObserver
+        const observerOptions = {
+          root: null,
+          rootMargin: "0px 0px -70% 0px",
+          threshold: 0
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const id = entry.target.id;
+              
+              // Remover estilos activos en ambos menús
+              document.querySelectorAll("#toc-list a").forEach((a) => {
+                a.classList.remove("text-emerald-800", "bg-emerald-50/70", "border-emerald-500", "font-bold");
+              });
+              document.querySelectorAll("#mobile-toc-list a").forEach((a) => {
+                a.classList.remove("text-emerald-800", "bg-emerald-50", "font-bold");
+              });
+
+              // Resaltar en Desktop
+              const activeDesktop = document.querySelector(`#toc-list a[href="#${id}"]`);
+              if (activeDesktop) {
+                activeDesktop.classList.add("text-emerald-800", "bg-emerald-50/70", "border-emerald-500", "font-bold");
+              }
+
+              // Resaltar en Móvil
+              const activeMobile = document.querySelector(`#mobile-toc-list a[href="#${id}"]`);
+              if (activeMobile) {
+                activeMobile.classList.add("text-emerald-800", "bg-emerald-50", "font-bold");
+              }
+            }
+          });
+        }, observerOptions);
+
+        headings.forEach((heading) => observer.observe(heading));
+
+        // 4. Modal Visor de Imágenes
+        const modal = document.getElementById("image-modal");
+        const modalImg = document.getElementById("modal-img");
+        const modalCaption = document.getElementById("modal-caption");
+        const closeModalBtn = document.getElementById("close-modal");
+        const zoomInBtn = document.getElementById("zoom-in");
+        const zoomOutBtn = document.getElementById("zoom-out");
+        const zoomResetBtn = document.getElementById("zoom-reset");
+        const zoomLevelSpan = document.getElementById("zoom-level");
+
+        let scale = 1;
+        let isDragging = false;
+        let startX = 0, startY = 0;
+        let translateX = 0, translateY = 0;
+
+        manualBody.addEventListener("click", (e) => {
+          if (e.target.tagName.toLowerCase() === "img") {
+            modalImg.src = e.target.src;
+            modalCaption.textContent = e.target.alt;
             
-            // Remover estilos activos en ambos menús
-            document.querySelectorAll("#toc-list a").forEach((a) => {
-              a.classList.remove("text-emerald-800", "bg-emerald-50/70", "border-emerald-500", "font-bold");
-            });
-            document.querySelectorAll("#mobile-toc-list a").forEach((a) => {
-              a.classList.remove("text-emerald-800", "bg-emerald-50", "font-bold");
-            });
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            updateTransform();
 
-            // Resaltar en Desktop
-            const activeDesktop = document.querySelector(`#toc-list a[href="#${id}"]`);
-            if (activeDesktop) {
-              activeDesktop.classList.add("text-emerald-800", "bg-emerald-50/70", "border-emerald-500", "font-bold");
-            }
-
-            // Resaltar en Móvil
-            const activeMobile = document.querySelector(`#mobile-toc-list a[href="#${id}"]`);
-            if (activeMobile) {
-              activeMobile.classList.add("text-emerald-800", "bg-emerald-50", "font-bold");
-            }
+            modal.classList.remove("hidden");
+            setTimeout(() => {
+              modal.classList.remove("opacity-0");
+              modal.classList.add("opacity-100");
+            }, 10);
           }
         });
-      }, observerOptions);
 
-      headings.forEach((heading) => observer.observe(heading));
+        function updateTransform() {
+          modalImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+          zoomLevelSpan.textContent = `${Math.round(scale * 100)}%`;
+        }
 
-      // 4. Modal Visor de Imágenes
-      const modal = document.getElementById("image-modal");
-      const modalImg = document.getElementById("modal-img");
-      const modalCaption = document.getElementById("modal-caption");
-      const closeModalBtn = document.getElementById("close-modal");
-      const zoomInBtn = document.getElementById("zoom-in");
-      const zoomOutBtn = document.getElementById("zoom-out");
-      const zoomResetBtn = document.getElementById("zoom-reset");
-      const zoomLevelSpan = document.getElementById("zoom-level");
+        function closeModal() {
+          modal.classList.remove("opacity-100");
+          modal.classList.add("opacity-0");
+          setTimeout(() => {
+            modal.classList.add("hidden");
+          }, 300);
+        }
 
-      let scale = 1;
-      let isDragging = false;
-      let startX = 0, startY = 0;
-      let translateX = 0, translateY = 0;
+        closeModalBtn.addEventListener("click", closeModal);
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal || e.target.id === "close-modal") {
+            closeModal();
+          }
+        });
 
-      manualBody.addEventListener("click", (e) => {
-        if (e.target.tagName.toLowerCase() === "img") {
-          modalImg.src = e.target.src;
-          modalCaption.textContent = e.target.alt;
-          
+        zoomInBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          scale = Math.min(scale + 0.25, 4);
+          updateTransform();
+        });
+
+        zoomOutBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          scale = Math.max(scale - 0.25, 0.5);
+          updateTransform();
+        });
+
+        zoomResetBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
           scale = 1;
           translateX = 0;
           translateY = 0;
           updateTransform();
+        });
 
-          modal.classList.remove("hidden");
-          setTimeout(() => {
-            modal.classList.remove("opacity-0");
-            modal.classList.add("opacity-100");
-          }, 10);
-        }
-      });
+        modalImg.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          if (scale <= 1) return;
+          isDragging = true;
+          startX = e.clientX - translateX;
+          startY = e.clientY - translateY;
+          modalImg.style.transition = "none";
+        });
 
-      function updateTransform() {
-        modalImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-        zoomLevelSpan.textContent = `${Math.round(scale * 100)}%`;
-      }
+        window.addEventListener("mousemove", (e) => {
+          if (!isDragging) return;
+          translateX = e.clientX - startX;
+          translateY = e.clientY - startY;
+          updateTransform();
+        });
 
-      function closeModal() {
-        modal.classList.remove("opacity-100");
-        modal.classList.add("opacity-0");
-        setTimeout(() => {
-          modal.classList.add("hidden");
-        }, 300);
-      }
-
-      closeModalBtn.addEventListener("click", closeModal);
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal || e.target.id === "close-modal") {
-          closeModal();
-        }
-      });
-
-      zoomInBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        scale = Math.min(scale + 0.25, 4);
-        updateTransform();
-      });
-
-      zoomOutBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        scale = Math.max(scale - 0.25, 0.5);
-        updateTransform();
-      });
-
-      zoomResetBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-        updateTransform();
-      });
-
-      modalImg.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        if (scale <= 1) return;
-        isDragging = true;
-        startX = e.clientX - translateX;
-        startY = e.clientY - translateY;
-        modalImg.style.transition = "none";
-      });
-
-      window.addEventListener("mousemove", (e) => {
-        if (!isDragging) return;
-        translateX = e.clientX - startX;
-        translateY = e.clientY - startY;
-        updateTransform();
-      });
-
-      window.addEventListener("mouseup", () => {
-        if (isDragging) {
-          isDragging = false;
-          modalImg.style.transition = "transform 0.2s ease";
-        }
-      });
-
-      // 5. Drawer de TOC para Móviles
-      const mobileTocDrawer = document.getElementById("mobile-toc-drawer");
-      const mobileTocContent = document.getElementById("mobile-toc-content");
-      const mobileTocToggle = document.getElementById("mobile-toc-toggle");
-      const closeMobileTocBtn = document.getElementById("close-mobile-toc");
-      const mobileTocBackdrop = document.getElementById("mobile-toc-backdrop");
-
-      function openMobileTocDrawer() {
-        mobileTocDrawer.classList.remove("hidden");
-        setTimeout(() => {
-          mobileTocDrawer.classList.add("opacity-100");
-          mobileTocContent.classList.remove("translate-y-full");
-        }, 10);
-      }
-
-      function closeMobileTocDrawer() {
-        mobileTocContent.classList.add("translate-y-full");
-        mobileTocDrawer.classList.remove("opacity-100");
-        setTimeout(() => {
-          mobileTocDrawer.classList.add("hidden");
-        }, 300);
-      }
-
-      mobileTocToggle.addEventListener("click", openMobileTocDrawer);
-      closeMobileTocBtn.addEventListener("click", closeMobileTocDrawer);
-      mobileTocBackdrop.addEventListener("click", closeMobileTocDrawer);
-
-      // 6. Buscador con Resaltador
-      const searchInput = document.getElementById("search-input");
-      const matchCountSpan = document.getElementById("match-count");
-      const mobileMatchCountSpan = document.getElementById("mobile-match-count");
-      const prevMatchBtn = document.getElementById("prev-match");
-      const nextMatchBtn = document.getElementById("next-match");
-      
-      let searchMatches = [];
-      let currentMatchIndex = -1;
-
-      function performSearch() {
-        const query = searchInput.value.trim().toLowerCase();
-        
-        removeHighlights();
-        searchMatches = [];
-        currentMatchIndex = -1;
-
-        if (!query) {
-          matchCountSpan.textContent = "";
-          mobileMatchCountSpan.textContent = "";
-          prevMatchBtn.disabled = true;
-          nextMatchBtn.disabled = true;
-          return;
-        }
-
-        highlightText(manualBody, query);
-        searchMatches = Array.from(document.querySelectorAll("mark.search-highlight"));
-
-        if (searchMatches.length > 0) {
-          currentMatchIndex = 0;
-          prevMatchBtn.disabled = false;
-          nextMatchBtn.disabled = false;
-          const statusText = `1 de ${searchMatches.length}`;
-          matchCountSpan.textContent = statusText;
-          mobileMatchCountSpan.textContent = statusText;
-          scrollToMatch(0);
-        } else {
-          const noResultsText = "Sin resultados";
-          matchCountSpan.textContent = noResultsText;
-          mobileMatchCountSpan.textContent = noResultsText;
-          prevMatchBtn.disabled = true;
-          nextMatchBtn.disabled = true;
-        }
-      }
-
-      function removeHighlights() {
-        const highlights = document.querySelectorAll("mark.search-highlight");
-        highlights.forEach((highlight) => {
-          const parent = highlight.parentNode;
-          if (parent) {
-            parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
-            parent.normalize();
+        window.addEventListener("mouseup", () => {
+          if (isDragging) {
+            isDragging = false;
+            modalImg.style.transition = "transform 0.2s ease";
           }
         });
-      }
 
-      function highlightText(element, query) {
-        if (element.nodeType === 3) {
-          const text = element.textContent;
-          const lowerText = text.toLowerCase();
-          let index = lowerText.indexOf(query);
+        // 5. Drawer de TOC para Móviles
+        const mobileTocDrawer = document.getElementById("mobile-toc-drawer");
+        const mobileTocContent = document.getElementById("mobile-toc-content");
+        const mobileTocToggle = document.getElementById("mobile-toc-toggle");
+        const closeMobileTocBtn = document.getElementById("close-mobile-toc");
+        const mobileTocBackdrop = document.getElementById("mobile-toc-backdrop");
 
-          if (index >= 0) {
-            const parent = element.parentNode;
-            if (parent && parent.toggleAttribute && parent.tagName !== "SCRIPT" && parent.tagName !== "STYLE" && parent.tagName !== "MARK") {
-              const fragment = document.createDocumentFragment();
-              let lastIndex = 0;
+        function openMobileTocDrawer() {
+          mobileTocDrawer.classList.remove("hidden");
+          setTimeout(() => {
+            mobileTocDrawer.classList.add("opacity-100");
+            mobileTocContent.classList.remove("translate-y-full");
+          }, 10);
+        }
 
-              while (index >= 0) {
-                fragment.appendChild(document.createTextNode(text.substring(lastIndex, index)));
+        function closeMobileTocDrawer() {
+          mobileTocContent.classList.add("translate-y-full");
+          mobileTocDrawer.classList.remove("opacity-100");
+          setTimeout(() => {
+            mobileTocDrawer.classList.add("hidden");
+          }, 300);
+        }
 
-                const mark = document.createElement("mark");
-                mark.className = "search-highlight bg-amber-200 text-slate-900 rounded-sm px-0.5";
-                mark.textContent = text.substring(index, index + query.length);
-                fragment.appendChild(mark);
+        mobileTocToggle.addEventListener("click", openMobileTocDrawer);
+        closeMobileTocBtn.addEventListener("click", closeMobileTocDrawer);
+        mobileTocBackdrop.addEventListener("click", closeMobileTocDrawer);
 
-                lastIndex = index + query.length;
-                index = lowerText.indexOf(query, lastIndex);
-              }
+        // 6. Buscador con Resaltador
+        const searchInput = document.getElementById("search-input");
+        const matchCountSpan = document.getElementById("match-count");
+        const mobileMatchCountSpan = document.getElementById("mobile-match-count");
+        const prevMatchBtn = document.getElementById("prev-match");
+        const nextMatchBtn = document.getElementById("next-match");
+        
+        let searchMatches = [];
+        let currentMatchIndex = -1;
 
-              fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
-              parent.replaceChild(fragment, element);
-            }
+        function performSearch() {
+          const query = searchInput.value.trim().toLowerCase();
+          
+          removeHighlights();
+          searchMatches = [];
+          currentMatchIndex = -1;
+
+          if (!query) {
+            matchCountSpan.textContent = "";
+            mobileMatchCountSpan.textContent = "";
+            prevMatchBtn.disabled = true;
+            nextMatchBtn.disabled = true;
+            return;
           }
-        } else if (element.nodeType === 1 && element.childNodes.length > 0) {
-          for (let i = element.childNodes.length - 1; i >= 0; i--) {
-            highlightText(element.childNodes[i], query);
+
+          highlightText(manualBody, query);
+          searchMatches = Array.from(document.querySelectorAll("mark.search-highlight"));
+
+          if (searchMatches.length > 0) {
+            currentMatchIndex = 0;
+            prevMatchBtn.disabled = false;
+            nextMatchBtn.disabled = false;
+            const statusText = `1 de ${searchMatches.length}`;
+            matchCountSpan.textContent = statusText;
+            mobileMatchCountSpan.textContent = statusText;
+            scrollToMatch(0);
+          } else {
+            const noResultsText = "Sin resultados";
+            matchCountSpan.textContent = noResultsText;
+            mobileMatchCountSpan.textContent = noResultsText;
+            prevMatchBtn.disabled = true;
+            nextMatchBtn.disabled = true;
           }
         }
+
+        function removeHighlights() {
+          const highlights = document.querySelectorAll("mark.search-highlight");
+          highlights.forEach((highlight) => {
+            const parent = highlight.parentNode;
+            if (parent) {
+              parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+              parent.normalize();
+            }
+          });
+        }
+
+        function highlightText(element, query) {
+          if (element.nodeType === 3) {
+            const text = element.textContent;
+            const lowerText = text.toLowerCase();
+            let index = lowerText.indexOf(query);
+
+            if (index >= 0) {
+              const parent = element.parentNode;
+              if (parent && parent.toggleAttribute && parent.tagName !== "SCRIPT" && parent.tagName !== "STYLE" && parent.tagName !== "MARK") {
+                const fragment = document.createDocumentFragment();
+                let lastIndex = 0;
+
+                while (index >= 0) {
+                  fragment.appendChild(document.createTextNode(text.substring(lastIndex, index)));
+
+                  const mark = document.createElement("mark");
+                  mark.className = "search-highlight bg-amber-200 text-slate-900 rounded-sm px-0.5";
+                  mark.textContent = text.substring(index, index + query.length);
+                  fragment.appendChild(mark);
+
+                  lastIndex = index + query.length;
+                  index = lowerText.indexOf(query, lastIndex);
+                }
+
+                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+                parent.replaceChild(fragment, element);
+              }
+            }
+          } else if (element.nodeType === 1 && element.childNodes.length > 0) {
+            for (let i = element.childNodes.length - 1; i >= 0; i--) {
+              highlightText(element.childNodes[i], query);
+            }
+          }
+        }
+
+        function scrollToMatch(index) {
+          if (index < 0 || index >= searchMatches.length) return;
+
+          searchMatches.forEach((m) => m.classList.remove("bg-amber-400", "ring-2", "ring-amber-500"));
+
+          const activeMatch = searchMatches[index];
+          activeMatch.classList.add("bg-amber-400", "ring-2", "ring-amber-500");
+          activeMatch.scrollIntoView({ behavior: "smooth", block: "center" });
+
+          const statusText = `${index + 1} de ${searchMatches.length}`;
+          matchCountSpan.textContent = statusText;
+          mobileMatchCountSpan.textContent = statusText;
+        }
+
+        searchInput.addEventListener("input", performSearch);
+
+        prevMatchBtn.addEventListener("click", () => {
+          if (searchMatches.length === 0) return;
+          currentMatchIndex = (currentMatchIndex - 1 + searchMatches.length) % searchMatches.length;
+          scrollToMatch(currentMatchIndex);
+        });
+
+        nextMatchBtn.addEventListener("click", () => {
+          if (searchMatches.length === 0) return;
+          currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+          scrollToMatch(currentMatchIndex);
+        });
       }
-
-      function scrollToMatch(index) {
-        if (index < 0 || index >= searchMatches.length) return;
-
-        searchMatches.forEach((m) => m.classList.remove("bg-amber-400", "ring-2", "ring-amber-500"));
-
-        const activeMatch = searchMatches[index];
-        activeMatch.classList.add("bg-amber-400", "ring-2", "ring-amber-500");
-        activeMatch.scrollIntoView({ behavior: "smooth", block: "center" });
-
-        const statusText = `${index + 1} de ${searchMatches.length}`;
-        matchCountSpan.textContent = statusText;
-        mobileMatchCountSpan.textContent = statusText;
-      }
-
-      searchInput.addEventListener("input", performSearch);
-
-      prevMatchBtn.addEventListener("click", () => {
-        if (searchMatches.length === 0) return;
-        currentMatchIndex = (currentMatchIndex - 1 + searchMatches.length) % searchMatches.length;
-        scrollToMatch(currentMatchIndex);
-      });
-
-      nextMatchBtn.addEventListener("click", () => {
-        if (searchMatches.length === 0) return;
-        currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-        scrollToMatch(currentMatchIndex);
-      });
     });
   </script>
 {% endblock %}
