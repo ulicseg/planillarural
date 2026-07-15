@@ -23,7 +23,7 @@ ESTADOS_PREDEFINIDOS_MAP = {
 
 
 def is_operador(user):
-	return user.is_authenticated and user.username in settings.OPERADOR_USERNAMES
+	return user.is_authenticated and (user.username in settings.OPERADOR_USERNAMES or user.is_superuser)
 
 
 def get_preferencia_remate(usuario):
