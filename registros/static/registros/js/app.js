@@ -1163,6 +1163,10 @@
         ocupacionCorralActual = null;
         hideCorralOcupacionAviso();
         showImagePreview("");
+        const container = document.getElementById("rpInputsContainer");
+        if (container) {
+          container.innerHTML = "";
+        }
         guardarBtn.textContent = "Guardar Registro";
         cancelarEdicionBtn.classList.add("hidden");
         document.getElementById("categoria").dispatchEvent(new Event("change"));
@@ -1199,9 +1203,15 @@
         modalCantidad.value = registro.cantidad || "";
         setEstadoSelection(modalEstadoOptions, registro.estado || "");
         modalObservaciones.value = registro.observaciones || "";
-        const modalRpInput = document.getElementById("modalRp");
-        if (modalRpInput) {
-          modalRpInput.value = registro.rp || "";
+        const modalContainer = document.getElementById("modalRpInputsContainer");
+        if (modalContainer) {
+          modalContainer.innerHTML = "";
+          const rpVal = registro.rp || "";
+          if (rpVal) {
+            rpVal.split(",").forEach((val) => {
+              crearRpInputField("modalRpInputsContainer", val.trim());
+            });
+          }
         }
         ocupacionModalCorralActual = null;
         hideModalCorralOcupacionAviso();
@@ -1219,6 +1229,10 @@
         editarLoteModal.classList.remove("flex");
         editarLoteForm.reset();
         modalCategoria.dispatchEvent(new Event("change"));
+        const modalContainer = document.getElementById("modalRpInputsContainer");
+        if (modalContainer) {
+          modalContainer.innerHTML = "";
+        }
         editarLoteId.value = "";
         ocupacionModalCorralActual = null;
         hideModalCorralOcupacionAviso();
@@ -1237,9 +1251,15 @@
         document.getElementById("cantidad").value = registro.cantidad || "";
         setEstadoSelection(estadoOptions, registro.estado || "");
         document.getElementById("observaciones").value = registro.observaciones || "";
-        const rpInput = document.getElementById("rp");
-        if (rpInput) {
-          rpInput.value = registro.rp || "";
+        const container = document.getElementById("rpInputsContainer");
+        if (container) {
+          container.innerHTML = "";
+          const rpVal = registro.rp || "";
+          if (rpVal) {
+            rpVal.split(",").forEach((val) => {
+              crearRpInputField("rpInputsContainer", val.trim());
+            });
+          }
         }
 
         imagenBase64Actual = (registro.marcaImagenes && registro.marcaImagenes.length) ? registro.marcaImagenes : (registro.marcaImagen ? [registro.marcaImagen] : []);
@@ -2076,9 +2096,13 @@
             observaciones: document.getElementById("observaciones").value.trim(),
             marcaImagen: imagenBase64Actual,
           };
-          const rpInput = document.getElementById("rp");
-          if (rpInput) {
-            payload.rp = rpInput.value.trim();
+          const container = document.getElementById("rpInputsContainer");
+          if (container) {
+            const inputs = container.querySelectorAll(".rp-individual-input");
+            const rps = Array.from(inputs)
+              .map((inp) => inp.value.trim())
+              .filter(Boolean);
+            payload.rp = rps.join(",");
           }
 
           const url = id ? `/api/registros/${id}/` : "/api/registros/";
@@ -2350,9 +2374,13 @@
           observaciones: modalObservaciones.value.trim(),
           marcaImagen: registro.marcaImagen || "",
         };
-        const modalRpInput = document.getElementById("modalRp");
-        if (modalRpInput) {
-          payload.rp = modalRpInput.value.trim();
+        const modalContainer = document.getElementById("modalRpInputsContainer");
+        if (modalContainer) {
+          const inputs = modalContainer.querySelectorAll(".rp-individual-input");
+          const rps = Array.from(inputs)
+            .map((inp) => inp.value.trim())
+            .filter(Boolean);
+          payload.rp = rps.join(",");
         }
 
         if (!validatePasilloAllowed(payload.corral, payload.allowPasillo, "el modal de edicion")) {
@@ -2829,11 +2857,35 @@
 
         function buildOptions() {
           dropdown.innerHTML = "";
+
+          const colMachos = document.createElement("div");
+          colMachos.className = "flex flex-col gap-2";
+
+          const colHembras = document.createElement("div");
+          colHembras.className = "flex flex-col gap-2";
+
+          const headerM = document.createElement("div");
+          headerM.className = "text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1 px-1 text-center sm:text-left border-b border-slate-100 pb-1";
+          headerM.textContent = "Machos";
+          colMachos.appendChild(headerM);
+
+          const headerH = document.createElement("div");
+          headerH.className = "text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1 px-1 text-center sm:text-left border-b border-slate-100 pb-1";
+          headerH.textContent = "Hembras";
+          colHembras.appendChild(headerH);
+
+          dropdown.appendChild(colMachos);
+          dropdown.appendChild(colHembras);
+
+          const machos = ["MEJ", "Novillito", "Novillo", "Ternera/o", "Ternero", "Toro"];
+
           Array.from(select.options).forEach((opt) => {
             const isPlaceholder = opt.value === "";
+            if (isPlaceholder) return;
+
             const btn = document.createElement("button");
             btn.type = "button";
-            btn.className = "w-full text-left rounded-lg px-3.5 py-2.5 text-sm sm:text-base font-semibold border transition-all flex items-center justify-between gap-2 shadow-sm";
+            btn.className = "w-full text-left rounded-lg px-3 py-2 text-sm sm:text-base font-semibold border transition-all flex items-center justify-between gap-2 shadow-sm";
 
             if (select.value === opt.value) {
               btn.className += " bg-app-mint/20 text-app-leaf border-app-leaf/40 font-bold";
@@ -2842,7 +2894,7 @@
             }
 
             btn.innerHTML = `<span class="leading-tight">${opt.text}</span>`;
-            if (select.value === opt.value && !isPlaceholder) {
+            if (select.value === opt.value) {
               btn.innerHTML += `
                 <svg class="text-app-leaf shrink-0 ml-1" style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -2858,7 +2910,11 @@
               arrowSvg.classList.remove("rotate-180");
             });
 
-            dropdown.appendChild(btn);
+            if (machos.includes(opt.value)) {
+              colMachos.appendChild(btn);
+            } else {
+              colHembras.appendChild(btn);
+            }
           });
         }
 
@@ -2900,6 +2956,54 @@
         if (select.value === "") {
           labelSpan.classList.add("text-slate-500");
         }
+      }
+
+      function crearRpInputField(containerId, value = "") {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const count = container.children.length + 1;
+        const wrapper = document.createElement("div");
+        wrapper.className = "relative flex items-center";
+
+        const isModal = containerId.toLowerCase().includes("modal");
+        const inputClass = isModal
+          ? "rp-individual-input w-full rounded-md border border-app-leaf/45 bg-white pl-3 pr-8 py-2 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10"
+          : "rp-individual-input w-full rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 py-2 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = `RP #${count}`;
+        input.value = value;
+        input.maxLength = 11;
+        input.className = inputClass;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "absolute right-2 text-slate-400 hover:text-red-500 font-extrabold text-sm flex h-6 w-6 items-center justify-center shrink-0 transition-colors";
+        removeBtn.innerHTML = "&times;";
+        removeBtn.title = "Quitar RP";
+        removeBtn.addEventListener("click", () => {
+          wrapper.remove();
+          Array.from(container.children).forEach((child, idx) => {
+            const inp = child.querySelector("input");
+            if (inp) inp.placeholder = `RP #${idx + 1}`;
+          });
+        });
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(removeBtn);
+        container.appendChild(wrapper);
+      }
+
+      const btnAddRp = document.getElementById("agregarRpBtn");
+      if (btnAddRp) {
+        btnAddRp.addEventListener("click", () => crearRpInputField("rpInputsContainer"));
+      }
+
+      const btnModalAddRp = document.getElementById("modalAgregarRpBtn");
+      if (btnModalAddRp) {
+        btnModalAddRp.addEventListener("click", () => crearRpInputField("modalRpInputsContainer"));
       }
 
       initializeCustomSelect("categoria");

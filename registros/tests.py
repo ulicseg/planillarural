@@ -225,7 +225,7 @@ class RegistrosApiTests(TestCase):
 		self.assertTrue(remate.habilitar_rp)
 
 	def test_registro_rp_validation(self):
-		# Test valid RP
+		# Test valid single RP
 		response = self.client.post(
 			reverse("api-registros"),
 			data={
@@ -241,33 +241,49 @@ class RegistrosApiTests(TestCase):
 		registro = Registro.objects.get(id=registro_id)
 		self.assertEqual(registro.rp, "RP123A")
 
-		# Test too long RP (> 11 chars)
+		# Test valid multiple RPs (comma-separated)
 		response = self.client.post(
 			reverse("api-registros"),
 			data={
 				"corral": "12",
 				"remitente": "Proveedor X",
 				"categoria": "Vaca",
-				"rp": "A" * 12,
+				"rp": "RP123A, RP456B, RP789",
 			},
 			content_type="application/json",
 		)
-		self.assertEqual(response.status_code, 400)
-		self.assertIn("El campo RP no puede superar los 11 caracteres.", response.json().get("error", ""))
+		self.assertEqual(response.status_code, 201)
+		registro_id = response.json()["data"]["id"]
+		registro = Registro.objects.get(id=registro_id)
+		self.assertEqual(registro.rp, "RP123A, RP456B, RP789")
 
-		# Test non-alphanumeric RP
+		# Test too long RP in a list (> 11 chars)
 		response = self.client.post(
 			reverse("api-registros"),
 			data={
 				"corral": "12",
 				"remitente": "Proveedor X",
 				"categoria": "Vaca",
-				"rp": "RP-123",
+				"rp": "RP123A, " + ("A" * 12) + ", RP789",
 			},
 			content_type="application/json",
 		)
 		self.assertEqual(response.status_code, 400)
-		self.assertIn("El campo RP debe ser alfanumérico", response.json().get("error", ""))
+		self.assertIn("Cada identificador RP no puede superar los 11 caracteres.", response.json().get("error", ""))
+
+		# Test non-alphanumeric RP in a list
+		response = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "12",
+				"remitente": "Proveedor X",
+				"categoria": "Vaca",
+				"rp": "RP123A, RP-123, RP789",
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(response.status_code, 400)
+		self.assertIn("Cada identificador RP debe ser alfanumérico", response.json().get("error", ""))
 
 	def test_update_and_delete_registro(self):
 		registro = Registro.objects.create(remate=self.remate, corral="10", remitente="Pedro")

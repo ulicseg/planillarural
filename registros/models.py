@@ -106,7 +106,7 @@ class Registro(models.Model):
 	cantidad = models.PositiveIntegerField(null=True, blank=True)
 	estado = models.CharField(max_length=80, blank=True)
 	observaciones = models.TextField(blank=True)
-	rp = models.CharField(max_length=11, null=True, blank=True, db_index=True)
+	rp = models.CharField(max_length=500, blank=True, null=True, db_index=True)
 	marca_imagen = models.TextField(blank=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)

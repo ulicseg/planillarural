@@ -458,9 +458,14 @@
                     </div>
 
                     {% if remate_activo.habilitar_rp %}
-                    <div>
-                      <label for="rp" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">RP</label>
-                      <input id="rp" type="text" placeholder="Identificador RP (opcional, alfanumérico)" maxlength="11" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10" />
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">RP (Opcional)</span>
+                        <button type="button" id="agregarRpBtn" class="rounded-lg border border-app-leaf/40 hover:bg-app-mint/15 px-2.5 py-1 text-xs font-bold text-app-leaf shadow-sm transition-all active:scale-[0.98]">
+                          + Agregar RP
+                        </button>
+                      </div>
+                      <div id="rpInputsContainer" class="grid grid-cols-2 gap-2"></div>
                     </div>
                     {% endif %}
 
@@ -732,9 +737,14 @@
               </div>
 
               {% if remate_activo.habilitar_rp %}
-              <div>
-                <label for="modalRp" class="mb-1 block text-xs font-bold">RP</label>
-                <input id="modalRp" type="text" maxlength="11" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="block text-xs font-bold text-app-ink/75">RP (Opcional)</span>
+                  <button type="button" id="modalAgregarRpBtn" class="rounded-md border border-app-leaf/45 hover:bg-app-mint/15 px-2 py-0.5 text-xs font-bold text-app-leaf shadow-sm transition-all">
+                    + Agregar RP
+                  </button>
+                </div>
+                <div id="modalRpInputsContainer" class="grid grid-cols-2 gap-1.5"></div>
               </div>
               {% endif %}
 

@@ -455,12 +455,16 @@ def api_registros(request):
 	if estado_error:
 		return JsonResponse({"error": estado_error}, status=400)
 
-	rp = (payload.get("rp") or "").strip()
-	if rp:
-		if len(rp) > 11:
-			return JsonResponse({"error": "El campo RP no puede superar los 11 caracteres."}, status=400)
-		if not rp.isalnum():
-			return JsonResponse({"error": "El campo RP debe ser alfanumérico (solo letras y números)."}, status=400)
+	rp_raw = (payload.get("rp") or "").strip()
+	rp_formatted = ""
+	if rp_raw:
+		rp_list = [item.strip() for item in rp_raw.split(",") if item.strip()]
+		for rp_val in rp_list:
+			if len(rp_val) > 11:
+				return JsonResponse({"error": "Cada identificador RP no puede superar los 11 caracteres."}, status=400)
+			if not rp_val.isalnum():
+				return JsonResponse({"error": "Cada identificador RP debe ser alfanumérico (solo letras y números)."}, status=400)
+		rp_formatted = ", ".join(rp_list)
 
 	registro = Registro.objects.create(
 		remate=remate,
@@ -470,7 +474,7 @@ def api_registros(request):
 		cantidad=parse_cantidad(payload.get("cantidad")),
 		estado=estado or "",
 		observaciones=(payload.get("observaciones") or "").strip(),
-		rp=rp,
+		rp=rp_formatted,
 		marca_imagen=resolve_marca_imagen_list(payload.get("marcaImagen")),
 	)
 
@@ -528,12 +532,16 @@ def api_registro_detail(request, registro_id):
 	if estado_error:
 		return JsonResponse({"error": estado_error}, status=400)
 
-	rp = (payload.get("rp") or "").strip()
-	if rp:
-		if len(rp) > 11:
-			return JsonResponse({"error": "El campo RP no puede superar los 11 caracteres."}, status=400)
-		if not rp.isalnum():
-			return JsonResponse({"error": "El campo RP debe ser alfanumérico (solo letras y números)."}, status=400)
+	rp_raw = (payload.get("rp") or "").strip()
+	rp_formatted = ""
+	if rp_raw:
+		rp_list = [item.strip() for item in rp_raw.split(",") if item.strip()]
+		for rp_val in rp_list:
+			if len(rp_val) > 11:
+				return JsonResponse({"error": "Cada identificador RP no puede superar los 11 caracteres."}, status=400)
+			if not rp_val.isalnum():
+				return JsonResponse({"error": "Cada identificador RP debe ser alfanumérico (solo letras y números)."}, status=400)
+		rp_formatted = ", ".join(rp_list)
 
 	registro.corral = corral
 	registro.remitente = remitente
@@ -541,7 +549,7 @@ def api_registro_detail(request, registro_id):
 	registro.cantidad = parse_cantidad(payload.get("cantidad"))
 	registro.estado = estado or ""
 	registro.observaciones = (payload.get("observaciones") or "").strip()
-	registro.rp = rp
+	registro.rp = rp_formatted
 	registro.marca_imagen = resolve_marca_imagen_list(payload.get("marcaImagen"), current_registro=registro)
 	registro.save()
 
