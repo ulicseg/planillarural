@@ -3032,6 +3032,55 @@
       setupMouseNavigation();
       refreshAllData();
 
+      // HIDE BOTTOM NAV BAR ON MOBILE WHEN VIRTUAL KEYBOARD IS ACTIVE
+      const bottomNav = document.querySelector(".app-bottom-nav");
+      if (bottomNav) {
+        const isMobile = () => {
+          return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+        };
+
+        const hideNav = () => {
+          if (isMobile()) {
+            bottomNav.classList.add("hidden");
+            bottomNav.style.display = "none";
+          }
+        };
+
+        const showNav = () => {
+          if (isMobile()) {
+            const active = document.activeElement;
+            if (!active || !["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName)) {
+              bottomNav.classList.remove("hidden");
+              bottomNav.style.display = "";
+            }
+          }
+        };
+
+        document.addEventListener("focusin", (e) => {
+          if (e.target && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) {
+            hideNav();
+          }
+        });
+
+        document.addEventListener("focusout", (e) => {
+          if (e.target && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) {
+            setTimeout(showNav, 150);
+          }
+        });
+
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener("resize", () => {
+            if (isMobile()) {
+              if (window.visualViewport.height < window.innerHeight * 0.82) {
+                hideNav();
+              } else {
+                setTimeout(showNav, 150);
+              }
+            }
+          });
+        }
+      }
+
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("/sw.js").catch((err) => {
