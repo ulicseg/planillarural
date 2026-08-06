@@ -2962,14 +2962,31 @@
         const container = document.getElementById(containerId);
         if (!container) return;
 
+        const isModal = containerId.toLowerCase().includes("modal");
+
+        // Only validate limit if we are adding manually (value is empty)
+        if (!value) {
+          const cantInput = document.getElementById(isModal ? "modalCantidad" : "cantidad");
+          const cantVal = parseInt(cantInput ? cantInput.value : 0, 10) || 0;
+
+          if (cantVal <= 0) {
+            showMessage("Por favor, ingresá una cantidad de cabezas mayor a 0 primero.", "error");
+            return;
+          }
+
+          if (container.children.length >= cantVal) {
+            showMessage(`No podés agregar más RPs que la cantidad de cabezas (${cantVal}).`, "error");
+            return;
+          }
+        }
+
         const count = container.children.length + 1;
         const wrapper = document.createElement("div");
         wrapper.className = "relative flex items-center";
 
-        const isModal = containerId.toLowerCase().includes("modal");
         const inputClass = isModal
-          ? "rp-individual-input w-full rounded-md border border-app-leaf/45 bg-white pl-3 pr-8 py-2 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10"
-          : "rp-individual-input w-full rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 py-2 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10";
+          ? "rp-individual-input w-full text-center rounded-md border border-app-leaf/45 bg-white px-8 py-2 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10"
+          : "rp-individual-input w-full text-center rounded-xl border border-slate-200 bg-white px-8 py-2 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10";
 
         const input = document.createElement("input");
         input.type = "text";
@@ -2980,7 +2997,7 @@
 
         const removeBtn = document.createElement("button");
         removeBtn.type = "button";
-        removeBtn.className = "absolute right-2 text-slate-400 hover:text-red-500 font-extrabold text-sm flex h-6 w-6 items-center justify-center shrink-0 transition-colors";
+        removeBtn.className = "absolute right-2 text-slate-400 hover:text-red-600 font-extrabold text-xl flex h-8 w-8 items-center justify-center shrink-0 transition-colors hover:scale-110 active:scale-95";
         removeBtn.innerHTML = "&times;";
         removeBtn.title = "Quitar RP";
         removeBtn.addEventListener("click", () => {
