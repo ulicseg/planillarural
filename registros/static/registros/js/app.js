@@ -1165,6 +1165,7 @@
         showImagePreview("");
         guardarBtn.textContent = "Guardar Registro";
         cancelarEdicionBtn.classList.add("hidden");
+        document.getElementById("categoria").dispatchEvent(new Event("change"));
       }
 
       function setGuardarLoading(loading) {
@@ -1194,6 +1195,7 @@
         modalCorral.value = registro.corral || "";
         modalRemitente.value = registro.remitente || "";
         modalCategoria.value = registro.categoria || "";
+        modalCategoria.dispatchEvent(new Event("change"));
         modalCantidad.value = registro.cantidad || "";
         setEstadoSelection(modalEstadoOptions, registro.estado || "");
         modalObservaciones.value = registro.observaciones || "";
@@ -1212,6 +1214,7 @@
         editarLoteModal.classList.add("hidden");
         editarLoteModal.classList.remove("flex");
         editarLoteForm.reset();
+        modalCategoria.dispatchEvent(new Event("change"));
         editarLoteId.value = "";
         ocupacionModalCorralActual = null;
         hideModalCorralOcupacionAviso();
@@ -1226,6 +1229,7 @@
         }
         document.getElementById("remitente").value = registro.remitente || "";
         document.getElementById("categoria").value = registro.categoria || "";
+        document.getElementById("categoria").dispatchEvent(new Event("change"));
         document.getElementById("cantidad").value = registro.cantidad || "";
         setEstadoSelection(estadoOptions, registro.estado || "");
         document.getElementById("observaciones").value = registro.observaciones || "";
@@ -2727,6 +2731,130 @@
         showMessage("Conexión restablecida.");
         refreshAllData();
       });
+
+      // --- CUSTOM SELECT MINIMALISTA Y ELEGANTE ---
+      function initializeCustomSelect(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        select.style.display = "none";
+
+        const container = document.createElement("div");
+        container.className = "custom-select-container relative w-full";
+        select.parentNode.insertBefore(container, select);
+        container.appendChild(select);
+
+        const isModal = select.classList.contains("rounded-md") || selectId.toLowerCase().includes("modal");
+
+        const trigger = document.createElement("button");
+        trigger.type = "button";
+        if (isModal) {
+          trigger.className = "custom-select-trigger w-full flex items-center justify-between rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm font-semibold text-app-ink shadow-sm transition-all focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10";
+        } else {
+          trigger.className = "custom-select-trigger w-full flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm font-semibold text-app-ink shadow-sm transition-all focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10";
+        }
+
+        const labelSpan = document.createElement("span");
+        labelSpan.className = "custom-select-label text-slate-500";
+        labelSpan.textContent = select.options[select.selectedIndex]?.text || "Seleccionar categoría";
+
+        const arrowSvg = document.createElement("div");
+        arrowSvg.className = "transition-transform duration-200 text-slate-400 shrink-0 ml-2";
+        arrowSvg.innerHTML = `
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        `;
+
+        trigger.appendChild(labelSpan);
+        trigger.appendChild(arrowSvg);
+        container.appendChild(trigger);
+
+        const dropdown = document.createElement("div");
+        if (isModal) {
+          dropdown.className = "custom-select-dropdown absolute left-0 right-0 z-50 mt-1.5 hidden grid grid-cols-2 gap-2 rounded-md border border-app-leaf/25 bg-white/95 p-2 shadow-xl backdrop-blur-md transition-all";
+        } else {
+          dropdown.className = "custom-select-dropdown absolute left-0 right-0 z-50 mt-1.5 hidden grid grid-cols-2 gap-2 rounded-xl border border-slate-100 bg-white/95 p-2 shadow-xl backdrop-blur-md transition-all";
+        }
+        container.appendChild(dropdown);
+
+        function buildOptions() {
+          dropdown.innerHTML = "";
+          Array.from(select.options).forEach((opt) => {
+            const isPlaceholder = opt.value === "";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "w-full text-left rounded-lg px-3.5 py-2.5 text-sm sm:text-base font-semibold border transition-all flex items-center justify-between gap-2 shadow-sm";
+
+            if (select.value === opt.value) {
+              btn.className += " bg-app-mint/20 text-app-leaf border-app-leaf/40 font-bold";
+            } else {
+              btn.className += " bg-slate-50/50 text-app-ink border-slate-200/50 hover:bg-slate-50 hover:border-app-leaf/25 hover:text-app-leaf";
+            }
+
+            btn.innerHTML = `<span class="leading-tight">${opt.text}</span>`;
+            if (select.value === opt.value && !isPlaceholder) {
+              btn.innerHTML += `
+                <svg class="text-app-leaf shrink-0 ml-1" style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              `;
+            }
+
+            btn.addEventListener("click", (e) => {
+              e.preventDefault();
+              select.value = opt.value;
+              select.dispatchEvent(new Event("change"));
+              dropdown.classList.add("hidden");
+              arrowSvg.classList.remove("rotate-180");
+            });
+
+            dropdown.appendChild(btn);
+          });
+        }
+
+        trigger.addEventListener("click", (e) => {
+          e.preventDefault();
+          const isHidden = dropdown.classList.contains("hidden");
+
+          document.querySelectorAll(".custom-select-dropdown").forEach((d) => d.classList.add("hidden"));
+          document.querySelectorAll(".custom-select-trigger div").forEach((a) => a.classList.remove("rotate-180"));
+
+          if (isHidden) {
+            buildOptions();
+            dropdown.classList.remove("hidden");
+            arrowSvg.classList.add("rotate-180");
+          } else {
+            dropdown.classList.add("hidden");
+            arrowSvg.classList.remove("rotate-180");
+          }
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!container.contains(e.target)) {
+            dropdown.classList.add("hidden");
+            arrowSvg.classList.remove("rotate-180");
+          }
+        });
+
+        select.addEventListener("change", () => {
+          const selectedText = select.options[select.selectedIndex]?.text || "Seleccionar categoría";
+          labelSpan.textContent = selectedText;
+          if (select.value === "") {
+            labelSpan.classList.add("text-slate-500");
+          } else {
+            labelSpan.classList.remove("text-slate-500");
+          }
+          buildOptions();
+        });
+
+        if (select.value === "") {
+          labelSpan.classList.add("text-slate-500");
+        }
+      }
+
+      initializeCustomSelect("categoria");
+      initializeCustomSelect("modalCategoria");
 
       applyDesktopView(desktopViewEnabled);
       setSection("registros");

@@ -633,3 +633,9 @@ def api_corral_ocupacion(request, corral):
 def api_mapas(request):
 	mapas = Mapa.objects.all()
 	return JsonResponse({"data": [mapa.to_dict() for mapa in mapas]})
+
+
+def logout_view(request):
+	from django.contrib.auth import logout as django_logout
+	django_logout(request)
+	return redirect("login")

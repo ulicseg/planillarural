@@ -6,7 +6,7 @@ from . import views
 urlpatterns = [
     path("manual/", views.user_manual, name="user-manual"),
     path("login/", auth_views.LoginView.as_view(template_name="registros/login.html"), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("logout/", views.logout_view, name="logout"),
     path("manifest.webmanifest", views.pwa_manifest, name="pwa-manifest"),
     path("sw.js", views.pwa_service_worker, name="pwa-service-worker"),
     path("[]", views.catch_empty_array, name="catch-empty-array"),

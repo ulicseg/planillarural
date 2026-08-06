@@ -169,6 +169,31 @@ class RegistrosApiTests(TestCase):
 
 		self.assertEqual(response.status_code, 400)
 
+	def test_create_accepts_new_categories(self):
+		# Verify Vaca Preñada is accepted
+		response_vaca = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "12",
+				"remitente": "Proveedor X",
+				"categoria": "Vaca Preñada",
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(response_vaca.status_code, 201)
+
+		# Verify MEJ is accepted
+		response_mej = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "12",
+				"remitente": "Proveedor Y",
+				"categoria": "MEJ",
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(response_mej.status_code, 201)
+
 	def test_create_rejects_invalid_estado(self):
 		response = self.client.post(
 			reverse("api-registros"),
