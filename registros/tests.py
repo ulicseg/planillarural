@@ -209,6 +209,66 @@ class RegistrosApiTests(TestCase):
 		self.assertEqual(response.status_code, 400)
 		self.assertIn("Estado invalido", response.json().get("error", ""))
 
+	def test_create_remate_with_habilitar_rp(self):
+		response = self.client.post(
+			reverse("crear-remate"),
+			data={
+				"nombre": "Remate Con RP",
+				"fecha": "2026-08-06",
+				"lugar": "Lugar X",
+				"habilitar_rp": "true",
+			}
+		)
+		self.assertEqual(response.status_code, 302)
+		remate = Remate.objects.filter(nombre="Remate Con RP").first()
+		self.assertIsNotNone(remate)
+		self.assertTrue(remate.habilitar_rp)
+
+	def test_registro_rp_validation(self):
+		# Test valid RP
+		response = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "12",
+				"remitente": "Proveedor X",
+				"categoria": "Vaca",
+				"rp": "RP123A",
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(response.status_code, 201)
+		registro_id = response.json()["data"]["id"]
+		registro = Registro.objects.get(id=registro_id)
+		self.assertEqual(registro.rp, "RP123A")
+
+		# Test too long RP (> 11 chars)
+		response = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "12",
+				"remitente": "Proveedor X",
+				"categoria": "Vaca",
+				"rp": "A" * 12,
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(response.status_code, 400)
+		self.assertIn("El campo RP no puede superar los 11 caracteres.", response.json().get("error", ""))
+
+		# Test non-alphanumeric RP
+		response = self.client.post(
+			reverse("api-registros"),
+			data={
+				"corral": "12",
+				"remitente": "Proveedor X",
+				"categoria": "Vaca",
+				"rp": "RP-123",
+			},
+			content_type="application/json",
+		)
+		self.assertEqual(response.status_code, 400)
+		self.assertIn("El campo RP debe ser alfanumérico", response.json().get("error", ""))
+
 	def test_update_and_delete_registro(self):
 		registro = Registro.objects.create(remate=self.remate, corral="10", remitente="Pedro")
 

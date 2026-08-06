@@ -49,6 +49,7 @@ class Remate(models.Model):
 	mapa = models.ForeignKey("Mapa", on_delete=models.SET_NULL, null=True, blank=True, related_name="remates")
 	finalizado = models.BooleanField(default=False)
 	finalizado_at = models.DateTimeField(null=True, blank=True)
+	habilitar_rp = models.BooleanField(default=False)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 
@@ -74,6 +75,7 @@ class Remate(models.Model):
 			"lugar": self.lugar,
 			"finalizado": self.finalizado,
 			"finalizadoAt": self.finalizado_at.isoformat() if self.finalizado_at else None,
+			"habilitarRp": self.habilitar_rp,
 			"createdAt": self.created_at.isoformat(),
 			"updatedAt": self.updated_at.isoformat(),
 		}
@@ -104,6 +106,7 @@ class Registro(models.Model):
 	cantidad = models.PositiveIntegerField(null=True, blank=True)
 	estado = models.CharField(max_length=80, blank=True)
 	observaciones = models.TextField(blank=True)
+	rp = models.CharField(max_length=11, null=True, blank=True, db_index=True)
 	marca_imagen = models.TextField(blank=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
@@ -194,6 +197,7 @@ class Registro(models.Model):
 			"cantidad": self.cantidad,
 			"estado": self.estado,
 			"observaciones": self.observaciones,
+			"rp": self.rp or "",
 			# legacy field (string) kept for compatibility
 			"marcaImagen": first_img_url,
 			# new field: thumbnails always array

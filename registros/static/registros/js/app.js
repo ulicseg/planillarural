@@ -1199,6 +1199,10 @@
         modalCantidad.value = registro.cantidad || "";
         setEstadoSelection(modalEstadoOptions, registro.estado || "");
         modalObservaciones.value = registro.observaciones || "";
+        const modalRpInput = document.getElementById("modalRp");
+        if (modalRpInput) {
+          modalRpInput.value = registro.rp || "";
+        }
         ocupacionModalCorralActual = null;
         hideModalCorralOcupacionAviso();
 
@@ -1233,6 +1237,10 @@
         document.getElementById("cantidad").value = registro.cantidad || "";
         setEstadoSelection(estadoOptions, registro.estado || "");
         document.getElementById("observaciones").value = registro.observaciones || "";
+        const rpInput = document.getElementById("rp");
+        if (rpInput) {
+          rpInput.value = registro.rp || "";
+        }
 
         imagenBase64Actual = (registro.marcaImagenes && registro.marcaImagenes.length) ? registro.marcaImagenes : (registro.marcaImagen ? [registro.marcaImagen] : []);
         showImagePreview(imagenBase64Actual);
@@ -1483,6 +1491,12 @@
                       <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
                       <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "Sin categoría"))}</p>
                     </div>
+                    ${REMATE_HABILITAR_RP ? `
+                    <div>
+                      <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">RP</p>
+                      <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.rp, "-"))}</p>
+                    </div>
+                    ` : ""}
                     
                     <div class="grid grid-cols-2 gap-2">
                       <div>
@@ -1665,6 +1679,12 @@
                           <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">Categoría</p>
                           <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.categoria, "Sin categoría"))}</p>
                         </div>
+                        ${REMATE_HABILITAR_RP ? `
+                        <div>
+                          <p class="text-sm font-extrabold uppercase tracking-[.12em] text-app-ink/70">RP</p>
+                          <p class="mt-1 text-base font-bold text-app-ink">${escapeHtml(emptyText(item.rp, "-"))}</p>
+                        </div>
+                        ` : ""}
                         
                         <div class="grid grid-cols-2 gap-2">
                           <div>
@@ -1759,6 +1779,7 @@
           cantidad: registro.cantidad ?? "",
           estado: (registro.estado || "").toString().trim(),
           observaciones: (registro.observaciones || "").toString().trim(),
+          rp: (registro.rp || "").toString().trim(),
           marcaImagen,
         };
 
@@ -2055,6 +2076,10 @@
             observaciones: document.getElementById("observaciones").value.trim(),
             marcaImagen: imagenBase64Actual,
           };
+          const rpInput = document.getElementById("rp");
+          if (rpInput) {
+            payload.rp = rpInput.value.trim();
+          }
 
           const url = id ? `/api/registros/${id}/` : "/api/registros/";
           const method = id ? "PUT" : "POST";
@@ -2325,6 +2350,10 @@
           observaciones: modalObservaciones.value.trim(),
           marcaImagen: registro.marcaImagen || "",
         };
+        const modalRpInput = document.getElementById("modalRp");
+        if (modalRpInput) {
+          payload.rp = modalRpInput.value.trim();
+        }
 
         if (!validatePasilloAllowed(payload.corral, payload.allowPasillo, "el modal de edicion")) {
           return;
@@ -2621,6 +2650,9 @@
         });
 
         const tableColumn = ["Corral", "Remitente", "Categoría", "Estado", "Cant.", "Observaciones", "Corral Nuevo 1", "Corral Nuevo 2"];
+        if (typeof REMATE_HABILITAR_RP !== "undefined" && REMATE_HABILITAR_RP) {
+          tableColumn.splice(3, 0, "RP");
+        }
         const tableRows = [];
 
         registrosOrdenados.forEach(item => {
@@ -2634,12 +2666,19 @@
             "", 
             ""  
           ];
+          if (typeof REMATE_HABILITAR_RP !== "undefined" && REMATE_HABILITAR_RP) {
+            rowData.splice(3, 0, item.rp || "-");
+          }
           tableRows.push(rowData);
         });
 
         // Agregamos filas vacias suficientes para llenar la hoja actual y asegurar una hoja extra
         for (let i = 0; i < 40; i++) {
-          tableRows.push(["", "", "", "", "", "", "", ""]);
+          if (typeof REMATE_HABILITAR_RP !== "undefined" && REMATE_HABILITAR_RP) {
+            tableRows.push(["", "", "", "", "", "", "", "", ""]);
+          } else {
+            tableRows.push(["", "", "", "", "", "", "", ""]);
+          }
         }
 
         doc.autoTable({
@@ -2658,7 +2697,17 @@
             textColor: [0, 0, 0], 
             valign: 'middle'
           },
-          columnStyles: {
+          columnStyles: (typeof REMATE_HABILITAR_RP !== "undefined" && REMATE_HABILITAR_RP) ? {
+            0: { halign: 'center', cellWidth: 15 }, 
+            1: { cellWidth: 'auto' }, 
+            2: { cellWidth: 20 }, 
+            3: { cellWidth: 20 }, 
+            4: { cellWidth: 20 }, 
+            5: { halign: 'center', cellWidth: 12 }, 
+            6: { cellWidth: 35 }, 
+            7: { cellWidth: 26 }, 
+            8: { cellWidth: 26 }  
+          } : {
             0: { halign: 'center', cellWidth: 15 }, 
             1: { cellWidth: 'auto' }, 
             2: { cellWidth: 20 }, 

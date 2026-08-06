@@ -457,6 +457,13 @@
                       </div>
                     </div>
 
+                    {% if remate_activo.habilitar_rp %}
+                    <div>
+                      <label for="rp" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">RP</label>
+                      <input id="rp" type="text" placeholder="Identificador RP (opcional, alfanumérico)" maxlength="11" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm font-semibold shadow-sm focus:border-app-leaf focus:ring-4 focus:ring-app-leaf/10" />
+                    </div>
+                    {% endif %}
+
                     <div>
                       <label for="estadoOptions" class="mb-1 block text-xs font-extrabold uppercase tracking-wider text-app-ink/75">Estado de la Hacienda</label>
                       <div id="estadoOptions" class="grid grid-cols-2 gap-2.5 rounded-xl border border-slate-200 bg-white p-3 text-sm font-semibold shadow-sm">
@@ -724,6 +731,13 @@
                 <input id="modalCantidad" type="number" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
               </div>
 
+              {% if remate_activo.habilitar_rp %}
+              <div>
+                <label for="modalRp" class="mb-1 block text-xs font-bold">RP</label>
+                <input id="modalRp" type="text" maxlength="11" class="w-full rounded-md border border-app-leaf/45 bg-white px-3 py-2 text-sm" />
+              </div>
+              {% endif %}
+
               <div>
                 <label for="modalEstadoOptions" class="mb-1 block text-xs font-bold">Estado</label>
                 <div id="modalEstadoOptions" class="grid grid-cols-2 gap-2 rounded-md border border-app-leaf/45 bg-white p-2 text-sm">
@@ -796,6 +810,7 @@
       const ES_OPERADOR = {{ es_operador|yesno:"true,false" }};
       const REMATE_ID = "{{ remate_activo.id }}";
       const REMATE_FINALIZADO = {{ remate_activo.finalizado|yesno:"true,false" }};
+      const REMATE_HABILITAR_RP = {{ remate_activo.habilitar_rp|yesno:"true,false" }};
     </script>
     <script src="{% static 'registros/js/app.js' %}"></script>
   </body>

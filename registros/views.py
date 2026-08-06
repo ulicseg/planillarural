@@ -298,8 +298,9 @@ def crear_remate(request):
 	if mapa is None:
 		mapa = Mapa.objects.filter(es_default=True).first()
 
+	habilitar_rp = parse_bool(request.POST.get("habilitar_rp"))
 	with transaction.atomic():
-		remate = Remate.objects.create(nombre=nombre, fecha=fecha, lugar=lugar, mapa=mapa)
+		remate = Remate.objects.create(nombre=nombre, fecha=fecha, lugar=lugar, mapa=mapa, habilitar_rp=habilitar_rp)
 		set_remate_seleccionado(request.user, remate)
 
 	return redirect("home")
@@ -454,6 +455,13 @@ def api_registros(request):
 	if estado_error:
 		return JsonResponse({"error": estado_error}, status=400)
 
+	rp = (payload.get("rp") or "").strip()
+	if rp:
+		if len(rp) > 11:
+			return JsonResponse({"error": "El campo RP no puede superar los 11 caracteres."}, status=400)
+		if not rp.isalnum():
+			return JsonResponse({"error": "El campo RP debe ser alfanumérico (solo letras y números)."}, status=400)
+
 	registro = Registro.objects.create(
 		remate=remate,
 		corral=corral,
@@ -462,6 +470,7 @@ def api_registros(request):
 		cantidad=parse_cantidad(payload.get("cantidad")),
 		estado=estado or "",
 		observaciones=(payload.get("observaciones") or "").strip(),
+		rp=rp,
 		marca_imagen=resolve_marca_imagen_list(payload.get("marcaImagen")),
 	)
 
@@ -519,12 +528,20 @@ def api_registro_detail(request, registro_id):
 	if estado_error:
 		return JsonResponse({"error": estado_error}, status=400)
 
+	rp = (payload.get("rp") or "").strip()
+	if rp:
+		if len(rp) > 11:
+			return JsonResponse({"error": "El campo RP no puede superar los 11 caracteres."}, status=400)
+		if not rp.isalnum():
+			return JsonResponse({"error": "El campo RP debe ser alfanumérico (solo letras y números)."}, status=400)
+
 	registro.corral = corral
 	registro.remitente = remitente
 	registro.categoria = categoria
 	registro.cantidad = parse_cantidad(payload.get("cantidad"))
 	registro.estado = estado or ""
 	registro.observaciones = (payload.get("observaciones") or "").strip()
+	registro.rp = rp
 	registro.marca_imagen = resolve_marca_imagen_list(payload.get("marcaImagen"), current_registro=registro)
 	registro.save()
 
